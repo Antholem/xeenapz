@@ -1,5 +1,3 @@
-// src/lib/firebase.ts
-
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
@@ -14,11 +12,12 @@ const firebaseConfig = {
     appId: "1:1033979416912:web:2f3368fbdc9729f3c79c55"
 };
 
-// Initialize Firebase app only if it's not already initialized
+// Initialize Firebase app
 const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase services
 const auth = getAuth(app);
 const firestore = getFirestore(app);
+const provider = new GoogleAuthProvider();
 
-export { app, auth, firestore, GoogleAuthProvider, signInWithPopup, signOut };
+export { app, auth, firestore, provider, signInWithPopup, signOut };
