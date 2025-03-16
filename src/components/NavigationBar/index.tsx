@@ -1,7 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Flex, Box, Text, Button, Avatar, useColorMode, IconButton } from "@chakra-ui/react";
+import {
+    Flex,
+    Box,
+    Text,
+    Button,
+    Avatar,
+    useColorMode,
+    IconButton,
+    Menu,
+    MenuButton,
+    MenuList,
+    MenuItem,
+} from "@chakra-ui/react";
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
 import { auth, provider } from "@/lib/firebase";
 import { signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
@@ -10,7 +22,6 @@ const NavigationBar = () => {
     const { colorMode, toggleColorMode } = useColorMode();
     const [user, setUser] = useState<User | null>(null);
 
-    // Listen for authentication state changes
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
@@ -19,7 +30,6 @@ const NavigationBar = () => {
         return () => unsubscribe();
     }, []);
 
-    // Google Sign-In
     const handleGoogleSignIn = async () => {
         try {
             await signInWithPopup(auth, provider);
@@ -28,7 +38,6 @@ const NavigationBar = () => {
         }
     };
 
-    // Sign out user
     const handleSignOut = async () => {
         try {
             await signOut(auth);
@@ -44,14 +53,13 @@ const NavigationBar = () => {
             top="0"
             left="0"
             width="100%"
-            bg={colorMode === "light" ? "white" : "gray.900"}
-            boxShadow="md"
             zIndex="50"
+            borderBottom="1px solid"
+            borderColor={colorMode === "light" ? "gray.200" : "gray.700"}
         >
             <Flex mx="auto" py="3" px="6" align="center" justify="space-between">
                 <Flex align="center" gap={3}>
-                    <Avatar size="sm" src="/favicon.ico" />
-                    <Text fontSize="lg" fontWeight="bold" color={colorMode === "light" ? "gray.800" : "white"}>
+                    <Text fontSize="lg" fontWeight="bold">
                         Xeenapz
                     </Text>
                 </Flex>
@@ -63,17 +71,19 @@ const NavigationBar = () => {
                         onClick={toggleColorMode}
                         variant="ghost"
                     />
-
                     {user ? (
-                        <Avatar
-                            size="sm"
-                            src={user.photoURL || ""}
-                            name={user.displayName || "User"}
-                            cursor="pointer"
-                            onClick={handleSignOut}
-                        />
+                        <Menu>
+                            <MenuButton as={Avatar} size="sm" src={user.photoURL || ""} name={user.displayName || "User"} cursor="pointer" />
+                            <MenuList>
+                                <MenuItem onClick={handleSignOut}>
+                                    Log Out
+                                </MenuItem>
+                            </MenuList>
+                        </Menu>
                     ) : (
-                        <Button onClick={handleGoogleSignIn}>Login with Google</Button>
+                        <Button onClick={handleGoogleSignIn}>
+                            Login with Google
+                        </Button>
                     )}
                 </Flex>
             </Flex>
