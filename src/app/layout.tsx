@@ -1,5 +1,5 @@
 import { Box } from "@chakra-ui/react";
-import { Providers } from "./provider";
+import { Providers } from "./providers";
 import { NavigationBar } from "@/components";
 
 export default function RootLayout({

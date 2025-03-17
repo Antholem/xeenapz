@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Input, Button, Box, VStack, Text } from "@chakra-ui/react";
 
-export default function Home() {
+function Home() {
   const [messages, setMessages] = useState<{ text: string; sender: string }[]>([]);
   const [input, setInput] = useState("");
 
@@ -21,7 +21,6 @@ export default function Home() {
       });
 
       const data = await res.json();
-      console.log("API Response:", data);
 
       const botMessage = { 
         text: data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response", 
@@ -29,6 +28,7 @@ export default function Home() {
       };
 
       setMessages((prev) => [...prev, botMessage]);
+
     } catch (error) {
       console.error("Error:", error);
       setMessages((prev) => [...prev, { text: "Error fetching response", sender: "bot" }]);
@@ -56,4 +56,6 @@ export default function Home() {
       </Box>
     </Box>
   );
-}
+};
+
+export default Home;
