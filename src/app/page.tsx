@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Input, Button, Box, VStack, Text } from "@chakra-ui/react";
 
-function Home() {
+const Home = () => {
   const [messages, setMessages] = useState<{ text: string; sender: string }[]>([]);
   const [input, setInput] = useState("");
 

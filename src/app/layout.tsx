@@ -1,12 +1,8 @@
 import { Box } from "@chakra-ui/react";
-import { Providers } from "./providers";
+import Providers from "./providers";
 import { NavigationBar } from "@/components";
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+const RootLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <html lang="en">
       <head>
@@ -20,12 +16,12 @@ export default function RootLayout({
         <div id="root">
           <Providers>
             <NavigationBar />
-            <Box pt="16">
-              {children}
-            </Box>
+            <Box pt="16">{children}</Box>
           </Providers>
         </div>
       </body>
     </html>
   );
 };
+
+export default RootLayout;

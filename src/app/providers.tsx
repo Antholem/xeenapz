@@ -4,7 +4,7 @@ import { ChakraProvider, ColorModeScript } from "@chakra-ui/react";
 import { ReactNode, useEffect, useState } from "react";
 import theme from "@/lib/theme";
 
-export function Providers({ children }: { children: ReactNode }) {
+const Providers = ({ children }: { children: ReactNode }) => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -19,4 +19,6 @@ export function Providers({ children }: { children: ReactNode }) {
       {children}
     </ChakraProvider>
   );
-}
+};
+
+export default Providers;
