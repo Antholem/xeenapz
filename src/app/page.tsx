@@ -49,7 +49,7 @@ const Home = () => {
       </VStack>
 
       <Box display="flex" mt={4}>
-        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type a message..." />
+        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Ask Xeenapz" />
         <Button ml={2} onClick={sendMessage} colorScheme="blue">
           Send
         </Button>
