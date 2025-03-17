@@ -8,6 +8,7 @@ import {
     Button,
     Avatar,
     useColorMode,
+    useTheme,
     IconButton,
     Menu,
     MenuButton,
@@ -20,6 +21,8 @@ import { signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/aut
 
 const NavigationBar = () => {
     const { colorMode, toggleColorMode } = useColorMode();
+    const theme = useTheme();
+    const bgColor = theme.styles.global({ colorMode }).body.bg;
     const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
@@ -35,7 +38,7 @@ const NavigationBar = () => {
             await signInWithPopup(auth, provider);
         } catch (error) {
             console.error("Google Sign-In Error:", error);
-        }
+        };
     };
 
     const handleSignOut = async () => {
@@ -43,7 +46,7 @@ const NavigationBar = () => {
             await signOut(auth);
         } catch (error) {
             console.error("Sign-Out Error:", error);
-        }
+        };
     };
 
     return (
@@ -56,7 +59,7 @@ const NavigationBar = () => {
             zIndex="50"
             borderBottom="1px solid"
             borderColor={colorMode === "light" ? "gray.200" : "gray.700"}
-            bgColor="inherit"
+            bg={bgColor}
         >
             <Flex mx="auto" py="3" px="6" align="center" justify="space-between">
                 <Flex align="center" gap={3}>
@@ -74,7 +77,12 @@ const NavigationBar = () => {
                     />
                     {user ? (
                         <Menu>
-                            <MenuButton as={Avatar} size="sm" src={user.photoURL || ""} name={user.displayName || "User"} cursor="pointer" />
+                            <MenuButton 
+                                as={Avatar} size="sm" 
+                                src={user?.photoURL ?? "/default-avatar.png"} 
+                                name={user?.displayName ?? "User"} 
+                                cursor="pointer" 
+                            />
                             <MenuList>
                                 <MenuItem onClick={handleSignOut}>
                                     Log Out
