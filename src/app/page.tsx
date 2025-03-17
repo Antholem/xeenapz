@@ -1,11 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { Input, Button, Box, VStack, Text } from "@chakra-ui/react";
+import { useState, useEffect, useRef } from "react";
+import { Input, Button, Box, VStack, Text, Flex, useColorMode, useTheme } from "@chakra-ui/react";
 
 const Home = () => {
+  const { colorMode } = useColorMode();
+  const theme = useTheme();
+  const bgColor = theme.styles.global({ colorMode }).body.bg;
   const [messages, setMessages] = useState<{ text: string; sender: string }[]>([]);
   const [input, setInput] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -22,9 +26,9 @@ const Home = () => {
 
       const data = await res.json();
 
-      const botMessage = { 
-        text: data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response", 
-        sender: "bot" 
+      const botMessage = {
+        text: data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response",
+        sender: "bot",
       };
 
       setMessages((prev) => [...prev, botMessage]);
@@ -37,24 +41,43 @@ const Home = () => {
     setInput("");
   };
 
-  return (
-    <Box p={4}>
-      <VStack spacing={4} align="stretch">
-        {messages.map((msg, index) => (
-          <Text key={index} color={msg.sender === "user" ? "blue.500" : "green.500"}>
-            {msg.sender === "user" ? "You: " : "Bot: "}
-            {msg.text}
-          </Text>
-        ))}
-      </VStack>
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
-      <Box display="flex" mt={4}>
-        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Ask Xeenapz" />
-        <Button ml={2} onClick={sendMessage} colorScheme="blue">
-          Send
-        </Button>
+  return (
+    <Flex direction="column" h="100%">
+      <Box flex="1" overflowY="auto" p={4}>
+        <VStack spacing={4} align="stretch">
+          {messages.map((msg, index) => (
+            <Text key={index} color={msg.sender === "user" ? "blue.500" : "green.500"}>
+              {msg.sender === "user" ? "You: " : "Bot: "}
+              {msg.text}
+            </Text>
+          ))}
+          <div ref={messagesEndRef} />
+        </VStack>
       </Box>
-    </Box>
+
+      <Box 
+        p={4}
+        borderTop="1px solid"
+        borderColor={colorMode === "light" ? "gray.200" : "gray.700"}
+        bg={bgColor}
+      >
+        <Flex>
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask Xeenapz"
+            flex="1"
+          />
+          <Button ml={2} onClick={sendMessage} colorScheme="blue">
+            Send
+          </Button>
+        </Flex>
+      </Box>
+    </Flex>
   );
 };
 

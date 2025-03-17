@@ -54,9 +54,6 @@ const NavigationBar = () => {
     return (
         <Box
             as="nav"
-            position="fixed"
-            top="0"
-            left="0"
             width="100%"
             zIndex="50"
             borderBottom="1px solid"

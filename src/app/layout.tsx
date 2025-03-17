@@ -1,7 +1,9 @@
-import { Box, Flex } from "@chakra-ui/react";
-import Providers from "./providers";
-import { NavigationBar } from "@/components";
+"use client";
+
 import { ReactNode } from "react";
+import {  Box, Flex } from "@chakra-ui/react";
+import Providers from "./providers";
+import { NavigationBar, SideBar } from "@/components";
 
 const RootLayout = ({ children }: { children: ReactNode }) => {
   return (
@@ -11,21 +13,17 @@ const RootLayout = ({ children }: { children: ReactNode }) => {
         <meta name="description" content="A chat application built with Next.js" />
       </head>
       <body>
-        <div id="root">
           <Providers>
-            <NavigationBar />
-            <Flex 
-              pt="16"
-              minH="calc(100vh - 4rem)"
-              justify="center"
-              align="center"
-            >
-              <Box width="100%" maxW="600px" px={4}>
-                {children}
-              </Box>
+            <Flex h="100vh">
+              <SideBar />
+              <Flex direction="column" flex="1">
+                <NavigationBar />
+                <Box flex="1" overflowY="auto">
+                  {children}
+                </Box>
+              </Flex>
             </Flex>
           </Providers>
-        </div>
       </body>
     </html>
   );
