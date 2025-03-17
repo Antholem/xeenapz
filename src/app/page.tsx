@@ -54,6 +54,259 @@ function Home() {
           Send
         </Button>
       </Box>
+      <VStack spacing={4} align="stretch">
+        {messages.map((msg, index) => (
+          <Text key={index} color={msg.sender === "user" ? "blue.500" : "green.500"}>
+            {msg.sender === "user" ? "You: " : "Bot: "}
+            {msg.text}
+          </Text>
+        ))}
+      </VStack>
+
+      <Box display="flex" mt={4}>
+        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type a message..." />
+        <Button ml={2} onClick={sendMessage} colorScheme="blue">
+          Send
+        </Button>
+      </Box><VStack spacing={4} align="stretch">
+        {messages.map((msg, index) => (
+          <Text key={index} color={msg.sender === "user" ? "blue.500" : "green.500"}>
+            {msg.sender === "user" ? "You: " : "Bot: "}
+            {msg.text}
+          </Text>
+        ))}
+      </VStack>
+
+      <Box display="flex" mt={4}>
+        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type a message..." />
+        <Button ml={2} onClick={sendMessage} colorScheme="blue">
+          Send
+        </Button>
+      </Box><VStack spacing={4} align="stretch">
+        {messages.map((msg, index) => (
+          <Text key={index} color={msg.sender === "user" ? "blue.500" : "green.500"}>
+            {msg.sender === "user" ? "You: " : "Bot: "}
+            {msg.text}
+          </Text>
+        ))}
+      </VStack>
+
+      <Box display="flex" mt={4}>
+        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type a message..." />
+        <Button ml={2} onClick={sendMessage} colorScheme="blue">
+          Send
+        </Button>
+      </Box><VStack spacing={4} align="stretch">
+        {messages.map((msg, index) => (
+          <Text key={index} color={msg.sender === "user" ? "blue.500" : "green.500"}>
+            {msg.sender === "user" ? "You: " : "Bot: "}
+            {msg.text}
+          </Text>
+        ))}
+      </VStack>
+
+      <Box display="flex" mt={4}>
+        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type a message..." />
+        <Button ml={2} onClick={sendMessage} colorScheme="blue">
+          Send
+        </Button>
+      </Box><VStack spacing={4} align="stretch">
+        {messages.map((msg, index) => (
+          <Text key={index} color={msg.sender === "user" ? "blue.500" : "green.500"}>
+            {msg.sender === "user" ? "You: " : "Bot: "}
+            {msg.text}
+          </Text>
+        ))}
+      </VStack>
+
+      <Box display="flex" mt={4}>
+        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type a message..." />
+        <Button ml={2} onClick={sendMessage} colorScheme="blue">
+          Send
+        </Button>
+      </Box><VStack spacing={4} align="stretch">
+        {messages.map((msg, index) => (
+          <Text key={index} color={msg.sender === "user" ? "blue.500" : "green.500"}>
+            {msg.sender === "user" ? "You: " : "Bot: "}
+            {msg.text}
+          </Text>
+        ))}
+      </VStack>
+
+      <Box display="flex" mt={4}>
+        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type a message..." />
+        <Button ml={2} onClick={sendMessage} colorScheme="blue">
+          Send
+        </Button>
+      </Box><VStack spacing={4} align="stretch">
+        {messages.map((msg, index) => (
+          <Text key={index} color={msg.sender === "user" ? "blue.500" : "green.500"}>
+            {msg.sender === "user" ? "You: " : "Bot: "}
+            {msg.text}
+          </Text>
+        ))}
+      </VStack>
+
+      <Box display="flex" mt={4}>
+        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type a message..." />
+        <Button ml={2} onClick={sendMessage} colorScheme="blue">
+          Send
+        </Button>
+      </Box><VStack spacing={4} align="stretch">
+        {messages.map((msg, index) => (
+          <Text key={index} color={msg.sender === "user" ? "blue.500" : "green.500"}>
+            {msg.sender === "user" ? "You: " : "Bot: "}
+            {msg.text}
+          </Text>
+        ))}
+      </VStack>
+
+      <Box display="flex" mt={4}>
+        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type a message..." />
+        <Button ml={2} onClick={sendMessage} colorScheme="blue">
+          Send
+        </Button>
+      </Box><VStack spacing={4} align="stretch">
+        {messages.map((msg, index) => (
+          <Text key={index} color={msg.sender === "user" ? "blue.500" : "green.500"}>
+            {msg.sender === "user" ? "You: " : "Bot: "}
+            {msg.text}
+          </Text>
+        ))}
+      </VStack>
+
+      <Box display="flex" mt={4}>
+        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type a message..." />
+        <Button ml={2} onClick={sendMessage} colorScheme="blue">
+          Send
+        </Button>
+      </Box><VStack spacing={4} align="stretch">
+        {messages.map((msg, index) => (
+          <Text key={index} color={msg.sender === "user" ? "blue.500" : "green.500"}>
+            {msg.sender === "user" ? "You: " : "Bot: "}
+            {msg.text}
+          </Text>
+        ))}
+      </VStack>
+
+      <Box display="flex" mt={4}>
+        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type a message..." />
+        <Button ml={2} onClick={sendMessage} colorScheme="blue">
+          Send
+        </Button>
+      </Box><VStack spacing={4} align="stretch">
+        {messages.map((msg, index) => (
+          <Text key={index} color={msg.sender === "user" ? "blue.500" : "green.500"}>
+            {msg.sender === "user" ? "You: " : "Bot: "}
+            {msg.text}
+          </Text>
+        ))}
+      </VStack>
+
+      <Box display="flex" mt={4}>
+        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type a message..." />
+        <Button ml={2} onClick={sendMessage} colorScheme="blue">
+          Send
+        </Button>
+      </Box><VStack spacing={4} align="stretch">
+        {messages.map((msg, index) => (
+          <Text key={index} color={msg.sender === "user" ? "blue.500" : "green.500"}>
+            {msg.sender === "user" ? "You: " : "Bot: "}
+            {msg.text}
+          </Text>
+        ))}
+      </VStack>
+
+      <Box display="flex" mt={4}>
+        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type a message..." />
+        <Button ml={2} onClick={sendMessage} colorScheme="blue">
+          Send
+        </Button>
+      </Box><VStack spacing={4} align="stretch">
+        {messages.map((msg, index) => (
+          <Text key={index} color={msg.sender === "user" ? "blue.500" : "green.500"}>
+            {msg.sender === "user" ? "You: " : "Bot: "}
+            {msg.text}
+          </Text>
+        ))}
+      </VStack>
+
+      <Box display="flex" mt={4}>
+        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type a message..." />
+        <Button ml={2} onClick={sendMessage} colorScheme="blue">
+          Send
+        </Button>
+      </Box><VStack spacing={4} align="stretch">
+        {messages.map((msg, index) => (
+          <Text key={index} color={msg.sender === "user" ? "blue.500" : "green.500"}>
+            {msg.sender === "user" ? "You: " : "Bot: "}
+            {msg.text}
+          </Text>
+        ))}
+      </VStack>
+
+      <Box display="flex" mt={4}>
+        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type a message..." />
+        <Button ml={2} onClick={sendMessage} colorScheme="blue">
+          Send
+        </Button>
+      </Box><VStack spacing={4} align="stretch">
+        {messages.map((msg, index) => (
+          <Text key={index} color={msg.sender === "user" ? "blue.500" : "green.500"}>
+            {msg.sender === "user" ? "You: " : "Bot: "}
+            {msg.text}
+          </Text>
+        ))}
+      </VStack>
+
+      <Box display="flex" mt={4}>
+        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type a message..." />
+        <Button ml={2} onClick={sendMessage} colorScheme="blue">
+          Send
+        </Button>
+      </Box><VStack spacing={4} align="stretch">
+        {messages.map((msg, index) => (
+          <Text key={index} color={msg.sender === "user" ? "blue.500" : "green.500"}>
+            {msg.sender === "user" ? "You: " : "Bot: "}
+            {msg.text}
+          </Text>
+        ))}
+      </VStack>
+
+      <Box display="flex" mt={4}>
+        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type a message..." />
+        <Button ml={2} onClick={sendMessage} colorScheme="blue">
+          Send
+        </Button>
+      </Box><VStack spacing={4} align="stretch">
+        {messages.map((msg, index) => (
+          <Text key={index} color={msg.sender === "user" ? "blue.500" : "green.500"}>
+            {msg.sender === "user" ? "You: " : "Bot: "}
+            {msg.text}
+          </Text>
+        ))}
+      </VStack>
+
+      <Box display="flex" mt={4}>
+        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type a message..." />
+        <Button ml={2} onClick={sendMessage} colorScheme="blue">
+          Send
+        </Button>
+      </Box><VStack spacing={4} align="stretch">
+        {messages.map((msg, index) => (
+          <Text key={index} color={msg.sender === "user" ? "blue.500" : "green.500"}>
+            {msg.sender === "user" ? "You: " : "Bot: "}
+            {msg.text}
+          </Text>
+        ))}
+      </VStack>
+
+      <Box display="flex" mt={4}>
+        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type a message..." />
+        <Button ml={2} onClick={sendMessage} colorScheme="blue">
+          Send
+        </Button>
+      </Box>
     </Box>
   );
 };

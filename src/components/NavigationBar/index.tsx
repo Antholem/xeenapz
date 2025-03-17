@@ -56,6 +56,7 @@ const NavigationBar = () => {
             zIndex="50"
             borderBottom="1px solid"
             borderColor={colorMode === "light" ? "gray.200" : "gray.700"}
+            bgColor="inherit"
         >
             <Flex mx="auto" py="3" px="6" align="center" justify="space-between">
                 <Flex align="center" gap={3}>
