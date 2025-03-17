@@ -14,10 +14,12 @@ import {
     MenuButton,
     MenuList,
     MenuItem,
+    Icon,
 } from "@chakra-ui/react";
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
 import { auth, provider } from "@/lib/firebase";
 import { signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
+import { FiLogOut } from "react-icons/fi";
 
 const NavigationBar = () => {
     const { colorMode, toggleColorMode } = useColorMode();
@@ -84,7 +86,7 @@ const NavigationBar = () => {
                                 cursor="pointer" 
                             />
                             <MenuList>
-                                <MenuItem onClick={handleSignOut}>
+                                <MenuItem onClick={handleSignOut} icon={<Icon as={FiLogOut} />}>
                                     Log Out
                                 </MenuItem>
                             </MenuList>
