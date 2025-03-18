@@ -15,6 +15,7 @@ import {
     MenuList,
     MenuItem,
     Icon,
+    Divider,
 } from "@chakra-ui/react";
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
 import { auth, provider } from "@/lib/firebase";
@@ -56,8 +57,6 @@ const NavigationBar = () => {
             as="nav"
             width="100%"
             zIndex="50"
-            borderBottom="1px solid"
-            borderColor={colorMode === "light" ? "gray.200" : "gray.700"}
             bg={bgColor}
         >
             <Flex mx="auto" py="3" px="6" align="center" justify="space-between">
@@ -95,6 +94,7 @@ const NavigationBar = () => {
                     )}
                 </Flex>
             </Flex>
+            <Divider orientation="horizontal" />
         </Box>
     );
 };

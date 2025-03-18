@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Input, Button, Box, VStack, Text, Flex, useColorMode, useTheme } from "@chakra-ui/react";
+import { 
+  Input, Button, Box, VStack, Text, Flex, Avatar, 
+  useColorMode, useTheme, 
+  Image,
+  Divider
+} from "@chakra-ui/react";
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged, User } from "firebase/auth";
 
 const Home = () => {
   const { colorMode } = useColorMode();
@@ -9,7 +16,16 @@ const Home = () => {
   const bgColor = theme.styles.global({ colorMode }).body.bg;
   const [messages, setMessages] = useState<{ text: string; sender: string }[]>([]);
   const [input, setInput] = useState("");
+  const [user, setUser] = useState<User | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -53,7 +69,12 @@ const Home = () => {
             <Flex
               key={index}
               justify={msg.sender === "user" ? "flex-end" : "flex-start"}
+              align="center"
+              gap={4}
             >
+              {msg.sender === "bot" && (
+                <Image boxSize="24px" src="./favicon.ico" alt="Bot Icon" />
+              )}
               <Box
                 p={3}
                 borderRadius="lg"
@@ -63,16 +84,21 @@ const Home = () => {
               >
                 <Text>{msg.text}</Text>
               </Box>
+              {msg.sender === "user" && (
+                <Avatar 
+                  size="sm" 
+                  src={user?.photoURL ?? "/broken-avatar.png"} 
+                  name={user?.displayName ?? "User"} 
+                />
+              )}
             </Flex>
           ))}
           <div ref={messagesEndRef} />
         </VStack>
       </Box>
-
+      <Divider orientation="horizontal" />
       <Box 
         p={4}
-        borderTop="1px solid"
-        borderColor={colorMode === "light" ? "gray.200" : "gray.700"}
         bg={bgColor}
       >
         <Flex>
