@@ -1,22 +1,37 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, FC } from "react";
 import { 
-  Input, Button, Box, VStack, Text, Flex, Avatar, 
-  useColorMode, useTheme, 
-  Image,
-  Divider
+  Input, 
+  Button, 
+  Box, 
+  VStack, 
+  Text, 
+  Flex, 
+  Avatar, 
+  Image, 
+  Skeleton, 
+  Divider,
+  useColorMode, 
+  useTheme 
 } from "@chakra-ui/react";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 
-const Home = () => {
+// Define a type for message
+interface Message {
+  text: string;
+  sender: "user" | "bot";
+};
+
+const Home: FC = () => {
   const { colorMode } = useColorMode();
   const theme = useTheme();
   const bgColor = theme.styles.global({ colorMode }).body.bg;
-  const [messages, setMessages] = useState<{ text: string; sender: string }[]>([]);
-  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState<string>("");
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -30,8 +45,9 @@ const Home = () => {
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-    const userMessage = { text: input, sender: "user" };
+    const userMessage: Message = { text: input, sender: "user" };
     setMessages((prev) => [...prev, userMessage]);
+    setLoading(true);
 
     try {
       const res = await fetch("/api/gemini", {
@@ -42,16 +58,17 @@ const Home = () => {
 
       const data = await res.json();
 
-      const botMessage = {
+      const botMessage: Message = {
         text: data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response",
         sender: "bot",
       };
 
       setMessages((prev) => [...prev, botMessage]);
-
     } catch (error) {
       console.error("Error:", error);
       setMessages((prev) => [...prev, { text: "Error fetching response", sender: "bot" }]);
+    } finally {
+      setLoading(false);
     }
 
     setInput("");
@@ -59,48 +76,25 @@ const Home = () => {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, loading]);
 
   return (
     <Flex direction="column" h="100%">
       <Box flex="1" overflowY="auto" p={4}>
         <VStack spacing={4} align="stretch">
           {messages.map((msg, index) => (
-            <Flex
-              key={index}
-              justify={msg.sender === "user" ? "flex-end" : "flex-start"}
-              align="center"
-              gap={4}
-            >
-              {msg.sender === "bot" && (
-                <Image boxSize="24px" src="./favicon.ico" alt="Bot Icon" />
-              )}
-              <Box
-                p={3}
-                borderRadius="lg"
-                maxW="70%"
-                bg={msg.sender === "user" ? "blue.500" : "gray.600"}
-                color="white"
-              >
-                <Text>{msg.text}</Text>
-              </Box>
-              {msg.sender === "user" && (
-                <Avatar 
-                  size="sm" 
-                  src={user?.photoURL ?? "/broken-avatar.png"} 
-                  name={user?.displayName ?? "User"} 
-                />
-              )}
-            </Flex>
+            <MessageItem key={index} message={msg} user={user} />
           ))}
+
+          {loading && <SkeletonLoader />}
+
           <div ref={messagesEndRef} />
         </VStack>
       </Box>
+
       <Divider orientation="horizontal" />
-      <Box 
-        p={4}
-        bg={bgColor}
-      >
+
+      <Box p={4} bg={bgColor}>
         <Flex>
           <Input
             value={input}
@@ -108,10 +102,35 @@ const Home = () => {
             placeholder="Ask Xeenapz"
             flex="1"
           />
-          <Button ml={2} onClick={sendMessage} colorScheme="blue">
+          <Button ml={2} onClick={sendMessage} colorScheme="blue" isDisabled={loading}>
             Send
           </Button>
         </Flex>
+      </Box>
+    </Flex>
+  );
+};
+
+const MessageItem: React.FC<{ message: Message; user: User | null }> = ({ message, user }) => {
+  return (
+    <Flex justify={message.sender === "user" ? "flex-end" : "flex-start"} align="start" gap={4}>
+      {message.sender === "bot" && <Image boxSize="24px" src="./favicon.ico" alt="Bot Icon" />}
+      <Box p={3} borderRadius="lg" maxW="70%" bg={message.sender === "user" ? "blue.500" : "gray.600"} color="white">
+        <Text>{message.text}</Text>
+      </Box>
+      {message.sender === "user" && (
+        <Avatar size="sm" src={user?.photoURL ?? "/broken-avatar.png"} name={user?.displayName ?? "User"} />
+      )}
+    </Flex>
+  );
+};
+
+const SkeletonLoader: React.FC = () => {
+  return (
+    <Flex justify="flex-start" align="center" gap={4} w="50%">
+      <Image boxSize="24px" src="./favicon.ico" alt="Bot Icon" />
+      <Box flex="1">
+        <Skeleton height="30px" borderRadius="lg" />
       </Box>
     </Flex>
   );
