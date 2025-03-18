@@ -1,61 +1,74 @@
 "use client";
 
-import { useState } from "react";
-import { Box, Flex, IconButton, VStack, Divider } from "@chakra-ui/react";
-import { FiMenu } from "react-icons/fi";
+import { Box, Flex, IconButton, VStack, Divider, Input, Button, InputGroup, InputLeftElement } from "@chakra-ui/react";
 import { IoSettingsSharp, IoCreateOutline } from "react-icons/io5";
+import { CiSearch } from "react-icons/ci";
 
 const SideBar = () => {
-  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <Flex direction="column" h="100vh" bgColor="black" color="white">
-      {/* Sidebar Toggle Button */}
-      <Box alignSelf="flex-start" p={3}>
-        <IconButton
-          aria-label="Toggle Sidebar"
-          variant="ghost"
-          icon={<FiMenu />}
-          onClick={() => setIsOpen(!isOpen)}
-        />
-      </Box>
+    <>
+      <Flex direction="column" h="100vh" w="250px">
+        {/* Sidebar Toggle Button */}
+        <Flex direction="row" p={3} align="center" justify="center">
+          <InputGroup>
+            <InputLeftElement>
+              <CiSearch />
+            </InputLeftElement>
+            <Input 
+              type="search" 
+              placeholder="Search chats..."
+            />
+          </InputGroup>
+          <IconButton
+            aria-label="Search"
+            variant="ghost"
+            icon={<IoCreateOutline />}
+          />
+        </Flex>
 
-      <Divider orientation="horizontal" />
+        <Divider orientation="horizontal" />
 
-      <Box alignSelf="flex-start" p={3}>
-        <IconButton
-          aria-label="New chat"
-          variant="ghost"
-          icon={<IoCreateOutline />} 
-        />
-      </Box>
+        {/* Sidebar Content */}
+        <VStack
+          h="100vh"
+          p={3}
+          align="stretch"
+          justify="start"
+          overflowY="auto"
+          spacing={0}
+        >
+          <Flex align="center" justify="center" w="100%">
+            <Button
+              variant="ghost"
+              w="100%"
+              justifyContent="flex-start"
+            >
+              <Box
+                as="span"
+                w="100%"
+                overflow="hidden"
+                textOverflow="ellipsis"
+                whiteSpace="nowrap"
+                display="block"
+              >
+                These texts are too long and it will be truncated
+              </Box>
+            </Button>
+          </Flex>
+        </VStack>
 
-      <Divider orientation="horizontal" />
+        <Divider orientation="horizontal" />
 
-      {/* Sidebar Content */}
-      <VStack
-        w={isOpen ? "240px" : "65px"}
-        h="100vh"
-        p={2}
-        transition="width 0.3s ease-in-out"
-        align="start"
-        justify="start"
-        overflowY="auto"
-        overflowX="hidden"
-      >
-        
-      </VStack>
+        <Flex p={3} align="center" justify="center">
+          <Button leftIcon={<IoSettingsSharp />} variant="ghost" w="100%" justifyContent="flex-start">
+            Settings
+          </Button>
+        </Flex>
+      </Flex>
 
-      <Divider orientation="horizontal" />
-      
-      <Box alignSelf="flex-start" p={3}>
-        <IconButton
-          aria-label="Settings"
-          variant="ghost"
-          icon={<IoSettingsSharp />} 
-        />
-      </Box>
-    </Flex>
+      <Divider orientation="vertical" />
+    </>
   );
 };
 

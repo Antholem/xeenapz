@@ -21,6 +21,7 @@ import { MoonIcon, SunIcon } from "@chakra-ui/icons";
 import { auth, provider } from "@/lib/firebase";
 import { signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
 import { FiLogOut } from "react-icons/fi";
+import { IoMdMenu } from "react-icons/io";
 
 const NavigationBar = () => {
     const { colorMode, toggleColorMode } = useColorMode();
@@ -61,6 +62,11 @@ const NavigationBar = () => {
         >
             <Flex mx="auto" py="3" px="6" align="center" justify="space-between">
                 <Flex align="center" gap={3}>
+                    <IconButton
+                        aria-label="Collapse"
+                        icon={<IoMdMenu />}
+                        variant="ghost"
+                    />
                     <Text fontSize="lg" fontWeight="bold">
                         Xeenapz
                     </Text>

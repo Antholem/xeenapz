@@ -94,7 +94,7 @@ const Home: FC = () => {
 
       <Divider orientation="horizontal" />
 
-      <Box p={4} bg={bgColor}>
+      <Box p={3} bg={bgColor}>
         <Flex>
           <Input
             value={input}

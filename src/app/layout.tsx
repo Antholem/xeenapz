@@ -14,7 +14,7 @@ const RootLayout = ({ children }: { children: ReactNode }) => {
       </head>
       <body>
         <Providers>
-          <Flex h="100vh">
+          <Flex h="100vh" overflow="hidden">
             <SideBar />
             <Flex direction="column" flex="1">
               <NavigationBar />
