@@ -3,7 +3,7 @@
 import { ReactNode } from "react";
 import {  Box, Flex } from "@chakra-ui/react";
 import Providers from "./providers";
-import { NavigationBar, SideBar } from "@/components";
+import { NavigationBar } from "@/components";
 
 const RootLayout = ({ children }: { children: ReactNode }) => {
   return (
@@ -15,7 +15,6 @@ const RootLayout = ({ children }: { children: ReactNode }) => {
       <body>
           <Providers>
             <Flex h="100vh">
-              <SideBar />
               <Flex direction="column" flex="1">
                 <NavigationBar />
                 <Box flex="1" overflowY="auto">

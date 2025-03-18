@@ -50,10 +50,20 @@ const Home = () => {
       <Box flex="1" overflowY="auto" p={4}>
         <VStack spacing={4} align="stretch">
           {messages.map((msg, index) => (
-            <Text key={index} color={msg.sender === "user" ? "blue.500" : "green.500"}>
-              {msg.sender === "user" ? "You: " : "Bot: "}
-              {msg.text}
-            </Text>
+            <Flex
+              key={index}
+              justify={msg.sender === "user" ? "flex-end" : "flex-start"}
+            >
+              <Box
+                p={3}
+                borderRadius="lg"
+                maxW="70%"
+                bg={msg.sender === "user" ? "blue.500" : "gray.600"}
+                color="white"
+              >
+                <Text>{msg.text}</Text>
+              </Box>
+            </Flex>
           ))}
           <div ref={messagesEndRef} />
         </VStack>
