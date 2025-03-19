@@ -15,10 +15,10 @@ const RootLayout = ({ children }: { children: ReactNode }) => {
       <body>
         <Providers>
           <Flex h="100vh" overflow="hidden">
-            <SideBar />
+            <SideBar type="persistent" />
             <Flex direction="column" flex="1">
               <NavigationBar />
-              <Box flex="1" overflowY="auto">
+              <Box flex="1" overflow="auto">
                 {children}
               </Box>
             </Flex>
