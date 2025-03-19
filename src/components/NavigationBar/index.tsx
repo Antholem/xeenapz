@@ -17,6 +17,7 @@ import {
     Icon,
     Divider,
     useDisclosure,
+    useBreakpointValue,
 } from "@chakra-ui/react";
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
 import { auth, provider } from "@/lib/firebase";
@@ -31,6 +32,7 @@ const NavigationBar = () => {
     const bgColor = theme.styles.global({ colorMode }).body.bg;
     const [user, setUser] = useState<User | null>(null);
     const { isOpen, onOpen, onClose } = useDisclosure();
+    const isLargeScreen = useBreakpointValue({ base: false, lg: true });
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -61,12 +63,22 @@ const NavigationBar = () => {
             <Box as="nav" width="100%" zIndex="50" bg={bgColor}>
                 <Flex mx="auto" py="3" px="6" align="center" justify="space-between">
                     <Flex align="center" gap={3}>
-                        <IconButton
+                        {
+                            isLargeScreen || (
+                                <IconButton
+                                    aria-label="Toggle Sidebar"
+                                    icon={<IoMdMenu />}
+                                    variant="ghost"
+                                    onClick={onOpen}
+                                />
+                            )
+                        }
+                        {/* <IconButton
                             aria-label="Toggle Sidebar"
                             icon={<IoMdMenu />}
                             variant="ghost"
                             onClick={onOpen}
-                        />
+                        /> */}
                         <Text fontSize="lg" fontWeight="bold">
                             Xeenapz
                         </Text>
@@ -80,6 +92,7 @@ const NavigationBar = () => {
                             variant="ghost"
                         />
                         {user ? (
+                            isLargeScreen &&
                             <Menu>
                                 <MenuButton 
                                     as={Avatar} 

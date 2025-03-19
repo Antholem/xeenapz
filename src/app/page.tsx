@@ -13,10 +13,12 @@ import {
   Skeleton, 
   Divider,
   useColorMode, 
-  useTheme 
+  useTheme, 
+  IconButton
 } from "@chakra-ui/react";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
+import { IoMdSend } from "react-icons/io";
 
 // Define a type for message
 interface Message {
@@ -99,12 +101,23 @@ const Home: FC = () => {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                sendMessage();
+              }
+            }}
             placeholder="Ask Xeenapz"
             flex="1"
           />
-          <Button ml={2} onClick={sendMessage} colorScheme="blue" isDisabled={loading}>
-            Send
-          </Button>
+          <IconButton
+              ml={2}
+              aria-label="Send Message"
+              icon={<IoMdSend />}
+              isDisabled={loading}
+              colorScheme="blue"
+              onClick={sendMessage}
+          />
         </Flex>
       </Box>
     </Flex>

@@ -18,7 +18,8 @@ import {
   DrawerHeader, 
   DrawerBody, 
   DrawerFooter, 
-  DrawerCloseButton 
+  DrawerCloseButton, 
+  Text
 } from "@chakra-ui/react";
 import { IoSettingsSharp, IoCreateOutline } from "react-icons/io5";
 import { CiSearch } from "react-icons/ci";
@@ -48,43 +49,21 @@ const SideBarHeader = () => {
 const SideBarBody = () => {
   return (
     <Fragment>
-    <Button variant="ghost" w="100%" justifyContent="flex-start">
-      <Box
-        as="span"
-        w="100%"
-        overflow="hidden"
-        textOverflow="ellipsis"
-        whiteSpace="nowrap"
-        display="block"
-        textAlign="left"
-      >
-        These texts are asd adiasb
-      </Box>
-    </Button><Button variant="ghost" w="100%" justifyContent="flex-start">
-      <Box
-        as="span"
-        w="100%"
-        overflow="hidden"
-        textOverflow="ellipsis"
-        whiteSpace="nowrap"
-        display="block"
-        textAlign="left"
-      >
-        These texts are asd adiasb
-      </Box>
-    </Button><Button variant="ghost" w="100%" justifyContent="flex-start">
-      <Box
-        as="span"
-        w="100%"
-        overflow="hidden"
-        textOverflow="ellipsis"
-        whiteSpace="nowrap"
-        display="block"
-        textAlign="left"
-      >
-        These texts are asd adiasb
-      </Box>
-    </Button>
+      {[...Array(20)].map((_, index) => (
+        <Button key={index} variant="ghost" w="100%" justifyContent="flex-start">
+          <Box
+            as="span"
+            w="100%"
+            overflow="hidden"
+            textOverflow="ellipsis"
+            whiteSpace="nowrap"
+            display="block"
+            textAlign="left"
+          >
+            Chat items
+          </Box>
+        </Button>
+      ))}
     </Fragment>
   );
 };
@@ -106,11 +85,19 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
     <Fragment>
       <Card borderRadius={0} variant="unstyled">
         <Flex direction="column" h="100vh" w="300px">
-          <Flex p={3} align="center" justify="start" fontSize="xl" fontWeight="semibold">
-            Chats
+          <Flex px={3} pt={2} align="center" justify="space-between" fontSize="xl" fontWeight="semibold">
+            <Text>
+              Chats
+            </Text>
+            <IconButton aria-label="New Chat" variant="ghost" icon={<IoCreateOutline />} />
           </Flex>
           <Flex p={3} align="center" justify="center">
-            <SideBarHeader />
+            <InputGroup>
+              <InputLeftElement>
+                <CiSearch />
+              </InputLeftElement>
+              <Input type="search" placeholder="Search chats..." />
+            </InputGroup>
           </Flex>
           <Divider />
             <VStack h="100vh" p={3} align="stretch" justify="start" overflowY="auto" spacing={0}>
@@ -135,13 +122,18 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
           <DrawerHeader p={3}>
             Chats
           </DrawerHeader>
-          <DrawerHeader p={3}>
-            <SideBarHeader />
+          <DrawerHeader p={3} borderBottomWidth="1px">
+            <InputGroup>
+              <InputLeftElement>
+                <CiSearch />
+              </InputLeftElement>
+              <Input type="search" placeholder="Search chats..." />
+            </InputGroup>
           </DrawerHeader>
-          <DrawerBody p={3} borderBottomWidth="1px" borderTopWidth="1px">
+          <DrawerBody p={3}>
             <SideBarBody />
           </DrawerBody>
-          <DrawerFooter p={3}>
+          <DrawerFooter p={3} borderTopWidth="1px">
             <SideBarFooter />
           </DrawerFooter>
         </Card>
