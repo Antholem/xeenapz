@@ -22,7 +22,7 @@ import {
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
 import { auth, provider } from "@/lib/firebase";
 import { signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
-import { FiLogOut } from "react-icons/fi";
+import { FiLogOut, FiUserCheck } from "react-icons/fi";
 import { IoMdMenu } from "react-icons/io";
 import SideBar from "@/components/SideBar";
 
@@ -73,12 +73,6 @@ const NavigationBar = () => {
                                 />
                             )
                         }
-                        {/* <IconButton
-                            aria-label="Toggle Sidebar"
-                            icon={<IoMdMenu />}
-                            variant="ghost"
-                            onClick={onOpen}
-                        /> */}
                         <Text fontSize="lg" fontWeight="bold">
                             Xeenapz
                         </Text>
@@ -92,7 +86,6 @@ const NavigationBar = () => {
                             variant="ghost"
                         />
                         {user ? (
-                            isLargeScreen &&
                             <Menu>
                                 <MenuButton 
                                     as={Avatar} 
@@ -102,8 +95,17 @@ const NavigationBar = () => {
                                     cursor="pointer" 
                                 />
                                 <MenuList>
+                                    <MenuItem 
+                                        onClick={async () => { 
+                                            await handleSignOut(); 
+                                            await handleGoogleSignIn(); 
+                                        }} 
+                                        icon={<Icon as={FiUserCheck} />}
+                                    >
+                                        Switch Account
+                                    </MenuItem>
                                     <MenuItem onClick={handleSignOut} icon={<Icon as={FiLogOut} />}>
-                                        Log Out
+                                        Log out
                                     </MenuItem>
                                 </MenuList>
                             </Menu>

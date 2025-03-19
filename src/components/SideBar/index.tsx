@@ -30,21 +30,7 @@ interface SideBarProps {
   isOpen?: boolean;
   placement?: "left" | "right" | "top" | "bottom";
   onClose?: () => void;
-};
-
-const SideBarHeader = () => {
-  return (
-    <Flex p={0} align="center" justify="center">
-      <InputGroup>
-        <InputLeftElement>
-          <CiSearch />
-        </InputLeftElement>
-        <Input type="search" placeholder="Search chats..." />
-      </InputGroup>
-      <IconButton aria-label="New Chat" variant="ghost" icon={<IoCreateOutline />} />
-    </Flex>
-  );
-};
+}
 
 const SideBarBody = () => {
   return (
@@ -85,12 +71,13 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
     <Fragment>
       <Card borderRadius={0} variant="unstyled">
         <Flex direction="column" h="100vh" w="300px">
+          {/* Sidebar Header */}
           <Flex px={3} pt={2} align="center" justify="space-between" fontSize="xl" fontWeight="semibold">
-            <Text>
-              Chats
-            </Text>
+            <Text>Chats</Text>
             <IconButton aria-label="New Chat" variant="ghost" icon={<IoCreateOutline />} />
           </Flex>
+
+          {/* Search Bar */}
           <Flex p={3} align="center" justify="center">
             <InputGroup>
               <InputLeftElement>
@@ -100,12 +87,16 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
             </InputGroup>
           </Flex>
           <Divider />
-            <VStack h="100vh" p={3} align="stretch" justify="start" overflowY="auto" spacing={0}>
+
+          {/* Sidebar Body */}
+          <VStack h="100vh" p={3} align="stretch" justify="start" overflowY="auto" spacing={0}>
             <Flex direction="column" align="center" justify="center" w="100%">
               <SideBarBody />
             </Flex>
           </VStack>
           <Divider />
+
+          {/* Sidebar Footer */}
           <Flex direction="column" p={3} align="center" justify="center">
             <SideBarFooter />
           </Flex>
@@ -118,21 +109,28 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
       <DrawerOverlay />
       <DrawerContent>
         <Card borderRadius={0} variant="unstyled" h="100vh">
-          <DrawerCloseButton/>
-          <DrawerHeader p={3}>
-            Chats
+          {/* Sidebar Header with "Chats" and "New Chat" Button */}
+          <DrawerHeader p={3} display="flex" alignItems="center" justifyContent="space-between">
+            <Text>Chats</Text>
+            <IconButton aria-label="New Chat" variant="ghost" icon={<IoCreateOutline />} />
           </DrawerHeader>
-          <DrawerHeader p={3} borderBottomWidth="1px">
+
+          {/* Search Bar (Moved Below Header) */}
+          <Flex p={3}>
             <InputGroup>
               <InputLeftElement>
                 <CiSearch />
               </InputLeftElement>
               <Input type="search" placeholder="Search chats..." />
             </InputGroup>
-          </DrawerHeader>
+          </Flex>
+
+          {/* Sidebar Body */}
           <DrawerBody p={3}>
             <SideBarBody />
           </DrawerBody>
+
+          {/* Sidebar Footer */}
           <DrawerFooter p={3} borderTopWidth="1px">
             <SideBarFooter />
           </DrawerFooter>
