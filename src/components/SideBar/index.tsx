@@ -59,7 +59,7 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
   return type === "persistent" ? (
     <Fragment>
       <Card borderRadius={0} variant="unstyled">
-        <Flex direction="column" h="100vh" w="300px">
+        <Flex direction="column" h="100vh" w="350px">
           {/* Sidebar Header */}
           <Flex px={3} pt={2} align="center" justify="space-between" fontSize="xl" fontWeight="semibold">
             <Text>
@@ -77,7 +77,7 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
               <InputLeftElement>
                 <IoSearch />
               </InputLeftElement>
-              <Input type="search" placeholder="Search chats..." />
+              <Input type="search" placeholder="Search chats..." variant="filled" />
             </InputGroup>
           </Flex>
 
@@ -110,7 +110,7 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
               <InputLeftElement>
                   <IoSearch />
               </InputLeftElement>
-              <Input type="search" placeholder="Search chats..." />
+              <Input type="search" placeholder="Search chats..." variant="filled" />
             </InputGroup>
           </Flex>
           <DrawerBody p={3}>

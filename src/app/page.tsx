@@ -106,8 +106,9 @@ const Home: FC = () => {
                 sendMessage();
               }
             }}
-            placeholder="Ask Xeenapz"
+            placeholder="Ask Xeenapz..."
             flex="1"
+            variant="filled"
           />
           <IconButton
               ml={2}
