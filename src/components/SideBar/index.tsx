@@ -18,7 +18,8 @@ import {
   DrawerContent,
   DrawerHeader,
   DrawerBody,
-  Text
+  Text,
+  Tooltip
 } from "@chakra-ui/react";
 import { IoAdd, IoSettingsSharp, IoSearch } from "react-icons/io5";
 
@@ -60,28 +61,27 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
     <Fragment>
       <Card borderRadius={0} variant="unstyled">
         <Flex direction="column" h="100vh" w="350px">
-          {/* Sidebar Header */}
           <Flex px={3} pt={2} align="center" justify="space-between" fontSize="xl" fontWeight="semibold">
             <Text>
               Chats
             </Text>
             <Box>
-              <IconButton aria-label="New Chat" variant="ghost" icon={<IoAdd />} />
-              <IconButton aria-label="Settings" variant="ghost" icon={<IoSettingsSharp />} />
+              <Tooltip label="New chat">
+                <IconButton aria-label="New Chat" variant="ghost" icon={<IoAdd />} />
+              </Tooltip>
+              <Tooltip label="Settings">
+                <IconButton aria-label="Settings" variant="ghost" icon={<IoSettingsSharp />} />
+              </Tooltip>
             </Box>
           </Flex>
-
-          {/* Search Bar */}
           <Flex p={3} align="center" justify="center" borderBottomWidth="1px">
             <InputGroup>
               <InputLeftElement>
                 <IoSearch />
               </InputLeftElement>
-              <Input type="search" placeholder="Search chats..." variant="filled" />
+              <Input type="search" placeholder="Search titles, chats..." variant="filled" />
             </InputGroup>
           </Flex>
-
-          {/* Sidebar Body */}
           <VStack h="100vh" p={3} align="stretch" justify="start" overflowY="auto" spacing={0}>
             <Flex direction="column" align="center" justify="center" w="100%">
               <SideBarBody />
@@ -101,8 +101,12 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
                 Chats
               </Text>
               <Box>
-                <IconButton aria-label="New Chat" variant="ghost" icon={<IoAdd />} />
-                <IconButton aria-label="Settings" variant="ghost" icon={<IoSettingsSharp />} />
+                <Tooltip label="New chat">
+                  <IconButton aria-label="New Chat" variant="ghost" icon={<IoAdd />} />
+                </Tooltip>
+                <Tooltip label="Settings">
+                  <IconButton aria-label="Settings" variant="ghost" icon={<IoSettingsSharp />} />
+                </Tooltip>
               </Box>
           </DrawerHeader>
           <Flex p={3}>
@@ -110,7 +114,7 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
               <InputLeftElement>
                   <IoSearch />
               </InputLeftElement>
-              <Input type="search" placeholder="Search chats..." variant="filled" />
+              <Input type="search" placeholder="Search titles, chats..." variant="filled" />
             </InputGroup>
           </Flex>
           <DrawerBody p={3}>

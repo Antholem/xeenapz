@@ -49,6 +49,7 @@ const Home: FC = () => {
     const userMessage: Message = { text: input, sender: "user" };
     setMessages((prev) => [...prev, userMessage]);
     setLoading(true);
+    setInput("");
 
     try {
       const res = await fetch("/api/gemini", {
@@ -70,9 +71,7 @@ const Home: FC = () => {
       setMessages((prev) => [...prev, { text: "Error fetching response", sender: "bot" }]);
     } finally {
       setLoading(false);
-    }
-
-    setInput("");
+    };
   };
 
   useEffect(() => {
@@ -101,12 +100,12 @@ const Home: FC = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
+              if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 sendMessage();
               }
             }}
-            placeholder="Ask Xeenapz..."
+            placeholder="Write a message..."
             flex="1"
             variant="filled"
           />
