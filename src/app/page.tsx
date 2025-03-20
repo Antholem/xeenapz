@@ -19,10 +19,10 @@ import { auth } from "@/lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { IoMdSend } from "react-icons/io";
 
-// Define a type for message
 interface Message {
   text: string;
   sender: "user" | "bot";
+  timestamp: number;
 };
 
 const Home: FC = () => {
@@ -46,7 +46,8 @@ const Home: FC = () => {
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-    const userMessage: Message = { text: input, sender: "user" };
+    const timestamp = Date.now();
+    const userMessage: Message = { text: input, sender: "user", timestamp };
     setMessages((prev) => [...prev, userMessage]);
     setLoading(true);
     setInput("");
@@ -63,12 +64,13 @@ const Home: FC = () => {
       const botMessage: Message = {
         text: data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response",
         sender: "bot",
+        timestamp: Date.now(),
       };
 
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
       console.error("Error:", error);
-      setMessages((prev) => [...prev, { text: "Error fetching response", sender: "bot" }]);
+      setMessages((prev) => [...prev, { text: "Error fetching response", sender: "bot", timestamp: Date.now() }]);
     } finally {
       setLoading(false);
     };
@@ -123,21 +125,37 @@ const Home: FC = () => {
   );
 };
 
-const MessageItem: React.FC<{ message: Message; user: User | null }> = ({ message, user }) => {
+const MessageItem: FC<{ message: Message; user: User | null }> = ({ message, user }) => {
   return (
-    <Flex justify={message.sender === "user" ? "flex-end" : "flex-start"} align="start" gap={4}>
-      {message.sender === "bot" && <Image boxSize="24px" src="./favicon.ico" alt="Bot Icon" />}
-      <Box p={3} borderRadius="lg" maxW="70%" bg={message.sender === "user" ? "blue.500" : "gray.600"} color="white">
-        <Text>{message.text}</Text>
-      </Box>
-      {message.sender === "user" && (
-        <Avatar size="sm" src={user?.photoURL ?? "/broken-avatar.png"} name={user?.displayName ?? "User"} />
-      )}
+    <Flex direction="column" align={message.sender === "user" ? "flex-end" : "flex-start"}>
+      <Flex align="start" gap={4} maxW="70%">
+        {message.sender === "bot" && <Image boxSize="24px" src="./favicon.ico" alt="Bot Icon" />}
+
+        <Box display="flex" flexDirection="column" alignItems={message.sender === "user" ? "flex-end" : "flex-start"}>
+          <Box
+            p={3}
+            borderRadius="lg"
+            bg={message.sender === "user" ? "blue.500" : "gray.600"}
+            color="white"
+            maxW="max-content"
+            whiteSpace="pre-wrap"
+          >
+            <Text>{message.text}</Text>
+          </Box>
+          <Text fontSize="xs" mt={1} textAlign={message.sender === "user" ? "right" : "left"}>
+            {message.timestamp}
+          </Text>
+        </Box>
+
+        {message.sender === "user" && (
+          <Avatar size="sm" src={user?.photoURL ?? "/broken-avatar.png"} name={user?.displayName ?? "User"} />
+        )}
+      </Flex>
     </Flex>
   );
 };
 
-const SkeletonLoader: React.FC = () => {
+const SkeletonLoader: FC = () => {
   return (
     <Flex justify="flex-start" align="center" gap={4} w="50%">
       <Image boxSize="24px" src="./favicon.ico" alt="Bot Icon" />
