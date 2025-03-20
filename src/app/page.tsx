@@ -18,6 +18,7 @@ import {
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { IoMdSend } from "react-icons/io";
+import { format } from "date-fns";
 
 interface Message {
   text: string;
@@ -143,7 +144,7 @@ const MessageItem: FC<{ message: Message; user: User | null }> = ({ message, use
             <Text>{message.text}</Text>
           </Box>
           <Text fontSize="xs" mt={1} textAlign={message.sender === "user" ? "right" : "left"}>
-            {message.timestamp}
+            {format(new Date(message.timestamp), "hh:mm a")}
           </Text>
         </Box>
 
