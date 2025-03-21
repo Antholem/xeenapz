@@ -5,14 +5,8 @@ import {
   Flex,
   Text,
   Button,
-  Avatar,
   useColorMode,
   IconButton,
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
-  Icon,
   Divider,
   useDisclosure,
   useBreakpointValue,
@@ -21,7 +15,6 @@ import {
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
 import { auth, provider } from "@/lib/firebase";
 import { signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
-import { FiLogOut, FiUserCheck } from "react-icons/fi";
 import { IoMdMenu } from "react-icons/io";
 import SideBar from "@/components/SideBar";
 
