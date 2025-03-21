@@ -3,7 +3,6 @@
 import { useState, useEffect, Fragment } from "react";
 import {
   Flex,
-  Box,
   Text,
   Button,
   Avatar,
