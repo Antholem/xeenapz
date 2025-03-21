@@ -38,14 +38,6 @@ const NavigationBar = () => {
     }
   };
 
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error("Sign-Out Error:", error);
-    }
-  };
-
   return (
     <Fragment>
         <Card
