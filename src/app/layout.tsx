@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 import { Box, Flex } from "@chakra-ui/react";
 import Providers from "./providers";
 import { NavigationBar, SideBar } from "@/components";
-import "./page.module.css";
+import "./globals.css";
 
 const RootLayout = ({ children }: { children: ReactNode }) => {
   return (

@@ -35,6 +35,24 @@ a {
   text-decoration: none;
 }
 
+@layer utilities {
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(171, 171, 171, 1.0);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(134, 134, 134, 1.0);
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;
