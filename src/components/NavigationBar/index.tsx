@@ -5,14 +5,8 @@ import {
   Flex,
   Text,
   Button,
-  Avatar,
   useColorMode,
   IconButton,
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
-  Icon,
   Divider,
   useDisclosure,
   useBreakpointValue,
@@ -20,8 +14,7 @@ import {
 } from "@chakra-ui/react";
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
 import { auth, provider } from "@/lib/firebase";
-import { signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
-import { FiLogOut, FiUserCheck } from "react-icons/fi";
+import { signInWithPopup, onAuthStateChanged, User } from "firebase/auth";
 import { IoMdMenu } from "react-icons/io";
 import SideBar from "@/components/SideBar";
 
@@ -42,14 +35,6 @@ const NavigationBar = () => {
       await signInWithPopup(auth, provider);
     } catch (error) {
       console.error("Google Sign-In Error:", error);
-    }
-  };
-
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error("Sign-Out Error:", error);
     }
   };
 
@@ -82,27 +67,7 @@ const NavigationBar = () => {
                 variant="ghost"
             />
 
-            {user ? (
-                <Menu>
-                    <MenuButton 
-                        as={Avatar} 
-                        size="sm" 
-                        src={user.photoURL ?? "/default-avatar.png"} 
-                        name={user.displayName ?? "User"} 
-                        cursor="pointer"
-                    />
-                    <MenuList>
-                        <MenuItem onClick={handleGoogleSignIn} icon={<Icon as={FiUserCheck} />}>
-                        Switch Account
-                        </MenuItem>
-                        <MenuItem onClick={handleSignOut} icon={<Icon as={FiLogOut} />}>
-                        Log out
-                        </MenuItem>
-                    </MenuList>
-                </Menu>
-            ) : (
-                <Button onClick={handleGoogleSignIn}>Login</Button>
-            )}
+            {!user && <Button onClick={handleGoogleSignIn}>Login</Button>}
             </Flex>
         </Flex>
         </Card>
