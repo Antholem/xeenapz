@@ -19,6 +19,7 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { IoIosMic, IoMdSend } from "react-icons/io";
 import { format } from "date-fns";
 import { IoStop } from "react-icons/io5";
+import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
 
 // Message Type
 interface Message {
@@ -34,6 +35,21 @@ const Home: FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const { transcript, listening, resetTranscript } = useSpeechRecognition();
+  const [isListening, setIsListening] = useState(false);
+
+const prevTranscriptRef = useRef("");
+
+useEffect(() => {
+  if (transcript && transcript !== prevTranscriptRef.current) {
+    const newText = transcript.replace(prevTranscriptRef.current, "").trim();
+    setInput((prev) => (prev ? `${prev} ${newText}`.trim() : newText));
+    prevTranscriptRef.current = transcript;
+  }
+}, [transcript]);
+
+
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, setUser);
@@ -155,10 +171,19 @@ const Home: FC = () => {
             variant="filled"
           />
           <IconButton
-            aria-label="Text to speech"
-            icon={<IoIosMic />}
-            colorScheme="blue"
-            onClick={sendMessage}
+            aria-label="Speech Recognition"
+            icon={listening ? <IoStop /> : <IoIosMic />}
+            colorScheme={listening ? "red" : "blue"}
+            onClick={() => {
+              if (listening) {
+                SpeechRecognition.stopListening();
+                setIsListening(false);
+              } else {
+                resetTranscript(); // Reset transcript before starting
+                SpeechRecognition.startListening({ continuous: true });
+                setIsListening(true);
+              }
+            }}
           />
           <IconButton
             aria-label="Send Message"
