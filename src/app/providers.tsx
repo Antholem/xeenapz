@@ -4,14 +4,19 @@ import { ChakraProvider, ColorModeScript } from "@chakra-ui/react";
 import { ReactNode, useEffect, useState } from "react";
 import theme from "@/lib/theme";
 
-const Providers = ({ children }: { children: ReactNode }) => {
-  const [mounted, setMounted] = useState(false);
+interface ProvidersProps {
+  children: ReactNode;
+};
+
+const Providers = ({ children }: ProvidersProps) => {
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    setIsMounted(true);
   }, []);
 
-  if (!mounted) return null;
+  // Prevent rendering until the component is mounted (avoids hydration mismatch)
+  if (!isMounted) return null;
 
   return (
     <ChakraProvider theme={theme}>
