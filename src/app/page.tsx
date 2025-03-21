@@ -11,7 +11,6 @@ import {
   Image, 
   Skeleton, 
   Divider,
-  useColorModeValue, 
   IconButton,
   Card
 } from "@chakra-ui/react";
@@ -33,8 +32,6 @@ const Home: FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const bgColor = useColorModeValue("gray.100", "gray.800");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, setUser);
