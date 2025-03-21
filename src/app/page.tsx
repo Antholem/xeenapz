@@ -154,7 +154,7 @@ const MessageItem: FC<{ message: Message; user: User | null }> = ({ message, use
           </Text>
         </Box>
         {isUser && (
-          <Avatar size="sm" src={user?.photoURL ?? "/broken-avatar.png"} name={user?.displayName ?? "User"} />
+          <Avatar size="sm" src={user?.photoURL ?? "default-avatar.png"} name={user?.displayName ?? ""} />
         )}
       </Flex>
     </Flex>

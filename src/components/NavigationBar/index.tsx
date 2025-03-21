@@ -82,27 +82,7 @@ const NavigationBar = () => {
                 variant="ghost"
             />
 
-            {user ? (
-                <Menu>
-                    <MenuButton 
-                        as={Avatar} 
-                        size="sm" 
-                        src={user.photoURL ?? "/default-avatar.png"} 
-                        name={user.displayName ?? "User"} 
-                        cursor="pointer"
-                    />
-                    <MenuList>
-                        <MenuItem onClick={handleGoogleSignIn} icon={<Icon as={FiUserCheck} />}>
-                        Switch Account
-                        </MenuItem>
-                        <MenuItem onClick={handleSignOut} icon={<Icon as={FiLogOut} />}>
-                        Log out
-                        </MenuItem>
-                    </MenuList>
-                </Menu>
-            ) : (
-                <Button onClick={handleGoogleSignIn}>Login</Button>
-            )}
+            {!user && <Button onClick={handleGoogleSignIn}>Login</Button>}
             </Flex>
         </Flex>
         </Card>
