@@ -6,7 +6,7 @@ import theme from "@/lib/theme";
 
 interface ProvidersProps {
   children: ReactNode;
-};
+}
 
 const Providers = ({ children }: ProvidersProps) => {
   const [isMounted, setIsMounted] = useState(false);

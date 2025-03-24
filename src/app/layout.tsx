@@ -11,7 +11,10 @@ const RootLayout = ({ children }: { children: ReactNode }) => {
     <html lang="en">
       <head>
         <title>Xeenapz</title>
-        <meta name="description" content="A chat application built with Next.js" />
+        <meta
+          name="description"
+          content="A chat application built with Next.js"
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body>

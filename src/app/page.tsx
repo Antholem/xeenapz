@@ -9,10 +9,11 @@ import {
   Flex,
   Avatar,
   Image,
-  Skeleton,
   Divider,
   IconButton,
   Card,
+  Tooltip,
+  SkeletonCircle,
 } from "@chakra-ui/react";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
@@ -154,7 +155,16 @@ const Home: FC = () => {
               playingMessage={playingMessage}
             />
           ))}
-          {loading && <SkeletonLoader />}
+          {loading && (
+            <Flex justify="flex-start" align="end" gap={4}>
+              <Image boxSize="24px" src="./favicon.ico" alt="Xeenapz" />
+              <Flex direction="row" gap={1}>
+                {[...Array(3)].map((_, index) => (
+                  <SkeletonCircle key={index} size="2" />
+                ))}
+              </Flex>
+            </Flex>
+          )}
           <div ref={messagesEndRef} />
         </VStack>
       </Box>
@@ -177,30 +187,34 @@ const Home: FC = () => {
             flex="1"
             variant="filled"
           />
-          <IconButton
-            aria-label="Speech Recognition"
-            icon={isListening ? <IoStop /> : <IoIosMic />}
-            colorScheme={isListening ? "red" : "blue"}
-            onClick={() => {
-              if (isListening) {
-                SpeechRecognition.stopListening();
-              } else {
-                resetTranscript();
-                SpeechRecognition.startListening({
-                  continuous: true,
-                  language: "en-US",
-                  interimResults: true,
-                });
-              }
-            }}
-          />
-          <IconButton
-            aria-label="Send Message"
-            icon={<IoMdSend />}
-            isDisabled={loading || !input.trim()}
-            colorScheme="blue"
-            onClick={sendMessage}
-          />
+          <Tooltip label="Type by voice">
+            <IconButton
+              aria-label="Speech Recognition"
+              icon={isListening ? <IoStop /> : <IoIosMic />}
+              colorScheme={isListening ? "red" : "blue"}
+              onClick={() => {
+                if (isListening) {
+                  SpeechRecognition.stopListening();
+                } else {
+                  resetTranscript();
+                  SpeechRecognition.startListening({
+                    continuous: true,
+                    language: "en-US",
+                    interimResults: true,
+                  });
+                }
+              }}
+            />
+          </Tooltip>
+          <Tooltip label="Send message">
+            <IconButton
+              aria-label="Send Message"
+              icon={<IoMdSend />}
+              isDisabled={loading || !input.trim()}
+              colorScheme="blue"
+              onClick={sendMessage}
+            />
+          </Tooltip>
         </Flex>
       </Card>
     </Flex>
@@ -244,15 +258,17 @@ const MessageItem: FC<{
           <Flex align="center" justify="center" gap={1}>
             <Text fontSize="xs">{formattedTime}</Text>
             {!isUser && (
-              <IconButton
-                aria-label="Speak message"
-                icon={
-                  playingMessage === message.text ? <IoStop /> : <IoIosMic />
-                }
-                variant="ghost"
-                size="xs"
-                onClick={() => speakText(message.text)}
-              />
+              <Tooltip label="Read aloud">
+                <IconButton
+                  aria-label="Read aloud"
+                  icon={
+                    playingMessage === message.text ? <IoStop /> : <IoIosMic />
+                  }
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => speakText(message.text)}
+                />
+              </Tooltip>
             )}
           </Flex>
         </Box>
@@ -267,15 +283,5 @@ const MessageItem: FC<{
     </Flex>
   );
 };
-
-// Loading Skeleton Component
-const SkeletonLoader: FC = () => (
-  <Flex justify="flex-start" align="center" gap={4} w="50%">
-    <Image boxSize="24px" src="./favicon.ico" alt="Bot Icon" />
-    <Box flex="1">
-      <Skeleton height="30px" borderRadius="lg" />
-    </Box>
-  </Flex>
-);
 
 export default Home;

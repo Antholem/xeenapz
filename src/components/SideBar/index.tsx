@@ -30,7 +30,12 @@ import {
 import { IoAdd, IoSettingsSharp, IoSearch } from "react-icons/io5";
 import { FiLogOut, FiUserCheck } from "react-icons/fi";
 import { auth, provider } from "@/lib/firebase";
-import { signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
+import {
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
+  User,
+} from "firebase/auth";
 
 interface SideBarProps {
   type: "temporary" | "persistent";
@@ -42,7 +47,15 @@ interface SideBarProps {
 const ChatList = () =>
   [...Array(20)].map((_, index) => (
     <Button key={index} variant="ghost" w="100%" justifyContent="flex-start">
-      <Box as="span" w="100%" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap" display="block" textAlign="left">
+      <Box
+        as="span"
+        w="100%"
+        overflow="hidden"
+        textOverflow="ellipsis"
+        whiteSpace="nowrap"
+        display="block"
+        textAlign="left"
+      >
         Chat items
       </Box>
     </Button>
@@ -80,31 +93,58 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
     <Card borderRadius={0} variant="unstyled">
       <Flex direction="column" h="100vh" w="350px">
         {/* Sidebar Header */}
-        <Flex px={3} pt={2} align="center" justify="space-between" fontSize="xl" fontWeight="semibold">
+        <Flex
+          px={3}
+          pt={2}
+          align="center"
+          justify="space-between"
+          fontSize="xl"
+          fontWeight="semibold"
+        >
           {/* Profile Avatar */}
           <Flex align="center" justify="start" gap={3}>
-              {user ? (
+            {user ? (
               <Menu>
-                <MenuButton as={Box} display="flex" alignItems="center" gap={2} cursor="pointer">
-                  <Avatar 
-                    size="sm" 
-                    src={user.photoURL ?? "/default-avatar.png"} 
-                    name={user.displayName ?? "User"} 
+                <MenuButton
+                  as={Box}
+                  display="flex"
+                  alignItems="center"
+                  gap={2}
+                  cursor="pointer"
+                >
+                  <Avatar
+                    size="sm"
+                    src={user.photoURL ?? "/default-avatar.png"}
+                    name={user.displayName ?? "User"}
                   />
                 </MenuButton>
                 <MenuList>
-                  <MenuItem onClick={handleGoogleSignIn} icon={<Icon as={FiUserCheck} />} fontSize="md">
+                  <MenuItem
+                    onClick={handleGoogleSignIn}
+                    icon={<Icon as={FiUserCheck} />}
+                    fontSize="md"
+                  >
                     Switch Account
                   </MenuItem>
-                  <MenuItem onClick={handleSignOut} icon={<Icon as={FiLogOut} />} fontSize="md">
+                  <MenuItem
+                    onClick={handleSignOut}
+                    icon={<Icon as={FiLogOut} />}
+                    fontSize="md"
+                  >
                     Log out
                   </MenuItem>
-              </MenuList>
-            </Menu>
+                </MenuList>
+              </Menu>
             ) : (
               <Avatar size="sm" src={"/broken-avatar.png"} />
             )}
-            <Box lineHeight="1.2" maxW="200px" overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
+            <Box
+              lineHeight="1.2"
+              maxW="200px"
+              overflow="hidden"
+              whiteSpace="nowrap"
+              textOverflow="ellipsis"
+            >
               {user?.displayName && user?.email && (
                 <Fragment>
                   <Text fontWeight="bold" fontSize="sm" isTruncated>
@@ -119,10 +159,18 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
           </Flex>
           <Box>
             <Tooltip label="New chat">
-              <IconButton aria-label="New Chat" variant="ghost" icon={<IoAdd />} />
+              <IconButton
+                aria-label="New Chat"
+                variant="ghost"
+                icon={<IoAdd />}
+              />
             </Tooltip>
             <Tooltip label="Settings">
-              <IconButton aria-label="Settings" variant="ghost" icon={<IoSettingsSharp />} />
+              <IconButton
+                aria-label="Settings"
+                variant="ghost"
+                icon={<IoSettingsSharp />}
+              />
             </Tooltip>
           </Box>
         </Flex>
@@ -133,7 +181,11 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
             <InputLeftElement>
               <IoSearch />
             </InputLeftElement>
-            <Input type="search" placeholder="Search titles, chats..." variant="filled" />
+            <Input
+              type="search"
+              placeholder="Search titles, chats..."
+              variant="filled"
+            />
           </InputGroup>
         </Flex>
 
@@ -155,56 +207,95 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
       <Divider orientation="vertical" />
     </Fragment>
   ) : (
-    <Drawer isOpen={!!isOpen} placement={placement!} onClose={onClose!} size="xs">
+    <Drawer
+      isOpen={!!isOpen}
+      placement={placement!}
+      onClose={onClose!}
+      size="xs"
+    >
       <DrawerOverlay />
       <DrawerContent>
         <Card borderRadius={0} variant="unstyled" h="100vh">
           {/* Drawer Header */}
-          <DrawerHeader p={3} display="flex" alignItems="center" justifyContent="space-between">
+          <DrawerHeader
+            p={3}
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+          >
             {/* Profile Section */}
             <Flex align="center" justify="start" gap={3}>
               {user ? (
-              <Menu>
-                <MenuButton as={Box} display="flex" alignItems="center" gap={2} cursor="pointer">
-                  <Avatar 
-                    size="sm" 
-                    src={user.photoURL ?? "/default-avatar.png"} 
-                    name={user.displayName ?? "User"} 
-                  />
-                </MenuButton>
-                <MenuList>
-                  <MenuItem onClick={handleGoogleSignIn} icon={<Icon as={FiUserCheck} />} fontSize="md">
-                    Switch Account
-                  </MenuItem>
-                  <MenuItem onClick={handleSignOut} icon={<Icon as={FiLogOut} />} fontSize="md">
-                    Log out
-                  </MenuItem>
-              </MenuList>
-            </Menu>
-            ) : (
-              <Avatar size="sm" src={"/broken-avatar.png"} />
-            )}
-            <Box textAlign="left" lineHeight="1.2" maxW="170px" overflow="hidden" whiteSpace="nowrap" textOverflow="ellipsis">
-              {user?.displayName && user?.email && (
-                <Fragment>
-                  <Text fontWeight="bold" fontSize="sm" isTruncated>
-                    {user.displayName}
-                  </Text>
-                  <Text fontSize="xs" color="gray.400" isTruncated>
-                    {user?.email ?? "email@example.com"}
-                  </Text>
-                </Fragment>
+                <Menu>
+                  <MenuButton
+                    as={Box}
+                    display="flex"
+                    alignItems="center"
+                    gap={2}
+                    cursor="pointer"
+                  >
+                    <Avatar
+                      size="sm"
+                      src={user.photoURL ?? "/default-avatar.png"}
+                      name={user.displayName ?? "User"}
+                    />
+                  </MenuButton>
+                  <MenuList>
+                    <MenuItem
+                      onClick={handleGoogleSignIn}
+                      icon={<Icon as={FiUserCheck} />}
+                      fontSize="md"
+                    >
+                      Switch Account
+                    </MenuItem>
+                    <MenuItem
+                      onClick={handleSignOut}
+                      icon={<Icon as={FiLogOut} />}
+                      fontSize="md"
+                    >
+                      Log out
+                    </MenuItem>
+                  </MenuList>
+                </Menu>
+              ) : (
+                <Avatar size="sm" src={"/broken-avatar.png"} />
               )}
-            </Box>
-          </Flex>
+              <Box
+                textAlign="left"
+                lineHeight="1.2"
+                maxW="170px"
+                overflow="hidden"
+                whiteSpace="nowrap"
+                textOverflow="ellipsis"
+              >
+                {user?.displayName && user?.email && (
+                  <Fragment>
+                    <Text fontWeight="bold" fontSize="sm" isTruncated>
+                      {user.displayName}
+                    </Text>
+                    <Text fontSize="xs" color="gray.400" isTruncated>
+                      {user?.email ?? "email@example.com"}
+                    </Text>
+                  </Fragment>
+                )}
+              </Box>
+            </Flex>
 
             {/* Action Buttons */}
             <Box>
               <Tooltip label="New chat">
-                <IconButton aria-label="New Chat" variant="ghost" icon={<IoAdd />} />
+                <IconButton
+                  aria-label="New Chat"
+                  variant="ghost"
+                  icon={<IoAdd />}
+                />
               </Tooltip>
               <Tooltip label="Settings">
-                <IconButton aria-label="Settings" variant="ghost" icon={<IoSettingsSharp />} />
+                <IconButton
+                  aria-label="Settings"
+                  variant="ghost"
+                  icon={<IoSettingsSharp />}
+                />
               </Tooltip>
             </Box>
           </DrawerHeader>
@@ -215,7 +306,11 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
               <InputLeftElement>
                 <IoSearch />
               </InputLeftElement>
-              <Input type="search" placeholder="Search titles, chats..." variant="filled" />
+              <Input
+                type="search"
+                placeholder="Search titles, chats..."
+                variant="filled"
+              />
             </InputGroup>
           </Flex>
 

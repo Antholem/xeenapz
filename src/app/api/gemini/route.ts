@@ -12,10 +12,15 @@ export async function OPTIONS() {
 export async function POST(req: Request) {
   try {
     const { message } = await req.json();
-    if (!message) return NextResponse.json({ error: "Message is required" }, { status: 400 });
+    if (!message)
+      return NextResponse.json(
+        { error: "Message is required" },
+        { status: 400 }
+      );
 
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return NextResponse.json({ error: "API key not found" }, { status: 500 });
+    if (!apiKey)
+      return NextResponse.json({ error: "API key not found" }, { status: 500 });
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
@@ -30,12 +35,15 @@ export async function POST(req: Request) {
 
     const headers = new Headers();
     headers.set("Access-Control-Allow-Origin", "*");
-    
+
     const data = await response.json();
 
     return new Response(JSON.stringify(data), { headers });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Something went wrong" },
+      { status: 500 }
+    );
   }
 }
