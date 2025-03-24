@@ -23,6 +23,7 @@ import { IoStop } from "react-icons/io5";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
+import { speakText } from "@/lib/textToSpeech";
 
 // Message Type
 interface Message {
@@ -72,27 +73,6 @@ const Home: FC = () => {
       speechSynthesis.cancel();
     };
   }, []);
-
-  // Text-to-Speech (TTS) Function
-  const speakText = (text: string) => {
-    if ("speechSynthesis" in window) {
-      // Stop the current speech before playing a new one
-      speechSynthesis.cancel();
-
-      if (playingMessage === text) {
-        // If the same message is playing, stop it
-        setPlayingMessage(null);
-      } else {
-        // Start playing the new message
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.onend = () => setPlayingMessage(null);
-        speechSynthesis.speak(utterance);
-        setPlayingMessage(text);
-      }
-    } else {
-      console.error("Text-to-Speech is not supported in this browser.");
-    }
-  };
 
   // Fetch Bot Response
   const fetchBotResponse = async (userMessage: Message) => {
@@ -153,6 +133,7 @@ const Home: FC = () => {
               user={user}
               speakText={speakText}
               playingMessage={playingMessage}
+              setPlayingMessage={setPlayingMessage}
             />
           ))}
           {loading && (
@@ -225,9 +206,15 @@ const Home: FC = () => {
 const MessageItem: FC<{
   message: Message;
   user: User | null;
-  speakText: (text: string) => void;
+  speakText: (
+    text: string,
+    playingMessage: string | null,
+    setPlayingMessage: (msg: string | null) => void
+  ) => void;
+  setPlayingMessage: (msg: string | null) => void; // ✅ Ensure this is included
   playingMessage: string | null;
-}> = ({ message, user, speakText, playingMessage }) => {
+}> = ({ message, user, speakText, playingMessage, setPlayingMessage }) => {
+  // ✅ Ensure setPlayingMessage is included here
   const isUser = message.sender === "user";
   const formattedTime = format(new Date(message.timestamp), "hh:mm a");
 
@@ -258,7 +245,9 @@ const MessageItem: FC<{
           <Flex align="center" justify="center" gap={1}>
             <Text fontSize="xs">{formattedTime}</Text>
             {!isUser && (
-              <Tooltip label="Read aloud">
+              <Tooltip
+                label={playingMessage === message.text ? "Stop" : "Read aloud"}
+              >
                 <IconButton
                   aria-label="Read aloud"
                   icon={
@@ -266,7 +255,9 @@ const MessageItem: FC<{
                   }
                   variant="ghost"
                   size="xs"
-                  onClick={() => speakText(message.text)}
+                  onClick={() =>
+                    speakText(message.text, playingMessage, setPlayingMessage)
+                  }
                 />
               </Tooltip>
             )}
