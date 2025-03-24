@@ -23,6 +23,7 @@ import { IoStop } from "react-icons/io5";
 import { useSpeechRecognition } from "react-speech-recognition";
 import { speakText } from "@/lib/textToSpeech";
 import { SpeechRecognize } from "@/lib/speechRecognition";
+import ReactMarkdown from "react-markdown";
 
 // Message Type
 interface Message {
@@ -227,8 +228,17 @@ const MessageItem: FC<{
             maxW="max-content"
             whiteSpace="pre-wrap"
           >
-            <Text>{message.text}</Text>
+            <ReactMarkdown
+              components={{
+                ul: ({ children }) => (
+                  <ul style={{ paddingLeft: "20px" }}>{children}</ul>
+                ),
+              }}
+            >
+              {message.text}
+            </ReactMarkdown>
           </Box>
+
           <Flex align="center" justify="center" gap={1}>
             <Text fontSize="xs">{formattedTime}</Text>
             {!isUser && (
