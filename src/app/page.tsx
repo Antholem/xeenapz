@@ -20,10 +20,9 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { IoIosMic, IoMdSend } from "react-icons/io";
 import { format } from "date-fns";
 import { IoStop } from "react-icons/io5";
-import SpeechRecognition, {
-  useSpeechRecognition,
-} from "react-speech-recognition";
+import { useSpeechRecognition } from "react-speech-recognition";
 import { speakText } from "@/lib/textToSpeech";
+import { SpeechRecognize } from "@/lib/speechRecognition";
 
 // Message Type
 interface Message {
@@ -168,23 +167,12 @@ const Home: FC = () => {
             flex="1"
             variant="filled"
           />
-          <Tooltip label="Type by voice">
+          <Tooltip label={isListening ? "Stop" : "Type by voice"}>
             <IconButton
               aria-label="Speech Recognition"
               icon={isListening ? <IoStop /> : <IoIosMic />}
               colorScheme={isListening ? "red" : "blue"}
-              onClick={() => {
-                if (isListening) {
-                  SpeechRecognition.stopListening();
-                } else {
-                  resetTranscript();
-                  SpeechRecognition.startListening({
-                    continuous: true,
-                    language: "en-US",
-                    interimResults: true,
-                  });
-                }
-              }}
+              onClick={() => SpeechRecognize(isListening, resetTranscript)}
             />
           </Tooltip>
           <Tooltip label="Send message">
@@ -211,10 +199,9 @@ const MessageItem: FC<{
     playingMessage: string | null,
     setPlayingMessage: (msg: string | null) => void
   ) => void;
-  setPlayingMessage: (msg: string | null) => void; // ✅ Ensure this is included
+  setPlayingMessage: (msg: string | null) => void;
   playingMessage: string | null;
 }> = ({ message, user, speakText, playingMessage, setPlayingMessage }) => {
-  // ✅ Ensure setPlayingMessage is included here
   const isUser = message.sender === "user";
   const formattedTime = format(new Date(message.timestamp), "hh:mm a");
 
