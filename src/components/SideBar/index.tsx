@@ -136,7 +136,7 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
                 </MenuList>
               </Menu>
             ) : (
-              <Avatar size="sm" src={"/broken-avatar.png"} />
+              <Avatar size="sm" />
             )}
             <Box
               lineHeight="1.2"
@@ -258,7 +258,7 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
                   </MenuList>
                 </Menu>
               ) : (
-                <Avatar size="sm" src={"/broken-avatar.png"} />
+                <Avatar size="sm" />
               )}
               <Box
                 textAlign="left"
