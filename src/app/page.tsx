@@ -1,24 +1,27 @@
 "use client";
 
 import { useState, useEffect, useRef, FC } from "react";
-import { 
-  Input, 
-  Box, 
-  VStack, 
-  Text, 
-  Flex, 
-  Avatar, 
-  Image, 
-  Skeleton, 
+import {
+  Input,
+  Box,
+  VStack,
+  Text,
+  Flex,
+  Avatar,
+  Image,
+  Skeleton,
   Divider,
   IconButton,
-  Card
+  Card,
 } from "@chakra-ui/react";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { IoIosMic, IoMdSend } from "react-icons/io";
 import { format } from "date-fns";
 import { IoStop } from "react-icons/io5";
+import SpeechRecognition, {
+  useSpeechRecognition,
+} from "react-speech-recognition";
 
 // Message Type
 interface Message {
@@ -34,6 +37,21 @@ const Home: FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { transcript, listening, resetTranscript } = useSpeechRecognition();
+  const [isListening, setIsListening] = useState(false);
+  const prevTranscriptRef = useRef("");
+
+  useEffect(() => {
+    if (transcript && transcript !== prevTranscriptRef.current) {
+      const newText = transcript.replace(prevTranscriptRef.current, "").trim();
+      setInput((prev) => (prev ? `${prev} ${newText}`.trim() : newText));
+      prevTranscriptRef.current = transcript;
+    }
+  }, [transcript]);
+
+  useEffect(() => {
+    setIsListening(listening);
+  }, [listening]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, setUser);
@@ -87,7 +105,8 @@ const Home: FC = () => {
       });
 
       const data = await res.json();
-      const botResponse = data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+      const botResponse =
+        data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
 
       setMessages((prev) => [
         ...prev,
@@ -97,7 +116,11 @@ const Home: FC = () => {
       console.error("Error fetching response:", error);
       setMessages((prev) => [
         ...prev,
-        { text: "Error fetching response", sender: "bot", timestamp: Date.now() },
+        {
+          text: "Error fetching response",
+          sender: "bot",
+          timestamp: Date.now(),
+        },
       ]);
     } finally {
       setLoading(false);
@@ -123,11 +146,11 @@ const Home: FC = () => {
       <Box flex="1" overflowY="auto" p={4} aria-live="polite">
         <VStack spacing={4} align="stretch">
           {messages.map((msg, index) => (
-            <MessageItem 
-              key={index} 
-              message={msg} 
-              user={user} 
-              speakText={speakText} 
+            <MessageItem
+              key={index}
+              message={msg}
+              user={user}
+              speakText={speakText}
               playingMessage={playingMessage}
             />
           ))}
@@ -155,10 +178,21 @@ const Home: FC = () => {
             variant="filled"
           />
           <IconButton
-            aria-label="Text to speech"
-            icon={<IoIosMic />}
-            colorScheme="blue"
-            onClick={sendMessage}
+            aria-label="Speech Recognition"
+            icon={isListening ? <IoStop /> : <IoIosMic />}
+            colorScheme={isListening ? "red" : "blue"}
+            onClick={() => {
+              if (isListening) {
+                SpeechRecognition.stopListening();
+              } else {
+                resetTranscript();
+                SpeechRecognition.startListening({
+                  continuous: true,
+                  language: "en-US",
+                  interimResults: true,
+                });
+              }
+            }}
           />
           <IconButton
             aria-label="Send Message"
@@ -174,20 +208,29 @@ const Home: FC = () => {
 };
 
 // Message Component
-const MessageItem: FC<{ 
-  message: Message; 
-  user: User | null; 
-  speakText: (text: string) => void; 
-  playingMessage: string | null 
+const MessageItem: FC<{
+  message: Message;
+  user: User | null;
+  speakText: (text: string) => void;
+  playingMessage: string | null;
 }> = ({ message, user, speakText, playingMessage }) => {
   const isUser = message.sender === "user";
   const formattedTime = format(new Date(message.timestamp), "hh:mm a");
 
   return (
-    <Flex direction="column" align={isUser ? "flex-end" : "flex-start"}>
+    <Flex
+      direction="column"
+      align={isUser ? "flex-end" : "flex-start"}
+      overflowX="hidden"
+    >
       <Flex align="start" gap={4} maxW="70%">
         {!isUser && <Image boxSize="24px" src="./favicon.ico" alt="Bot Icon" />}
-        <Box display="flex" flexDirection="column" alignItems={isUser ? "flex-end" : "flex-start"} gap={1}>
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems={isUser ? "flex-end" : "flex-start"}
+          gap={1}
+        >
           <Box
             p={3}
             borderRadius="lg"
@@ -203,7 +246,9 @@ const MessageItem: FC<{
             {!isUser && (
               <IconButton
                 aria-label="Speak message"
-                icon={playingMessage === message.text ? <IoStop /> : <IoIosMic />}
+                icon={
+                  playingMessage === message.text ? <IoStop /> : <IoIosMic />
+                }
                 variant="ghost"
                 size="xs"
                 onClick={() => speakText(message.text)}
@@ -212,7 +257,11 @@ const MessageItem: FC<{
           </Flex>
         </Box>
         {isUser && (
-          <Avatar size="sm" src={user?.photoURL ?? "default-avatar.png"} name={user?.displayName ?? ""} />
+          <Avatar
+            size="sm"
+            src={user?.photoURL ?? "default-avatar.png"}
+            name={user?.displayName ?? ""}
+          />
         )}
       </Flex>
     </Flex>
