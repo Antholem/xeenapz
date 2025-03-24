@@ -20,9 +20,9 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { IoIosMic, IoMdSend } from "react-icons/io";
 import { format } from "date-fns";
 import { IoStop } from "react-icons/io5";
-import SpeechRecognition, {
-  useSpeechRecognition,
-} from "react-speech-recognition";
+import { useSpeechRecognition } from "react-speech-recognition";
+import { speakText } from "@/lib/textToSpeech";
+import { SpeechRecognize } from "@/lib/speechRecognition";
 
 // Message Type
 interface Message {
@@ -72,27 +72,6 @@ const Home: FC = () => {
       speechSynthesis.cancel();
     };
   }, []);
-
-  // Text-to-Speech (TTS) Function
-  const speakText = (text: string) => {
-    if ("speechSynthesis" in window) {
-      // Stop the current speech before playing a new one
-      speechSynthesis.cancel();
-
-      if (playingMessage === text) {
-        // If the same message is playing, stop it
-        setPlayingMessage(null);
-      } else {
-        // Start playing the new message
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.onend = () => setPlayingMessage(null);
-        speechSynthesis.speak(utterance);
-        setPlayingMessage(text);
-      }
-    } else {
-      console.error("Text-to-Speech is not supported in this browser.");
-    }
-  };
 
   // Fetch Bot Response
   const fetchBotResponse = async (userMessage: Message) => {
@@ -153,6 +132,7 @@ const Home: FC = () => {
               user={user}
               speakText={speakText}
               playingMessage={playingMessage}
+              setPlayingMessage={setPlayingMessage}
             />
           ))}
           {loading && (
@@ -187,23 +167,12 @@ const Home: FC = () => {
             flex="1"
             variant="filled"
           />
-          <Tooltip label="Type by voice">
+          <Tooltip label={isListening ? "Stop" : "Type by voice"}>
             <IconButton
               aria-label="Speech Recognition"
               icon={isListening ? <IoStop /> : <IoIosMic />}
               colorScheme={isListening ? "red" : "blue"}
-              onClick={() => {
-                if (isListening) {
-                  SpeechRecognition.stopListening();
-                } else {
-                  resetTranscript();
-                  SpeechRecognition.startListening({
-                    continuous: true,
-                    language: "en-US",
-                    interimResults: true,
-                  });
-                }
-              }}
+              onClick={() => SpeechRecognize(isListening, resetTranscript)}
             />
           </Tooltip>
           <Tooltip label="Send message">
@@ -225,9 +194,14 @@ const Home: FC = () => {
 const MessageItem: FC<{
   message: Message;
   user: User | null;
-  speakText: (text: string) => void;
+  speakText: (
+    text: string,
+    playingMessage: string | null,
+    setPlayingMessage: (msg: string | null) => void
+  ) => void;
+  setPlayingMessage: (msg: string | null) => void;
   playingMessage: string | null;
-}> = ({ message, user, speakText, playingMessage }) => {
+}> = ({ message, user, speakText, playingMessage, setPlayingMessage }) => {
   const isUser = message.sender === "user";
   const formattedTime = format(new Date(message.timestamp), "hh:mm a");
 
@@ -258,7 +232,9 @@ const MessageItem: FC<{
           <Flex align="center" justify="center" gap={1}>
             <Text fontSize="xs">{formattedTime}</Text>
             {!isUser && (
-              <Tooltip label="Read aloud">
+              <Tooltip
+                label={playingMessage === message.text ? "Stop" : "Read aloud"}
+              >
                 <IconButton
                   aria-label="Read aloud"
                   icon={
@@ -266,7 +242,9 @@ const MessageItem: FC<{
                   }
                   variant="ghost"
                   size="xs"
-                  onClick={() => speakText(message.text)}
+                  onClick={() =>
+                    speakText(message.text, playingMessage, setPlayingMessage)
+                  }
                 />
               </Tooltip>
             )}
