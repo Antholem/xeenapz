@@ -87,6 +87,8 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
     }
   };
 
+  if (!user) return null;
+
   if (type === "persistent" && !isLargeScreen) return null;
 
   const sidebarContent = (

@@ -49,7 +49,7 @@ const NavigationBar = () => {
       >
         <Flex py="3" px="6" align="center" justify="space-between">
           <Flex align="center" gap={3}>
-            {!isLargeScreen && (
+            {user && !isLargeScreen && (
               <IconButton
                 aria-label="Toggle Sidebar"
                 icon={<IoMdMenu />}
