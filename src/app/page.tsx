@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, FC, Fragment } from "react";
+import { useState, useEffect, useRef, FC } from "react";
 import {
   Input,
   Box,
@@ -130,17 +130,9 @@ const Home: FC = () => {
           {messages.length === 0 && (
             <Flex justify="center" align="center" height="100%">
               <Text fontSize={{ base: "lg", md: "3xl" }} textAlign="center">
-                {user ? (
-                  <Flex direction="row" justifyContent="center" gap={2}>
-                    Hello
-                    <Text as="span" fontWeight="bold">
-                      {user.displayName},
-                    </Text>
-                    What can I help with?
-                  </Flex>
-                ) : (
-                  <Fragment>Hello, What can I help with?"</Fragment>
-                )}
+                {user
+                  ? `Hello ${user.displayName}, What can I help with?`
+                  : "Hello, What can I help with?"}
               </Text>
             </Flex>
           )}
