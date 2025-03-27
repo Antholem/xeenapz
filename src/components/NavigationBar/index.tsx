@@ -11,6 +11,7 @@ import {
   useDisclosure,
   useBreakpointValue,
   Card,
+  Progress,
 } from "@chakra-ui/react";
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
 import { auth, provider } from "@/lib/firebase";
@@ -25,8 +26,6 @@ const NavigationBar = () => {
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
   const { user, loading } = useAuth();
 
-  if (loading) return null;
-
   const handleGoogleSignIn = async () => {
     try {
       await signInWithPopup(auth, provider);
@@ -34,6 +33,8 @@ const NavigationBar = () => {
       console.error("Google Sign-In Error:", error);
     }
   };
+
+  if (loading) return <Progress size="xs" isIndeterminate />;
 
   return (
     <Fragment>

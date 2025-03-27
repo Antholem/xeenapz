@@ -26,6 +26,7 @@ import {
   MenuList,
   MenuItem,
   Icon,
+  Progress,
 } from "@chakra-ui/react";
 import { IoAdd, IoSettingsSharp, IoSearch } from "react-icons/io5";
 import { FiLogOut, FiUserCheck } from "react-icons/fi";
@@ -61,8 +62,6 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
   const { user, loading } = useAuth();
 
-  if (loading) return null;
-
   const handleGoogleSignIn = async () => {
     try {
       await signInWithPopup(auth, provider);
@@ -79,8 +78,8 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
     }
   };
 
+  if (loading) return <Progress size="xs" isIndeterminate />;
   if (!user) return null;
-
   if (type === "persistent" && !isLargeScreen) return null;
 
   const sidebarContent = (
