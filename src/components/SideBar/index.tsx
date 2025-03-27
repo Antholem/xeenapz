@@ -30,7 +30,7 @@ import {
 import { IoAdd, IoSettingsSharp, IoSearch } from "react-icons/io5";
 import { FiLogOut, FiUserCheck } from "react-icons/fi";
 import { auth, provider } from "@/lib/firebase";
-import { signInWithPopup, signOut, User } from "firebase/auth";
+import { signInWithPopup, signOut } from "firebase/auth";
 import { useAuth } from "@/app/context/AuthContext";
 
 interface SideBarProps {
