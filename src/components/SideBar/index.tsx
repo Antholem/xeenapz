@@ -32,7 +32,7 @@ import { IoAdd, IoSettingsSharp, IoSearch } from "react-icons/io5";
 import { FiLogOut, FiUserCheck } from "react-icons/fi";
 import { auth, provider } from "@/lib/firebase";
 import { signInWithPopup, signOut } from "firebase/auth";
-import { useAuth } from "@/app/context/AuthContext";
+import { useAuth } from "@/app/context/Auth";
 
 interface SideBarProps {
   type: "temporary" | "persistent";
@@ -79,7 +79,6 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
   };
 
   if (loading) return <Progress size="xs" isIndeterminate />;
-  if (!user) return null;
   if (type === "persistent" && !isLargeScreen) return null;
 
   const sidebarContent = (

@@ -15,7 +15,6 @@ const Providers = ({ children }: ProvidersProps) => {
     setIsMounted(true);
   }, []);
 
-  // Prevent rendering until the component is mounted (avoids hydration mismatch)
   if (!isMounted) return null;
 
   return (

@@ -24,7 +24,7 @@ import { useSpeechRecognition } from "react-speech-recognition";
 import { speakText } from "@/lib/textToSpeech";
 import { SpeechRecognize } from "@/lib/speechRecognition";
 import ReactMarkdown from "react-markdown";
-import { useAuth } from "./context/AuthContext";
+import { useAuth } from "@/app/context/Auth";
 
 // Message Type
 interface Message {

@@ -18,7 +18,7 @@ import { auth, provider } from "@/lib/firebase";
 import { signInWithPopup } from "firebase/auth";
 import { IoMdMenu } from "react-icons/io";
 import SideBar from "@/components/SideBar";
-import { useAuth } from "@/app/context/AuthContext";
+import { useAuth } from "@/app/context/Auth";
 
 const NavigationBar = () => {
   const { colorMode, toggleColorMode } = useColorMode();
