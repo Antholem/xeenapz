@@ -125,7 +125,26 @@ const Home: FC = () => {
     <Flex direction="column" h="100%">
       {/* Messages Container */}
       <Box flex="1" overflowY="auto" p={4} aria-live="polite">
-        <VStack spacing={4} align="stretch">
+        <VStack spacing={4} align="stretch" height="100%">
+          {/* Show "Hello World" when there are no messages */}
+          {messages.length === 0 && (
+            <Flex justify="center" align="center" height="100%">
+              <Text fontSize={{ base: "lg", md: "3xl" }} textAlign="center">
+                {user ? (
+                  <>
+                    Hello{" "}
+                    <Text as="span" fontWeight="bold">
+                      {user.displayName}
+                    </Text>
+                    , What can I help with?
+                  </>
+                ) : (
+                  <>Hello, What can I help with?"</>
+                )}
+              </Text>
+            </Flex>
+          )}
+
           {messages.map((msg, index) => (
             <MessageItem
               key={index}
@@ -136,6 +155,7 @@ const Home: FC = () => {
               setPlayingMessage={setPlayingMessage}
             />
           ))}
+
           {loading && (
             <Flex justify="flex-start" align="end" gap={4}>
               <Image boxSize="24px" src="./favicon.ico" alt="Xeenapz" />
