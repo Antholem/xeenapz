@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Fragment } from "react";
+import { Fragment } from "react";
 import {
   Flex,
   Text,
@@ -11,24 +11,20 @@ import {
   useDisclosure,
   useBreakpointValue,
   Card,
+  Progress,
 } from "@chakra-ui/react";
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
 import { auth, provider } from "@/lib/firebase";
-import { signInWithPopup, onAuthStateChanged, User } from "firebase/auth";
+import { signInWithPopup } from "firebase/auth";
 import { IoMdMenu } from "react-icons/io";
 import SideBar from "@/components/SideBar";
+import { useAuth } from "@/app/context/AuthContext";
 
 const NavigationBar = () => {
   const { colorMode, toggleColorMode } = useColorMode();
-  const [user, setUser] = useState<User | null>(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
-
-  // Handle authentication state changes
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, setUser);
-    return () => unsubscribe();
-  }, []);
+  const { user, loading } = useAuth();
 
   const handleGoogleSignIn = async () => {
     try {
@@ -37,6 +33,8 @@ const NavigationBar = () => {
       console.error("Google Sign-In Error:", error);
     }
   };
+
+  if (loading) return <Progress size="xs" isIndeterminate />;
 
   return (
     <Fragment>
