@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Fragment } from "react";
+import { Fragment } from "react";
 import {
   Box,
   Flex,
@@ -30,12 +30,8 @@ import {
 import { IoAdd, IoSettingsSharp, IoSearch } from "react-icons/io5";
 import { FiLogOut, FiUserCheck } from "react-icons/fi";
 import { auth, provider } from "@/lib/firebase";
-import {
-  signInWithPopup,
-  signOut,
-  onAuthStateChanged,
-  User,
-} from "firebase/auth";
+import { signInWithPopup, signOut, User } from "firebase/auth";
+import { useAuth } from "@/app/context/AuthContext";
 
 interface SideBarProps {
   type: "temporary" | "persistent";
@@ -63,13 +59,9 @@ const ChatList = () =>
 
 const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
-  const [user, setUser] = useState<User | null>(null);
+  const { user, loading } = useAuth();
 
-  // Handle authentication state changes
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, setUser);
-    return () => unsubscribe();
-  }, []);
+  if (loading) return null;
 
   const handleGoogleSignIn = async () => {
     try {

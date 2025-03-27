@@ -15,8 +15,7 @@ import {
   Tooltip,
   SkeletonCircle,
 } from "@chakra-ui/react";
-import { auth } from "@/lib/firebase";
-import { onAuthStateChanged, User } from "firebase/auth";
+import { User } from "firebase/auth";
 import { IoIosMic, IoMdSend } from "react-icons/io";
 import { format } from "date-fns";
 import { IoStop } from "react-icons/io5";
@@ -24,6 +23,7 @@ import { useSpeechRecognition } from "react-speech-recognition";
 import { speakText } from "@/lib/textToSpeech";
 import { SpeechRecognize } from "@/lib/speechRecognition";
 import ReactMarkdown from "react-markdown";
+import { useAuth } from "./context/AuthContext";
 
 // Message Type
 interface Message {
@@ -35,13 +35,15 @@ interface Message {
 const Home: FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState<string>("");
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [isFetchingResponse, setIsFetchingResponse] = useState<boolean>(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
   const [isListening, setIsListening] = useState(false);
   const prevTranscriptRef = useRef("");
+  const { user, loading } = useAuth();
+
+  if (loading) return null;
 
   useEffect(() => {
     if (transcript && transcript !== prevTranscriptRef.current) {
@@ -54,11 +56,6 @@ const Home: FC = () => {
   useEffect(() => {
     setIsListening(listening);
   }, [listening]);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, setUser);
-    return () => unsubscribe();
-  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -76,7 +73,7 @@ const Home: FC = () => {
 
   // Fetch Bot Response
   const fetchBotResponse = async (userMessage: Message) => {
-    setLoading(true);
+    setIsFetchingResponse(true);
 
     try {
       const res = await fetch("/api/gemini", {
@@ -104,7 +101,7 @@ const Home: FC = () => {
         },
       ]);
     } finally {
-      setLoading(false);
+      setIsFetchingResponse(false);
     }
   };
 
@@ -130,9 +127,7 @@ const Home: FC = () => {
           {messages.length === 0 && (
             <Flex justify="center" align="center" height="100%">
               <Text fontSize={{ base: "lg", md: "3xl" }} textAlign="center">
-                {user
-                  ? `Hello ${user.displayName}, What can I help with?`
-                  : "Hello, What can I help with?"}
+                Hello, What can I help with?
               </Text>
             </Flex>
           )}
@@ -148,7 +143,7 @@ const Home: FC = () => {
             />
           ))}
 
-          {loading && (
+          {isFetchingResponse && (
             <Flex justify="flex-start" align="end" gap={4}>
               <Image boxSize="24px" src="./favicon.ico" alt="Xeenapz" />
               <Flex direction="row" gap={1}>
@@ -192,7 +187,7 @@ const Home: FC = () => {
             <IconButton
               aria-label="Send Message"
               icon={<IoMdSend />}
-              isDisabled={loading || !input.trim()}
+              isDisabled={isFetchingResponse || !input.trim()}
               colorScheme="blue"
               onClick={sendMessage}
             />
