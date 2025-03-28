@@ -120,39 +120,40 @@ const Home: FC = () => {
     <Flex direction="column" h="100%">
       {/* Messages Container */}
       <Box flex="1" overflowY="auto" p={4} aria-live="polite">
-        <VStack spacing={4} align="stretch" height="100%">
-          {/* Show "Hello World" when there are no messages */}
-          {messages.length === 0 && (
-            <Flex justify="center" align="center" height="100%">
+        {messages.length === 0 ? (
+          <VStack height="100%">
+            <Flex justify="center" align="center" flex="1">
               <Text fontSize={{ base: "lg", md: "3xl" }} textAlign="center">
                 Hello, what can I help with?
               </Text>
             </Flex>
-          )}
+          </VStack>
+        ) : (
+          <VStack spacing={4} align="stretch">
+            {messages.map((msg, index) => (
+              <MessageItem
+                key={index}
+                message={msg}
+                user={user}
+                speakText={speakText}
+                playingMessage={playingMessage}
+                setPlayingMessage={setPlayingMessage}
+              />
+            ))}
+          </VStack>
+        )}
 
-          {messages.map((msg, index) => (
-            <MessageItem
-              key={index}
-              message={msg}
-              user={user}
-              speakText={speakText}
-              playingMessage={playingMessage}
-              setPlayingMessage={setPlayingMessage}
-            />
-          ))}
-
-          {isFetchingResponse && (
-            <Flex justify="flex-start" align="end" gap={4}>
-              <Image boxSize="24px" src="./favicon.ico" alt="Xeenapz" />
-              <Flex direction="row" gap={1}>
-                {[...Array(3)].map((_, index) => (
-                  <SkeletonCircle key={index} size="2" />
-                ))}
-              </Flex>
+        {isFetchingResponse && (
+          <Flex justify="flex-start" align="end" gap={4}>
+            <Image boxSize="24px" src="./favicon.ico" alt="Xeenapz" />
+            <Flex direction="row" gap={1}>
+              {[...Array(3)].map((_, index) => (
+                <SkeletonCircle key={index} size="2" />
+              ))}
             </Flex>
-          )}
-          <div ref={messagesEndRef} />
-        </VStack>
+          </Flex>
+        )}
+        <Box as="div" ref={messagesEndRef} />
       </Box>
 
       <Divider />
