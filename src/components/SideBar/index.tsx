@@ -26,7 +26,6 @@ import {
   MenuList,
   MenuItem,
   Icon,
-  Progress,
   Skeleton,
   SkeletonCircle,
 } from "@chakra-ui/react";
@@ -80,16 +79,18 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
   const handleSignOut = async () => {
     try {
       await signOut(auth);
+      if (onClose) onClose();
     } catch (error) {
       console.error("Sign-Out Error:", error);
     }
   };
 
-  if (loading) return <Progress size="xs" isIndeterminate />;
-  if (type === "persistent" && !isLargeScreen) return null;
-
   const sidebarContent = (
-    <Card borderRadius={0} variant="unstyled">
+    <Card
+      borderRadius={0}
+      variant="unstyled"
+      display={!isLargeScreen || !user ? "none" : "block"}
+    >
       <Flex direction="column" h="100vh" w="350px">
         {/* Sidebar Header */}
         <Flex

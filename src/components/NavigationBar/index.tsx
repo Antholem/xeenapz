@@ -11,7 +11,6 @@ import {
   useDisclosure,
   useBreakpointValue,
   Card,
-  Progress,
 } from "@chakra-ui/react";
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
 import { auth, provider } from "@/lib/firebase";
@@ -33,8 +32,6 @@ const NavigationBar = () => {
       console.error("Google Sign-In Error:", error);
     }
   };
-
-  if (loading) return <Progress size="xs" isIndeterminate />;
 
   return (
     <Fragment>

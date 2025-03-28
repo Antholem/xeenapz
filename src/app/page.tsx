@@ -14,7 +14,6 @@ import {
   Card,
   Tooltip,
   SkeletonCircle,
-  Progress,
 } from "@chakra-ui/react";
 import { User } from "firebase/auth";
 import { IoIosMic, IoMdSend } from "react-icons/io";
@@ -116,8 +115,6 @@ const Home: FC = () => {
 
     fetchBotResponse(userMessage);
   };
-
-  if (loading) return <Progress size="xs" isIndeterminate />;
 
   return (
     <Flex direction="column" h="100%">
