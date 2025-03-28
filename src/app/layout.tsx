@@ -5,7 +5,7 @@ import { Box, Flex } from "@chakra-ui/react";
 import Providers from "./providers";
 import { NavigationBar, SideBar } from "@/components";
 import "./globals.css";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider } from "@/app/context/Auth";
 
 const RootLayout = ({ children }: { children: ReactNode }) => {
   return (

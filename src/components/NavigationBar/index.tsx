@@ -11,20 +11,19 @@ import {
   useDisclosure,
   useBreakpointValue,
   Card,
-  Progress,
 } from "@chakra-ui/react";
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
 import { auth, provider } from "@/lib/firebase";
 import { signInWithPopup } from "firebase/auth";
 import { IoMdMenu } from "react-icons/io";
 import SideBar from "@/components/SideBar";
-import { useAuth } from "@/app/context/AuthContext";
+import { useAuth } from "@/app/context/Auth";
 
 const NavigationBar = () => {
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
 
   const handleGoogleSignIn = async () => {
     try {
@@ -33,8 +32,6 @@ const NavigationBar = () => {
       console.error("Google Sign-In Error:", error);
     }
   };
-
-  if (loading) return <Progress size="xs" isIndeterminate />;
 
   return (
     <Fragment>
