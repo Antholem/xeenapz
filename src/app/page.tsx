@@ -128,7 +128,7 @@ const Home: FC = () => {
           {messages.length === 0 && (
             <Flex justify="center" align="center" height="100%">
               <Text fontSize={{ base: "lg", md: "3xl" }} textAlign="center">
-                Hello, What can I help with?
+                Hello, what can I help with?
               </Text>
             </Flex>
           )}

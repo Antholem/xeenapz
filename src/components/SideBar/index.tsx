@@ -27,6 +27,8 @@ import {
   MenuItem,
   Icon,
   Progress,
+  Skeleton,
+  SkeletonCircle,
 } from "@chakra-ui/react";
 import { IoAdd, IoSettingsSharp, IoSearch } from "react-icons/io5";
 import { FiLogOut, FiUserCheck } from "react-icons/fi";
@@ -56,6 +58,11 @@ const ChatList = () =>
         Chat items
       </Box>
     </Button>
+  ));
+
+const SkeletonChatList = () =>
+  [...Array(100)].map((_, index) => (
+    <Skeleton key={index} height="40px" width="100%" borderRadius="md" mb={1} />
   ));
 
 const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
@@ -95,59 +102,65 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
         >
           {/* Profile Avatar */}
           <Flex align="center" justify="start" gap={3}>
-            {user ? (
-              <Menu>
-                <MenuButton
-                  as={Box}
-                  display="flex"
-                  alignItems="center"
-                  gap={2}
-                  cursor="pointer"
-                >
-                  <Avatar
-                    size="sm"
-                    src={user.photoURL ?? "/default-avatar.png"}
-                    name={user.displayName ?? "User"}
-                  />
-                </MenuButton>
-                <MenuList>
-                  <MenuItem
-                    onClick={handleGoogleSignIn}
-                    icon={<Icon as={FiUserCheck} />}
-                    fontSize="md"
-                  >
-                    Switch Account
-                  </MenuItem>
-                  <MenuItem
-                    onClick={handleSignOut}
-                    icon={<Icon as={FiLogOut} />}
-                    fontSize="md"
-                  >
-                    Log out
-                  </MenuItem>
-                </MenuList>
-              </Menu>
+            {loading ? (
+              <Fragment>
+                <SkeletonCircle height="32px" width="32px" />
+                <Box width="180px">
+                  <Skeleton height="16px" mb="2px" />
+                  <Skeleton height="14px" />
+                </Box>
+              </Fragment>
             ) : (
-              <Avatar size="sm" />
-            )}
-            <Box
-              lineHeight="1.2"
-              maxW="200px"
-              overflow="hidden"
-              whiteSpace="nowrap"
-              textOverflow="ellipsis"
-            >
-              {user?.displayName && user?.email && (
+              user && (
                 <Fragment>
-                  <Text fontWeight="bold" fontSize="sm" isTruncated>
-                    {user.displayName}
-                  </Text>
-                  <Text fontSize="xs" color="gray.400" isTruncated>
-                    {user?.email ?? "email@example.com"}
-                  </Text>
+                  <Menu>
+                    <MenuButton
+                      as={Box}
+                      display="flex"
+                      alignItems="center"
+                      gap={2}
+                      cursor="pointer"
+                    >
+                      <Avatar
+                        size="sm"
+                        src={user.photoURL ?? "/default-avatar.png"}
+                        name={user.displayName ?? "User"}
+                      />
+                    </MenuButton>
+                    <MenuList>
+                      <MenuItem
+                        onClick={handleGoogleSignIn}
+                        icon={<Icon as={FiUserCheck} />}
+                        fontSize="md"
+                      >
+                        Switch Account
+                      </MenuItem>
+                      <MenuItem
+                        onClick={handleSignOut}
+                        icon={<Icon as={FiLogOut} />}
+                        fontSize="md"
+                      >
+                        Log out
+                      </MenuItem>
+                    </MenuList>
+                  </Menu>
+                  <Box
+                    lineHeight="1.2"
+                    maxW="200px"
+                    overflow="hidden"
+                    whiteSpace="nowrap"
+                    textOverflow="ellipsis"
+                  >
+                    <Text fontWeight="bold" fontSize="sm" isTruncated>
+                      {user.displayName}
+                    </Text>
+                    <Text fontSize="xs" color="gray.400" isTruncated>
+                      {user.email}
+                    </Text>
+                  </Box>
                 </Fragment>
-              )}
-            </Box>
+              )
+            )}
           </Flex>
           <Box>
             <Tooltip label="New chat">
@@ -184,9 +197,15 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
         <Divider />
 
         {/* Chat List */}
-        <VStack h="100vh" p={3} align="stretch" overflowY="auto" spacing={0}>
+        <VStack
+          h="100vh"
+          p={3}
+          align="stretch"
+          overflowY={loading ? "hidden" : "auto"}
+          spacing={0}
+        >
           <Flex direction="column" align="center" justify="center" w="100%">
-            <ChatList />
+            {loading ? <SkeletonChatList /> : <ChatList />}
           </Flex>
         </VStack>
       </Flex>
@@ -210,67 +229,75 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
         <Card borderRadius={0} variant="unstyled" h="100vh">
           {/* Drawer Header */}
           <DrawerHeader
-            p={3}
+            px={3}
+            py={2}
+            pb={3}
             display="flex"
             alignItems="center"
             justifyContent="space-between"
           >
             {/* Profile Section */}
             <Flex align="center" justify="start" gap={3}>
-              {user ? (
-                <Menu>
-                  <MenuButton
-                    as={Box}
-                    display="flex"
-                    alignItems="center"
-                    gap={2}
-                    cursor="pointer"
-                  >
-                    <Avatar
-                      size="sm"
-                      src={user.photoURL ?? "/default-avatar.png"}
-                      name={user.displayName ?? "User"}
-                    />
-                  </MenuButton>
-                  <MenuList>
-                    <MenuItem
-                      onClick={handleGoogleSignIn}
-                      icon={<Icon as={FiUserCheck} />}
-                      fontSize="md"
-                    >
-                      Switch Account
-                    </MenuItem>
-                    <MenuItem
-                      onClick={handleSignOut}
-                      icon={<Icon as={FiLogOut} />}
-                      fontSize="md"
-                    >
-                      Log out
-                    </MenuItem>
-                  </MenuList>
-                </Menu>
+              {loading ? (
+                <Fragment>
+                  <SkeletonCircle height="32px" width="32px" />
+                  <Box width="150px">
+                    <Skeleton height="16px" mb="2px" />
+                    <Skeleton height="14px" />
+                  </Box>
+                </Fragment>
               ) : (
-                <Avatar size="sm" />
-              )}
-              <Box
-                textAlign="left"
-                lineHeight="1.2"
-                maxW="170px"
-                overflow="hidden"
-                whiteSpace="nowrap"
-                textOverflow="ellipsis"
-              >
-                {user?.displayName && user?.email && (
+                user && (
                   <Fragment>
-                    <Text fontWeight="bold" fontSize="sm" isTruncated>
-                      {user.displayName}
-                    </Text>
-                    <Text fontSize="xs" color="gray.400" isTruncated>
-                      {user?.email ?? "email@example.com"}
-                    </Text>
+                    <Menu>
+                      <MenuButton
+                        as={Box}
+                        display="flex"
+                        alignItems="center"
+                        gap={2}
+                        cursor="pointer"
+                      >
+                        <Avatar
+                          size="sm"
+                          src={user.photoURL ?? "/default-avatar.png"}
+                          name={user.displayName ?? "User"}
+                        />
+                      </MenuButton>
+                      <MenuList>
+                        <MenuItem
+                          onClick={handleGoogleSignIn}
+                          icon={<Icon as={FiUserCheck} />}
+                          fontSize="md"
+                        >
+                          Switch Account
+                        </MenuItem>
+                        <MenuItem
+                          onClick={handleSignOut}
+                          icon={<Icon as={FiLogOut} />}
+                          fontSize="md"
+                        >
+                          Log out
+                        </MenuItem>
+                      </MenuList>
+                    </Menu>
+                    <Box
+                      textAlign="left"
+                      lineHeight="1.2"
+                      maxW="170px"
+                      overflow="hidden"
+                      whiteSpace="nowrap"
+                      textOverflow="ellipsis"
+                    >
+                      <Text fontWeight="bold" fontSize="sm" isTruncated>
+                        {user.displayName}
+                      </Text>
+                      <Text fontSize="xs" color="gray.400" isTruncated>
+                        {user.email}
+                      </Text>
+                    </Box>
                   </Fragment>
-                )}
-              </Box>
+                )
+              )}
             </Flex>
 
             {/* Action Buttons */}
@@ -293,7 +320,7 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
           </DrawerHeader>
 
           {/* Search Bar */}
-          <Flex p={3}>
+          <Flex px={3} pb={3}>
             <InputGroup>
               <InputLeftElement>
                 <IoSearch />
@@ -306,8 +333,12 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
             </InputGroup>
           </Flex>
 
-          <DrawerBody p={3} borderTopWidth="1px">
-            <ChatList />
+          <DrawerBody
+            p={3}
+            borderTopWidth="1px"
+            overflowY={loading ? "hidden" : "auto"}
+          >
+            {loading ? <SkeletonChatList /> : <ChatList />}
           </DrawerBody>
         </Card>
       </DrawerContent>
