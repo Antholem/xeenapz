@@ -41,7 +41,7 @@ const Home: FC = () => {
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
   const [isListening, setIsListening] = useState(false);
   const prevTranscriptRef = useRef("");
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (transcript && transcript !== prevTranscriptRef.current) {

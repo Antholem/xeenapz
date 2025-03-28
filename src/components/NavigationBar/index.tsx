@@ -23,7 +23,7 @@ const NavigationBar = () => {
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
 
   const handleGoogleSignIn = async () => {
     try {
