@@ -14,7 +14,6 @@ import {
   Card,
   Tooltip,
   SkeletonCircle,
-  Progress,
 } from "@chakra-ui/react";
 import { User } from "firebase/auth";
 import { IoIosMic, IoMdSend } from "react-icons/io";
@@ -24,7 +23,7 @@ import { useSpeechRecognition } from "react-speech-recognition";
 import { speakText } from "@/lib/textToSpeech";
 import { SpeechRecognize } from "@/lib/speechRecognition";
 import ReactMarkdown from "react-markdown";
-import { useAuth } from "./context/AuthContext";
+import { useAuth } from "@/app/context/Auth";
 
 // Message Type
 interface Message {
@@ -42,7 +41,7 @@ const Home: FC = () => {
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
   const [isListening, setIsListening] = useState(false);
   const prevTranscriptRef = useRef("");
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (transcript && transcript !== prevTranscriptRef.current) {
@@ -117,45 +116,44 @@ const Home: FC = () => {
     fetchBotResponse(userMessage);
   };
 
-  if (loading) return <Progress size="xs" isIndeterminate />;
-
   return (
     <Flex direction="column" h="100%">
       {/* Messages Container */}
       <Box flex="1" overflowY="auto" p={4} aria-live="polite">
-        <VStack spacing={4} align="stretch" height="100%">
-          {/* Show "Hello World" when there are no messages */}
-          {messages.length === 0 && (
-            <Flex justify="center" align="center" height="100%">
+        {messages.length === 0 ? (
+          <VStack height="100%">
+            <Flex justify="center" align="center" flex="1">
               <Text fontSize={{ base: "lg", md: "3xl" }} textAlign="center">
-                Hello, What can I help with?
+                Hello, what can I help with?
               </Text>
             </Flex>
-          )}
+          </VStack>
+        ) : (
+          <VStack spacing={4} align="stretch">
+            {messages.map((msg, index) => (
+              <MessageItem
+                key={index}
+                message={msg}
+                user={user}
+                speakText={speakText}
+                playingMessage={playingMessage}
+                setPlayingMessage={setPlayingMessage}
+              />
+            ))}
+          </VStack>
+        )}
 
-          {messages.map((msg, index) => (
-            <MessageItem
-              key={index}
-              message={msg}
-              user={user}
-              speakText={speakText}
-              playingMessage={playingMessage}
-              setPlayingMessage={setPlayingMessage}
-            />
-          ))}
-
-          {isFetchingResponse && (
-            <Flex justify="flex-start" align="end" gap={4}>
-              <Image boxSize="24px" src="./favicon.ico" alt="Xeenapz" />
-              <Flex direction="row" gap={1}>
-                {[...Array(3)].map((_, index) => (
-                  <SkeletonCircle key={index} size="2" />
-                ))}
-              </Flex>
+        {isFetchingResponse && (
+          <Flex justify="flex-start" align="end" gap={4}>
+            <Image boxSize="24px" src="./favicon.ico" alt="Xeenapz" />
+            <Flex direction="row" gap={1}>
+              {[...Array(3)].map((_, index) => (
+                <SkeletonCircle key={index} size="2" />
+              ))}
             </Flex>
-          )}
-          <div ref={messagesEndRef} />
-        </VStack>
+          </Flex>
+        )}
+        <Box as="div" ref={messagesEndRef} />
       </Box>
 
       <Divider />
@@ -179,17 +177,17 @@ const Home: FC = () => {
           <Tooltip label={isListening ? "Stop" : "Type by voice"}>
             <IconButton
               aria-label="Speech Recognition"
+              variant="ghost"
               icon={isListening ? <IoStop /> : <IoIosMic />}
-              colorScheme={isListening ? "red" : "blue"}
               onClick={() => SpeechRecognize(isListening, resetTranscript)}
             />
           </Tooltip>
           <Tooltip label="Send message">
             <IconButton
               aria-label="Send Message"
+              variant="ghost"
               icon={<IoMdSend />}
               isDisabled={isFetchingResponse || !input.trim()}
-              colorScheme="blue"
               onClick={sendMessage}
             />
           </Tooltip>

@@ -11,14 +11,15 @@ import {
   useDisclosure,
   useBreakpointValue,
   Card,
-  Progress,
+  Skeleton,
 } from "@chakra-ui/react";
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
+import { HiPencilAlt } from "react-icons/hi";
 import { auth, provider } from "@/lib/firebase";
 import { signInWithPopup } from "firebase/auth";
 import { IoMdMenu } from "react-icons/io";
 import SideBar from "@/components/SideBar";
-import { useAuth } from "@/app/context/AuthContext";
+import { useAuth } from "@/app/context/Auth";
 
 const NavigationBar = () => {
   const { colorMode, toggleColorMode } = useColorMode();
@@ -34,8 +35,6 @@ const NavigationBar = () => {
     }
   };
 
-  if (loading) return <Progress size="xs" isIndeterminate />;
-
   return (
     <Fragment>
       <Card
@@ -46,34 +45,64 @@ const NavigationBar = () => {
         variant="unstyled"
       >
         <Flex py="3" px="6" align="center" justify="space-between">
-          <Flex align="center" gap={3}>
-            {user && !isLargeScreen && (
-              <IconButton
-                aria-label="Toggle Sidebar"
-                icon={<IoMdMenu />}
-                variant="ghost"
-                onClick={onOpen}
-              />
-            )}
-            <Text fontSize="lg" fontWeight="bold">
-              Xeenapz
-            </Text>
-          </Flex>
-          <Flex align="center" gap={4}>
-            <IconButton
-              aria-label="Toggle Dark Mode"
-              icon={colorMode === "light" ? <MoonIcon /> : <SunIcon />}
-              onClick={toggleColorMode}
-              variant="ghost"
-            />
-            {!user && <Button onClick={handleGoogleSignIn}>Login</Button>}
-          </Flex>
+          {loading ? (
+            <Skeleton height="40px" width="100%" borderRadius="md" />
+          ) : isLargeScreen ? (
+            <Fragment>
+              <Flex align="center" gap={3}>
+                <Text fontSize="lg" fontWeight="bold" isTruncated>
+                  Xeenapz
+                </Text>
+              </Flex>
+              <Flex align="center" gap={4}>
+                <IconButton
+                  aria-label="Toggle Dark Mode"
+                  icon={colorMode === "light" ? <MoonIcon /> : <SunIcon />}
+                  onClick={toggleColorMode}
+                  variant="ghost"
+                />
+                {!user && <Button onClick={handleGoogleSignIn}>Login</Button>}
+              </Flex>
+            </Fragment>
+          ) : (
+            <Fragment>
+              {user ? (
+                <IconButton
+                  aria-label="Toggle Sidebar"
+                  icon={<IoMdMenu />}
+                  variant="ghost"
+                  onClick={onOpen}
+                />
+              ) : (
+                <IconButton
+                  aria-label="New Chat"
+                  icon={<HiPencilAlt />}
+                  variant="ghost"
+                />
+              )}
+              <Text fontSize="lg" fontWeight="bold" isTruncated>
+                Xeenapz
+              </Text>
+              <Flex align="center" gap={2}>
+                <IconButton
+                  aria-label="Toggle Dark Mode"
+                  icon={colorMode === "light" ? <MoonIcon /> : <SunIcon />}
+                  onClick={toggleColorMode}
+                  variant="ghost"
+                />
+                {!user && (
+                  <Button size="sm" onClick={handleGoogleSignIn}>
+                    Login
+                  </Button>
+                )}
+              </Flex>
+            </Fragment>
+          )}
         </Flex>
       </Card>
 
       <Divider orientation="horizontal" />
 
-      {/* Sidebar for smaller screens */}
       <SideBar
         type="temporary"
         isOpen={isOpen}
