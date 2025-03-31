@@ -5,9 +5,18 @@ import {
   signInWithPopup,
   signOut,
 } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  doc,
+  setDoc,
+  updateDoc,
+  getDocs,
+  addDoc,
+  serverTimestamp,
+  onSnapshot,
+} from "firebase/firestore";
 
-// Firebase configuration from your Firebase Console
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -17,12 +26,24 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase app
 const app = initializeApp(firebaseConfig);
-
-// Initialize Firebase services
 const auth = getAuth(app);
 const firestore = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
-export { app, auth, firestore, provider, signInWithPopup, signOut };
+export {
+  app,
+  auth,
+  firestore,
+  provider,
+  signInWithPopup,
+  signOut,
+  collection,
+  doc,
+  setDoc,
+  updateDoc,
+  getDocs,
+  addDoc,
+  serverTimestamp,
+  onSnapshot,
+};
