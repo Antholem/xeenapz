@@ -14,6 +14,7 @@ import {
   Card,
   Tooltip,
   SkeletonCircle,
+  useColorMode,
 } from "@chakra-ui/react";
 import { User } from "firebase/auth";
 import { IoIosMic, IoMdSend } from "react-icons/io";
@@ -209,6 +210,7 @@ const MessageItem: FC<{
   setPlayingMessage: (msg: string | null) => void;
   playingMessage: string | null;
 }> = ({ message, user, speakText, playingMessage, setPlayingMessage }) => {
+  const { colorMode } = useColorMode();
   const isUser = message.sender === "user";
   const formattedTime = format(new Date(message.timestamp), "hh:mm a");
 
@@ -229,8 +231,16 @@ const MessageItem: FC<{
           <Box
             p={3}
             borderRadius="lg"
-            bg={isUser ? "blue.500" : "gray.600"}
-            color="white"
+            color={isUser ? "white" : ""}
+            bg={
+              isUser
+                ? colorMode === "light"
+                  ? "blue.400"
+                  : "blue.500"
+                : colorMode === "light"
+                ? "gray.200"
+                : "gray.700"
+            }
             maxW="max-content"
             whiteSpace="pre-wrap"
           >
