@@ -177,17 +177,17 @@ const Home: FC = () => {
           <Tooltip label={isListening ? "Stop" : "Type by voice"}>
             <IconButton
               aria-label="Speech Recognition"
+              variant="ghost"
               icon={isListening ? <IoStop /> : <IoIosMic />}
-              colorScheme={isListening ? "red" : "blue"}
               onClick={() => SpeechRecognize(isListening, resetTranscript)}
             />
           </Tooltip>
           <Tooltip label="Send message">
             <IconButton
               aria-label="Send Message"
+              variant="ghost"
               icon={<IoMdSend />}
               isDisabled={isFetchingResponse || !input.trim()}
-              colorScheme="blue"
               onClick={sendMessage}
             />
           </Tooltip>
