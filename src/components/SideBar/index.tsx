@@ -31,10 +31,19 @@ import {
 } from "@chakra-ui/react";
 import { IoAdd, IoSettingsSharp, IoSearch } from "react-icons/io5";
 import { FiLogOut, FiUserCheck } from "react-icons/fi";
-import { auth, provider } from "@/lib/firebase";
+import {
+  auth,
+  provider,
+  db,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "@/lib/firebase";
 import { signInWithPopup, signOut } from "firebase/auth";
 import { useAuth } from "@/app/context/Auth";
-import { db, collection, query, where, getDocs } from "@/lib/firebase";
+import { useRouter } from "next/navigation";
+
 interface SideBarProps {
   type: "temporary" | "persistent";
   isOpen?: boolean;
@@ -42,7 +51,17 @@ interface SideBarProps {
   onClose?: () => void;
 }
 
-const ChatList = ({ conversations }: { conversations: { id: string }[] }) => {
+const ChatList = ({
+  conversations,
+}: {
+  conversations: { id: string; title?: string }[];
+}) => {
+  const router = useRouter();
+
+  const handleConversationClick = (conversationId: string) => {
+    router.push(`/conversations/${conversationId}`);
+  };
+
   return (
     <Fragment>
       {conversations.map((convo) => (
@@ -51,6 +70,8 @@ const ChatList = ({ conversations }: { conversations: { id: string }[] }) => {
           variant="ghost"
           w="100%"
           justifyContent="flex-start"
+          onClick={() => handleConversationClick(convo.id)}
+          cursor="pointer"
         >
           <Box
             as="span"
@@ -66,6 +87,26 @@ const ChatList = ({ conversations }: { conversations: { id: string }[] }) => {
         </Button>
       ))}
     </Fragment>
+  );
+};
+
+const NewChatButton = () => {
+  const router = useRouter();
+
+  const handleNewChatClick = () => {
+    router.push("/");
+  };
+
+  return (
+    <Tooltip label="New chat">
+      <IconButton
+        aria-label="New Chat"
+        variant="ghost"
+        icon={<IoAdd />}
+        onClick={handleNewChatClick}
+        cursor="pointer"
+      />
+    </Tooltip>
   );
 };
 
@@ -194,13 +235,7 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
             )}
           </Flex>
           <Box>
-            <Tooltip label="New chat">
-              <IconButton
-                aria-label="New Chat"
-                variant="ghost"
-                icon={<IoAdd />}
-              />
-            </Tooltip>
+            <NewChatButton />
             <Tooltip label="Settings">
               <IconButton
                 aria-label="Settings"
@@ -337,13 +372,7 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
 
             {/* Action Buttons */}
             <Box>
-              <Tooltip label="New chat">
-                <IconButton
-                  aria-label="New Chat"
-                  variant="ghost"
-                  icon={<IoAdd />}
-                />
-              </Tooltip>
+              <NewChatButton />
               <Tooltip label="Settings">
                 <IconButton
                   aria-label="Settings"

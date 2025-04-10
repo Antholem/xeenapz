@@ -16,6 +16,7 @@ import {
   where,
   getDocs,
   getDoc,
+  orderBy,
 } from "firebase/firestore";
 
 // Firebase configuration from your Firebase Console
@@ -52,4 +53,5 @@ export {
   where,
   getDocs,
   getDoc,
+  orderBy,
 };
