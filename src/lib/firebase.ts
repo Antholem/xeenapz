@@ -17,6 +17,8 @@ import {
   getDocs,
   getDoc,
   orderBy,
+  updateDoc,
+  onSnapshot,
 } from "firebase/firestore";
 
 // Firebase configuration from your Firebase Console
@@ -54,4 +56,6 @@ export {
   getDocs,
   getDoc,
   orderBy,
+  updateDoc,
+  onSnapshot,
 };

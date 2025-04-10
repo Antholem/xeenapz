@@ -8,7 +8,6 @@ import {
   VStack,
   Divider,
   Input,
-  Button,
   InputGroup,
   InputLeftElement,
   Card,
@@ -28,6 +27,7 @@ import {
   Icon,
   Skeleton,
   SkeletonCircle,
+  Button,
 } from "@chakra-ui/react";
 import { IoAdd, IoSettingsSharp, IoSearch } from "react-icons/io5";
 import { FiLogOut, FiUserCheck } from "react-icons/fi";
@@ -38,7 +38,7 @@ import {
   collection,
   query,
   where,
-  getDocs,
+  onSnapshot,
 } from "@/lib/firebase";
 import { signInWithPopup, signOut } from "firebase/auth";
 import { useAuth } from "@/app/context/Auth";
@@ -123,25 +123,37 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
 
   useEffect(() => {
-    const fetchConversations = async () => {
-      if (user) {
-        const conversationsQuery = query(
-          collection(db, "conversations"),
-          where("userId", "==", user.uid)
-        );
-        const querySnapshot = await getDocs(conversationsQuery);
-        const conversationsList: Conversation[] = querySnapshot.docs.map(
-          (doc) =>
-            ({
-              id: doc.id,
-              ...doc.data(),
-            } as Conversation)
-        );
-        setConversations(conversationsList);
-      }
-    };
+    if (user) {
+      const conversationsCollectionRef = collection(db, "conversations");
+      const conversationsQuery = query(
+        conversationsCollectionRef,
+        where("userId", "==", user.uid)
+      );
 
-    fetchConversations();
+      const unsubscribe = onSnapshot(
+        conversationsQuery,
+        (snapshot) => {
+          const conversationsList: Conversation[] = snapshot.docs.map(
+            (doc) =>
+              ({
+                id: doc.id,
+                ...doc.data(),
+              } as Conversation)
+          );
+          setConversations(conversationsList);
+        },
+        (error) => {
+          console.error("Error listening for conversations:", error);
+          // Handle error appropriately
+        }
+      );
+
+      // Clean up the listener when the component unmounts or user changes
+      return () => unsubscribe();
+    } else {
+      // If user is not logged in, set conversations to an empty array
+      setConversations([]);
+    }
   }, [user]);
 
   const handleGoogleSignIn = async () => {
