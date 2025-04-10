@@ -58,11 +58,7 @@ interface Conversation {
   [key: string]: any; // Allow other dynamic properties
 }
 
-const ChatList = ({
-  conversations,
-}: {
-  conversations: Conversation[]; // Use the Conversation interface
-}) => {
+const ChatList = ({ conversations }: { conversations: Conversation[] }) => {
   const router = useRouter();
 
   const handleConversationClick = (conversationId: string) => {
@@ -125,7 +121,7 @@ const SkeletonChatList = () =>
 const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
   const { user, loading } = useAuth();
-  const [conversations, setConversations] = useState<Conversation[]>([]); // Use the Conversation interface
+  const [conversations, setConversations] = useState<Conversation[]>([]);
 
   useEffect(() => {
     const fetchConversations = async () => {
@@ -152,9 +148,12 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
   const handleGoogleSignIn = async () => {
     try {
       await signInWithPopup(auth, provider);
-    } catch (error: any) {
-      // Specify the error type
-      console.error("Google Sign-In Error:", error);
+    } catch (error: unknown) {
+      let errorMessage = "Google Sign-In Error occurred.";
+      if (error instanceof Error) {
+        errorMessage += ` ${error.message}`;
+      }
+      console.error(errorMessage);
     }
   };
 
@@ -162,9 +161,12 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
     try {
       await signOut(auth);
       if (onClose) onClose();
-    } catch (error: any) {
-      // Specify the error type
-      console.error("Sign-Out Error:", error);
+    } catch (error: unknown) {
+      let errorMessage = "Sign-Out Error occurred.";
+      if (error instanceof Error) {
+        errorMessage += ` ${error.message}`;
+      }
+      console.error(errorMessage);
     }
   };
 

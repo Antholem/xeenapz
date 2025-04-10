@@ -72,8 +72,12 @@ const ConversationPage = () => {
         } else {
           setError("Conversation not found!");
         }
-      } catch (e: any) {
-        setError(`Failed to fetch conversation and messages: ${e.message}`);
+      } catch (e: unknown) {
+        let errorMessage = "An unexpected error occurred.";
+        if (e instanceof Error) {
+          errorMessage = `Failed to fetch conversation and messages: ${e.message}`;
+        }
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
