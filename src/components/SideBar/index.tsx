@@ -51,10 +51,17 @@ interface SideBarProps {
   onClose?: () => void;
 }
 
+interface Conversation {
+  id: string;
+  userId: string;
+  // Add other properties based on your Firestore 'conversations' document
+  [key: string]: any; // Allow other dynamic properties
+}
+
 const ChatList = ({
   conversations,
 }: {
-  conversations: { id: string; title?: string }[];
+  conversations: Conversation[]; // Use the Conversation interface
 }) => {
   const router = useRouter();
 
@@ -118,7 +125,7 @@ const SkeletonChatList = () =>
 const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
   const { user, loading } = useAuth();
-  const [conversations, setConversations] = useState<any[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]); // Use the Conversation interface
 
   useEffect(() => {
     const fetchConversations = async () => {
@@ -128,10 +135,13 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
           where("userId", "==", user.uid)
         );
         const querySnapshot = await getDocs(conversationsQuery);
-        const conversationsList = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const conversationsList: Conversation[] = querySnapshot.docs.map(
+          (doc) =>
+            ({
+              id: doc.id,
+              ...doc.data(),
+            } as Conversation)
+        );
         setConversations(conversationsList);
       }
     };
@@ -142,7 +152,8 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
   const handleGoogleSignIn = async () => {
     try {
       await signInWithPopup(auth, provider);
-    } catch (error) {
+    } catch (error: any) {
+      // Specify the error type
       console.error("Google Sign-In Error:", error);
     }
   };
@@ -151,7 +162,8 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
     try {
       await signOut(auth);
       if (onClose) onClose();
-    } catch (error) {
+    } catch (error: any) {
+      // Specify the error type
       console.error("Sign-Out Error:", error);
     }
   };
