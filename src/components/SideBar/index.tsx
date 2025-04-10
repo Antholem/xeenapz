@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useEffect, useState } from "react";
 import {
   Box,
   Flex,
@@ -34,7 +34,7 @@ import { FiLogOut, FiUserCheck } from "react-icons/fi";
 import { auth, provider } from "@/lib/firebase";
 import { signInWithPopup, signOut } from "firebase/auth";
 import { useAuth } from "@/app/context/Auth";
-
+import { db, collection, query, where, getDocs } from "@/lib/firebase";
 interface SideBarProps {
   type: "temporary" | "persistent";
   isOpen?: boolean;
@@ -42,22 +42,32 @@ interface SideBarProps {
   onClose?: () => void;
 }
 
-const ChatList = () =>
-  [...Array(20)].map((_, index) => (
-    <Button key={index} variant="ghost" w="100%" justifyContent="flex-start">
-      <Box
-        as="span"
-        w="100%"
-        overflow="hidden"
-        textOverflow="ellipsis"
-        whiteSpace="nowrap"
-        display="block"
-        textAlign="left"
-      >
-        Chat items
-      </Box>
-    </Button>
-  ));
+const ChatList = ({ conversations }: { conversations: { id: string }[] }) => {
+  return (
+    <Fragment>
+      {conversations.map((convo) => (
+        <Button
+          key={convo.id}
+          variant="ghost"
+          w="100%"
+          justifyContent="flex-start"
+        >
+          <Box
+            as="span"
+            w="100%"
+            overflow="hidden"
+            textOverflow="ellipsis"
+            whiteSpace="nowrap"
+            display="block"
+            textAlign="left"
+          >
+            {convo.id}
+          </Box>
+        </Button>
+      ))}
+    </Fragment>
+  );
+};
 
 const SkeletonChatList = () =>
   [...Array(100)].map((_, index) => (
@@ -67,6 +77,26 @@ const SkeletonChatList = () =>
 const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
   const { user, loading } = useAuth();
+  const [conversations, setConversations] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchConversations = async () => {
+      if (user) {
+        const conversationsQuery = query(
+          collection(db, "conversations"),
+          where("userId", "==", user.uid)
+        );
+        const querySnapshot = await getDocs(conversationsQuery);
+        const conversationsList = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setConversations(conversationsList);
+      }
+    };
+
+    fetchConversations();
+  }, [user]);
 
   const handleGoogleSignIn = async () => {
     try {
@@ -206,7 +236,11 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
           spacing={0}
         >
           <Flex direction="column" align="center" justify="center" w="100%">
-            {loading ? <SkeletonChatList /> : <ChatList />}
+            {loading ? (
+              <SkeletonChatList />
+            ) : (
+              <ChatList conversations={conversations} />
+            )}
           </Flex>
         </VStack>
       </Flex>
@@ -339,7 +373,11 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
             borderTopWidth="1px"
             overflowY={loading ? "hidden" : "auto"}
           >
-            {loading ? <SkeletonChatList /> : <ChatList />}
+            {loading ? (
+              <SkeletonChatList />
+            ) : (
+              <ChatList conversations={conversations} />
+            )}
           </DrawerBody>
         </Card>
       </DrawerContent>

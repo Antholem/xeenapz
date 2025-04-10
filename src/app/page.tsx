@@ -25,6 +25,15 @@ import { speakText } from "@/lib/textToSpeech";
 import { SpeechRecognize } from "@/lib/speechRecognition";
 import ReactMarkdown from "react-markdown";
 import { useAuth } from "@/app/context/Auth";
+import {
+  db,
+  collection,
+  doc,
+  setDoc,
+  addDoc,
+  serverTimestamp,
+} from "@/lib/firebase";
+import { v4 as uuidv4 } from "uuid";
 
 // Message Type
 interface Message {
@@ -34,6 +43,7 @@ interface Message {
 }
 
 const Home: FC = () => {
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState<string>("");
   const [isFetchingResponse, setIsFetchingResponse] = useState<boolean>(false);
@@ -71,7 +81,7 @@ const Home: FC = () => {
   }, []);
 
   // Fetch Bot Response
-  const fetchBotResponse = async (userMessage: Message) => {
+  const fetchBotResponse = async (userMessage: Message, convoId: string) => {
     setIsFetchingResponse(true);
 
     try {
@@ -82,13 +92,40 @@ const Home: FC = () => {
       });
 
       const data = await res.json();
-      const botResponse =
+      const botText =
         data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
 
-      setMessages((prev) => [
-        ...prev,
-        { text: botResponse, sender: "bot", timestamp: Date.now() },
-      ]);
+      const botMessage: Message = {
+        text: botText,
+        sender: "bot",
+        timestamp: Date.now(),
+      };
+
+      setMessages((prev) => [...prev, botMessage]);
+      setIsFetchingResponse(false);
+
+      // Save bot message to Firestore
+      const messagesRef = collection(db, "conversations", convoId, "messages");
+
+      await addDoc(messagesRef, {
+        ...botMessage,
+        createdAt: new Date().toISOString(),
+        isGenerated: true,
+      });
+
+      // Optional: update conversation metadata
+      await setDoc(
+        doc(db, "conversations", convoId),
+        {
+          updatedAt: serverTimestamp(),
+          lastMessage: {
+            text: botMessage.text,
+            sender: botMessage.sender,
+            createdAt: new Date().toISOString(),
+          },
+        },
+        { merge: true }
+      );
     } catch (error) {
       console.error("Error fetching response:", error);
       setMessages((prev) => [
@@ -105,16 +142,51 @@ const Home: FC = () => {
   };
 
   // Send Message
-  const sendMessage = () => {
-    if (!input.trim()) return;
+  const sendMessage = async () => {
+    if (!input.trim() || !user) return;
 
     const timestamp = Date.now();
     const userMessage: Message = { text: input, sender: "user", timestamp };
+    const newMessages = [...messages, userMessage];
 
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages(newMessages);
     setInput("");
 
-    fetchBotResponse(userMessage);
+    try {
+      let convoId = conversationId;
+
+      if (!convoId) {
+        // Create a new conversation
+        convoId = uuidv4();
+        setConversationId(convoId);
+
+        await setDoc(doc(db, "conversations", convoId), {
+          userId: user.uid,
+          title: "New Chat",
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          isArchived: false,
+          lastMessage: {
+            text: userMessage.text,
+            sender: userMessage.sender,
+            createdAt: new Date().toISOString(),
+          },
+        });
+      }
+
+      // Save user message
+      const messagesRef = collection(db, "conversations", convoId, "messages");
+
+      await addDoc(messagesRef, {
+        ...userMessage,
+        createdAt: new Date().toISOString(),
+      });
+
+      // Now fetch the bot response and save it
+      fetchBotResponse(userMessage, convoId);
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
   };
 
   return (
