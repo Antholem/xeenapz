@@ -54,8 +54,7 @@ interface SideBarProps {
 interface Conversation {
   id: string;
   userId: string;
-  // Add other properties based on your Firestore 'conversations' document
-  [key: string]: any; // Allow other dynamic properties
+  [key: string]: any;
 }
 
 const ChatList = ({ conversations }: { conversations: Conversation[] }) => {
