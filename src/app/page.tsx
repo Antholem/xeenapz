@@ -123,6 +123,36 @@ const Home: FC = () => {
     }
   };
 
+  // Fetch Bot Set Title
+  const fetchBotSetTitle = async (userMessageText: string, convoId: string) => {
+    try {
+      const titlePrompt = `Generate a short, descriptive title (only the title, no extra words) for the following chat message: "${userMessageText}"`;
+      const titleResponse = await fetch("/api/gemini", {
+        // Reusing the Gemini API endpoint
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: titlePrompt }),
+      });
+
+      const titleData = await titleResponse.json();
+      const newTitle =
+        titleData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+      if (newTitle) {
+        await setDoc(
+          doc(db, "conversations", convoId),
+          {
+            title: newTitle,
+          },
+          { merge: true }
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching and setting title:", error);
+      // Optionally handle the error, e.g., keep the default title
+    }
+  };
+
   // Send Message
   const sendMessage = async () => {
     if (!input.trim() || !user) return;
@@ -154,11 +184,27 @@ const Home: FC = () => {
             createdAt: new Date().toISOString(),
           },
         });
+
+        // Fetch bot to set the title after creating the conversation
+        fetchBotSetTitle(userMessage.text, convoId);
+      } else {
+        // Update existing conversation's updatedAt and lastMessage
+        await setDoc(
+          doc(db, "conversations", convoId),
+          {
+            updatedAt: serverTimestamp(),
+            lastMessage: {
+              text: userMessage.text,
+              sender: userMessage.sender,
+              createdAt: new Date().toISOString(),
+            },
+          },
+          { merge: true }
+        );
       }
 
       // Save user message
       const messagesRef = collection(db, "conversations", convoId, "messages");
-
       await addDoc(messagesRef, {
         ...userMessage,
         createdAt: new Date().toISOString(),
@@ -183,9 +229,7 @@ const Home: FC = () => {
         setPlayingMessage={setPlayingMessage}
         messagesEndRef={messagesEndRef}
       />
-
       <Divider />
-
       {/* Input Area */}
       <ChatInput
         input={input}
