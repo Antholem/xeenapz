@@ -16,8 +16,8 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import { ChatInput, MessagesContainer } from "@/components/";
 import { ChatLayout } from "@/layouts";
+import { usePathname } from "next/navigation";
 
-// Message Type
 interface Message {
   text: string;
   sender: "user" | "bot";
@@ -35,6 +35,21 @@ const Home: FC = () => {
   const [isListening, setIsListening] = useState(false);
   const prevTranscriptRef = useRef("");
   const { user } = useAuth();
+  const pathname = usePathname();
+  const hasMounted = useRef(false);
+
+  useEffect(() => {
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      if (pathname === "/") {
+        setMessages([]);
+        setConversationId(null);
+      }
+    } else if (pathname === "/") {
+      setMessages([]);
+      setConversationId(null);
+    }
+  }, [pathname]);
 
   useEffect(() => {
     if (transcript && transcript !== prevTranscriptRef.current) {
@@ -54,7 +69,6 @@ const Home: FC = () => {
 
   useEffect(() => {
     const handleBeforeUnload = () => speechSynthesis.cancel();
-
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
@@ -62,10 +76,8 @@ const Home: FC = () => {
     };
   }, []);
 
-  // Fetch Bot Response
   const fetchBotResponse = async (userMessage: Message, convoId: string) => {
     setIsFetchingResponse(true);
-
     try {
       const res = await fetch("/api/gemini", {
         method: "POST",
@@ -86,16 +98,13 @@ const Home: FC = () => {
       setMessages((prev) => [...prev, botMessage]);
       setIsFetchingResponse(false);
 
-      // Save bot message to Firestore
       const messagesRef = collection(db, "conversations", convoId, "messages");
-
       await addDoc(messagesRef, {
         ...botMessage,
         createdAt: new Date().toISOString(),
         isGenerated: true,
       });
 
-      // Optional: update conversation metadata
       await setDoc(
         doc(db, "conversations", convoId),
         {
@@ -108,6 +117,11 @@ const Home: FC = () => {
         },
         { merge: true }
       );
+
+      if (!conversationId && convoId && pathname === "/") {
+        window.history.pushState({}, "", `/chat/${convoId}`);
+        setConversationId(convoId);
+      }
     } catch (error) {
       console.error("Error fetching response:", error);
       setMessages((prev) => [
@@ -123,12 +137,10 @@ const Home: FC = () => {
     }
   };
 
-  // Fetch Bot Set Title
   const fetchBotSetTitle = async (userMessageText: string, convoId: string) => {
     try {
       const titlePrompt = `Generate a short, descriptive title (only the title, no extra words) for the following chat message: "${userMessageText}"`;
       const titleResponse = await fetch("/api/gemini", {
-        // Reusing the Gemini API endpoint
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: titlePrompt }),
@@ -149,11 +161,9 @@ const Home: FC = () => {
       }
     } catch (error) {
       console.error("Error fetching and setting title:", error);
-      // Optionally handle the error, e.g., keep the default title
     }
   };
 
-  // Send Message
   const sendMessage = async () => {
     if (!input.trim() || !user) return;
 
@@ -168,7 +178,6 @@ const Home: FC = () => {
       let convoId = conversationId;
 
       if (!convoId) {
-        // Create a new conversation
         convoId = uuidv4();
         setConversationId(convoId);
 
@@ -185,10 +194,8 @@ const Home: FC = () => {
           },
         });
 
-        // Fetch bot to set the title after creating the conversation
         fetchBotSetTitle(userMessage.text, convoId);
       } else {
-        // Update existing conversation's updatedAt and lastMessage
         await setDoc(
           doc(db, "conversations", convoId),
           {
@@ -203,14 +210,12 @@ const Home: FC = () => {
         );
       }
 
-      // Save user message
       const messagesRef = collection(db, "conversations", convoId, "messages");
       await addDoc(messagesRef, {
         ...userMessage,
         createdAt: new Date().toISOString(),
       });
 
-      // Now fetch the bot response and save it
       fetchBotResponse(userMessage, convoId);
     } catch (error) {
       console.error("Error sending message:", error);
@@ -219,7 +224,6 @@ const Home: FC = () => {
 
   return (
     <ChatLayout>
-      {/* Messages Container */}
       <MessagesContainer
         messages={messages}
         isFetchingResponse={isFetchingResponse}
@@ -230,7 +234,6 @@ const Home: FC = () => {
         messagesEndRef={messagesEndRef}
       />
       <Divider />
-      {/* Input Area */}
       <ChatInput
         input={input}
         setInput={setInput}
