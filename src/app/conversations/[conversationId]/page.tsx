@@ -183,7 +183,6 @@ const ConversationPage: FC = () => {
     const timestamp = Date.now();
     const userMessage: Message = { text: input, sender: "user", timestamp };
 
-    // Optimistically update local state; onSnapshot will handle the source of truth
     setInput("");
 
     try {
@@ -199,11 +198,22 @@ const ConversationPage: FC = () => {
         sender: "user",
       });
 
+      // **UPDATE 'updatedAt' WHEN USER SENDS MESSAGE**
+      const conversationDocRef = doc(db, "conversations", conversationId);
+      await updateDoc(conversationDocRef, {
+        updatedAt: serverTimestamp(),
+        lastMessage: {
+          text: userMessage.text,
+          sender: userMessage.sender,
+          createdAt: new Date().toISOString(),
+        },
+      });
+
       // Fetch bot response after sending user message
       fetchBotResponse(userMessage, conversationId as string);
     } catch (error) {
       console.error("Error sending message:", error);
-      // Handle error in UI if needed, although onSnapshot should eventually reflect the state
+      // Handle error in UI if needed
     }
   };
 

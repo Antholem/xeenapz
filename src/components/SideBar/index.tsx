@@ -76,7 +76,7 @@ const ChatList = ({ conversations }: { conversations: Conversation[] }) => {
           <Button
             key={convo.id}
             variant={isActive ? "solid" : "ghost"}
-            m="1px"
+            mb="1px"
             w="100%"
             justifyContent="flex-start"
             onClick={() => handleConversationClick(convo.id)}
