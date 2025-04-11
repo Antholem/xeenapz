@@ -1,30 +1,38 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, FC } from "react";
 import {
   db,
   doc,
-  getDoc,
   collection,
-  getDocs,
   query,
   orderBy,
+  addDoc,
+  serverTimestamp,
+  updateDoc,
+  onSnapshot,
 } from "@/lib/firebase";
-import { Box, Text } from "@chakra-ui/react";
+import { Box } from "@chakra-ui/react";
+import { useAuth } from "@/app/context/Auth";
+import ChatLayout from "@/layouts/Chat/layout";
+import MessagesContainer from "@/components/MessagesContainer";
+import ChatInput from "@/components/ChatInput";
+import { useSpeechRecognition } from "react-speech-recognition";
+import { speakText } from "@/lib/textToSpeech";
 
 interface ConversationData {
   title?: string;
 }
 
 interface Message {
-  createdAt: string;
-  sender: string;
   text: string;
+  sender: "user" | "bot";
   timestamp: number;
+  createdAt?: string;
 }
 
-const ConversationPage = () => {
+const ConversationPage: FC = () => {
   const { conversationId } = useParams();
   const [conversation, setConversation] = useState<ConversationData | null>(
     null
@@ -32,96 +40,187 @@ const ConversationPage = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const [input, setInput] = useState<string>("");
+  const [isFetchingResponse, setIsFetchingResponse] = useState<boolean>(false);
+  const [playingMessage, setPlayingMessage] = useState<string | null>(null);
+  const { transcript, listening, resetTranscript } = useSpeechRecognition();
+  const [isListening, setIsListening] = useState(false);
+  const prevTranscriptRef = useRef("");
 
   useEffect(() => {
-    const fetchConversationAndMessages = async () => {
-      if (!conversationId) return;
-      setLoading(true);
-      setError(null);
-      setConversation(null);
-      setMessages([]);
+    if (!conversationId) return;
+    setLoading(true);
+    setError(null);
+    setConversation(null);
+    setMessages([]);
 
-      try {
-        // Fetch the conversation document
-        const conversationDocRef = doc(
-          db,
-          "conversations",
-          conversationId as string
-        );
-        const conversationSnap = await getDoc(conversationDocRef);
-        if (conversationSnap.exists()) {
-          setConversation(conversationSnap.data() as ConversationData);
-
-          // Fetch messages subcollection
-          const messagesCollectionRef = collection(
-            db,
-            "conversations",
-            conversationId as string,
-            "messages"
-          );
-          const messagesQuery = query(
-            messagesCollectionRef,
-            orderBy("createdAt")
-          ); // Or "timestamp", adjust based on your ordering
-          const messagesSnap = await getDocs(messagesQuery);
-          const messagesList: Message[] = [];
-          messagesSnap.forEach((doc) => {
-            messagesList.push(doc.data() as Message);
-          });
-          setMessages(messagesList);
+    const conversationDocRef = doc(db, "conversations", conversationId);
+    const unsubscribeConversation = onSnapshot(
+      conversationDocRef,
+      (docSnap) => {
+        if (docSnap.exists()) {
+          setConversation(docSnap.data() as ConversationData);
         } else {
           setError("Conversation not found!");
         }
-      } catch (e: unknown) {
-        let errorMessage = "An unexpected error occurred.";
-        if (e instanceof Error) {
-          errorMessage = `Failed to fetch conversation and messages: ${e.message}`;
-        }
-        setError(errorMessage);
-      } finally {
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error fetching conversation:", error);
+        setError("Failed to fetch conversation.");
         setLoading(false);
       }
-    };
+    );
 
-    fetchConversationAndMessages();
+    const messagesCollectionRef = collection(
+      db,
+      "conversations",
+      conversationId,
+      "messages"
+    );
+    const messagesQuery = query(messagesCollectionRef, orderBy("createdAt"));
+    const unsubscribeMessages = onSnapshot(
+      messagesQuery,
+      (snapshot) => {
+        const messagesList: Message[] = snapshot.docs.map(
+          (doc) =>
+            ({
+              ...doc.data(),
+            } as Message)
+        );
+        setMessages(messagesList);
+      },
+      (error) => {
+        console.error("Error listening for messages:", error);
+        setError("Failed to fetch messages.");
+      }
+    );
+
+    return () => {
+      unsubscribeConversation();
+      unsubscribeMessages();
+    };
   }, [conversationId]);
 
-  if (loading) {
-    return <Box>Loading conversation...</Box>;
-  }
+  useEffect(() => {
+    if (transcript && transcript !== prevTranscriptRef.current) {
+      const newText = transcript.replace(prevTranscriptRef.current, "").trim();
+      setInput((prev) => (prev ? `${prev} ${newText}`.trim() : newText));
+      prevTranscriptRef.current = transcript;
+    }
+  }, [transcript]);
 
-  if (error) {
-    return <Box color="red">{error}</Box>;
-  }
+  useEffect(() => {
+    setIsListening(listening);
+  }, [listening]);
 
-  if (!conversation) {
-    return <Box>Select a conversation.</Box>;
-  }
+  useEffect(() => {
+    if (!loading) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, loading]);
+
+  const fetchBotResponse = async (userMessage: Message, convoId: string) => {
+    setIsFetchingResponse(true);
+
+    try {
+      const res = await fetch("/api/gemini", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userMessage.text }),
+      });
+
+      const data = await res.json();
+      const botText =
+        data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+
+      const botMessage: Message = {
+        text: botText,
+        sender: "bot",
+        timestamp: Date.now(),
+      };
+
+      // Save bot message to Firestore; onSnapshot will update local messages
+      const messagesRef = collection(db, "conversations", convoId, "messages");
+      await addDoc(messagesRef, {
+        ...botMessage,
+        createdAt: new Date().toISOString(),
+        isGenerated: true,
+      });
+
+      // Optional: update conversation metadata (lastMessage, updatedAt)
+      await updateDoc(doc(db, "conversations", convoId), {
+        updatedAt: serverTimestamp(),
+        lastMessage: {
+          text: botMessage.text,
+          sender: botMessage.sender,
+          createdAt: new Date().toISOString(),
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching bot response:", error);
+      // Error state is not set here as onSnapshot should ideally reflect any issues
+    } finally {
+      setIsFetchingResponse(false);
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!input.trim() || !user || !conversationId) return;
+
+    const timestamp = Date.now();
+    const userMessage: Message = { text: input, sender: "user", timestamp };
+
+    // Optimistically update local state; onSnapshot will handle the source of truth
+    setInput("");
+
+    try {
+      const messagesRef = collection(
+        db,
+        "conversations",
+        conversationId,
+        "messages"
+      );
+      await addDoc(messagesRef, {
+        ...userMessage,
+        createdAt: new Date().toISOString(),
+        sender: "user",
+      });
+
+      // Fetch bot response after sending user message
+      fetchBotResponse(userMessage, conversationId);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      // Handle error in UI if needed, although onSnapshot should eventually reflect the state
+    }
+  };
+
+  if (loading) return <Box>Loading conversation...</Box>;
+  if (error) return <Box color="red">{error}</Box>;
+  if (!conversation) return <Box>Select a conversation.</Box>;
 
   return (
-    <Box p={4}>
-      <Text fontSize="xl" fontWeight="bold" mb={4}>
-        {conversation.title || conversationId}
-      </Text>
-      {messages.length > 0 ? (
-        messages.map((message) => (
-          <Box key={message.timestamp} mb={2}>
-            {" "}
-            {/* Assuming 'timestamp' is unique enough, otherwise use doc.id if available */}
-            <Text fontWeight={message.sender === "user" ? "bold" : "medium"}>
-              {message.sender}: {message.text}
-            </Text>
-            <Text fontSize="xs" color="gray.500">
-              {new Date(message.createdAt).toLocaleString()}{" "}
-              {/* Adjust if using Firebase Timestamp */}
-            </Text>
-          </Box>
-        ))
-      ) : (
-        <Text>No messages in this conversation yet.</Text>
-      )}
-      {/* Add your chat input area here */}
-    </Box>
+    <ChatLayout>
+      <MessagesContainer
+        messages={messages}
+        isFetchingResponse={isFetchingResponse}
+        user={user}
+        speakText={speakText}
+        playingMessage={playingMessage}
+        setPlayingMessage={setPlayingMessage}
+        messagesEndRef={messagesEndRef}
+      />
+      <ChatInput
+        input={input}
+        setInput={setInput}
+        isListening={isListening}
+        resetTranscript={resetTranscript}
+        isFetchingResponse={isFetchingResponse}
+        sendMessage={sendMessage}
+      />
+    </ChatLayout>
   );
 };
 

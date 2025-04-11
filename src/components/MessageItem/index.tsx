@@ -44,7 +44,10 @@ const MessageItem: FC<MessageItemProps> = ({
 }) => {
   const { colorMode } = useColorMode();
   const isUser = message.sender === "user";
-  const formattedTime = format(new Date(message.timestamp), "hh:mm a");
+  const formattedTime = format(
+    new Date(message.timestamp),
+    "MMM dd, yyyy hh:mm a"
+  );
 
   return (
     <Flex
