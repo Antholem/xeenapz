@@ -16,7 +16,7 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import { ChatInput, MessagesContainer } from "@/components/";
 import { ChatLayout } from "@/layouts";
-import { useRouter, usePathname } from "next/navigation"; // Import usePathname
+import { usePathname } from "next/navigation";
 
 interface Message {
   text: string;
@@ -35,15 +35,21 @@ const Home: FC = () => {
   const [isListening, setIsListening] = useState(false);
   const prevTranscriptRef = useRef("");
   const { user } = useAuth();
-  const router = useRouter();
   const pathname = usePathname();
   const hasMounted = useRef(false);
 
   useEffect(() => {
     if (!hasMounted.current) {
       hasMounted.current = true;
+      if (pathname === "/") {
+        setMessages([]);
+        setConversationId(null);
+      }
+    } else if (pathname === "/") {
+      setMessages([]);
+      setConversationId(null);
     }
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     if (transcript && transcript !== prevTranscriptRef.current) {
@@ -112,11 +118,9 @@ const Home: FC = () => {
         { merge: true }
       );
 
-      // **Update URL without full reload after bot response**
       if (!conversationId && convoId && pathname === "/") {
         window.history.pushState({}, "", `/chat/${convoId}`);
         setConversationId(convoId);
-        // Optionally update local state to reflect the URL change
       }
     } catch (error) {
       console.error("Error fetching response:", error);
