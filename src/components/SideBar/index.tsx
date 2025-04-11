@@ -69,18 +69,12 @@ const ChatList = ({ conversations }: { conversations: Conversation[] }) => {
 
   return (
     <Fragment>
-      {conversations.map((convo, index) => {
+      {conversations.map((convo) => {
         const isActive = pathname === `/chat/${convo.id}`;
 
         if (convo.title === "New Chat") {
           return (
-            <Skeleton
-              key={convo.id}
-              height="40px"
-              width="100%"
-              borderRadius="md"
-              mb="1px"
-            />
+            <Skeleton height="40px" width="100%" borderRadius="md" mb="1px" />
           );
         } else {
           return (
