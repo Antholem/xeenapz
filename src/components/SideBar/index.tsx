@@ -38,11 +38,12 @@ import {
   collection,
   query,
   where,
+  orderBy,
   onSnapshot,
 } from "@/lib/firebase";
 import { signInWithPopup, signOut } from "firebase/auth";
 import { useAuth } from "@/app/context/Auth";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 interface SideBarProps {
   type: "temporary" | "persistent";
@@ -54,11 +55,13 @@ interface SideBarProps {
 interface Conversation {
   id: string;
   userId: string;
+  updatedAt?: { seconds: number; nanoseconds: number } | null;
   [key: string]: any;
 }
 
 const ChatList = ({ conversations }: { conversations: Conversation[] }) => {
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleConversationClick = (conversationId: string) => {
     router.push(`/conversations/${conversationId}`);
@@ -66,28 +69,33 @@ const ChatList = ({ conversations }: { conversations: Conversation[] }) => {
 
   return (
     <Fragment>
-      {conversations.map((convo) => (
-        <Button
-          key={convo.id}
-          variant="ghost"
-          w="100%"
-          justifyContent="flex-start"
-          onClick={() => handleConversationClick(convo.id)}
-          cursor="pointer"
-        >
-          <Box
-            as="span"
+      {conversations.map((convo) => {
+        const isActive = pathname === `/conversations/${convo.id}`;
+
+        return (
+          <Button
+            key={convo.id}
+            variant={isActive ? "solid" : "ghost"}
+            m="1px"
             w="100%"
-            overflow="hidden"
-            textOverflow="ellipsis"
-            whiteSpace="nowrap"
-            display="block"
-            textAlign="left"
+            justifyContent="flex-start"
+            onClick={() => handleConversationClick(convo.id)}
+            cursor="pointer"
           >
-            {convo.id}
-          </Box>
-        </Button>
-      ))}
+            <Box
+              as="span"
+              w="100%"
+              overflow="hidden"
+              textOverflow="ellipsis"
+              whiteSpace="nowrap"
+              display="block"
+              textAlign="left"
+            >
+              {convo.id}
+            </Box>
+          </Button>
+        );
+      })}
     </Fragment>
   );
 };
@@ -127,7 +135,8 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
       const conversationsCollectionRef = collection(db, "conversations");
       const conversationsQuery = query(
         conversationsCollectionRef,
-        where("userId", "==", user.uid)
+        where("userId", "==", user.uid),
+        orderBy("updatedAt", "desc")
       );
 
       const unsubscribe = onSnapshot(
