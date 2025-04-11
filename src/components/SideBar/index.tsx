@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useEffect, useState } from "react";
 import {
   Box,
   Flex,
@@ -8,7 +8,6 @@ import {
   VStack,
   Divider,
   Input,
-  Button,
   InputGroup,
   InputLeftElement,
   Card,
@@ -28,12 +27,23 @@ import {
   Icon,
   Skeleton,
   SkeletonCircle,
+  Button,
 } from "@chakra-ui/react";
 import { IoAdd, IoSettingsSharp, IoSearch } from "react-icons/io5";
 import { FiLogOut, FiUserCheck } from "react-icons/fi";
-import { auth, provider } from "@/lib/firebase";
+import {
+  auth,
+  provider,
+  db,
+  collection,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+} from "@/lib/firebase";
 import { signInWithPopup, signOut } from "firebase/auth";
 import { useAuth } from "@/app/context/Auth";
+import { useRouter, usePathname } from "next/navigation";
 
 interface SideBarProps {
   type: "temporary" | "persistent";
@@ -42,22 +52,73 @@ interface SideBarProps {
   onClose?: () => void;
 }
 
-const ChatList = () =>
-  [...Array(20)].map((_, index) => (
-    <Button key={index} variant="ghost" w="100%" justifyContent="flex-start">
-      <Box
-        as="span"
-        w="100%"
-        overflow="hidden"
-        textOverflow="ellipsis"
-        whiteSpace="nowrap"
-        display="block"
-        textAlign="left"
-      >
-        Chat items
-      </Box>
-    </Button>
-  ));
+interface Conversation {
+  id: string;
+  userId: string;
+  updatedAt?: { seconds: number; nanoseconds: number } | null;
+  [key: string]: any;
+}
+
+const ChatList = ({ conversations }: { conversations: Conversation[] }) => {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const handleConversationClick = (conversationId: string) => {
+    router.push(`/conversations/${conversationId}`);
+  };
+
+  return (
+    <Fragment>
+      {conversations.map((convo) => {
+        const isActive = pathname === `/conversations/${convo.id}`;
+
+        return (
+          <Button
+            key={convo.id}
+            variant={isActive ? "solid" : "ghost"}
+            mb="1px"
+            w="100%"
+            justifyContent="flex-start"
+            onClick={() => handleConversationClick(convo.id)}
+            cursor="pointer"
+          >
+            <Box
+              as="span"
+              w="100%"
+              overflow="hidden"
+              textOverflow="ellipsis"
+              whiteSpace="nowrap"
+              display="block"
+              textAlign="left"
+            >
+              {convo.id}
+            </Box>
+          </Button>
+        );
+      })}
+    </Fragment>
+  );
+};
+
+const NewChatButton = () => {
+  const router = useRouter();
+
+  const handleNewChatClick = () => {
+    router.push("/");
+  };
+
+  return (
+    <Tooltip label="New chat">
+      <IconButton
+        aria-label="New Chat"
+        variant="ghost"
+        icon={<IoAdd />}
+        onClick={handleNewChatClick}
+        cursor="pointer"
+      />
+    </Tooltip>
+  );
+};
 
 const SkeletonChatList = () =>
   [...Array(100)].map((_, index) => (
@@ -67,12 +128,52 @@ const SkeletonChatList = () =>
 const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
   const { user, loading } = useAuth();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+
+  useEffect(() => {
+    if (user) {
+      const conversationsCollectionRef = collection(db, "conversations");
+      const conversationsQuery = query(
+        conversationsCollectionRef,
+        where("userId", "==", user.uid),
+        orderBy("updatedAt", "desc")
+      );
+
+      const unsubscribe = onSnapshot(
+        conversationsQuery,
+        (snapshot) => {
+          const conversationsList: Conversation[] = snapshot.docs.map(
+            (doc) =>
+              ({
+                id: doc.id,
+                ...doc.data(),
+              } as Conversation)
+          );
+          setConversations(conversationsList);
+        },
+        (error) => {
+          console.error("Error listening for conversations:", error);
+          // Handle error appropriately
+        }
+      );
+
+      // Clean up the listener when the component unmounts or user changes
+      return () => unsubscribe();
+    } else {
+      // If user is not logged in, set conversations to an empty array
+      setConversations([]);
+    }
+  }, [user]);
 
   const handleGoogleSignIn = async () => {
     try {
       await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error("Google Sign-In Error:", error);
+    } catch (error: unknown) {
+      let errorMessage = "Google Sign-In Error occurred.";
+      if (error instanceof Error) {
+        errorMessage += ` ${error.message}`;
+      }
+      console.error(errorMessage);
     }
   };
 
@@ -80,8 +181,12 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
     try {
       await signOut(auth);
       if (onClose) onClose();
-    } catch (error) {
-      console.error("Sign-Out Error:", error);
+    } catch (error: unknown) {
+      let errorMessage = "Sign-Out Error occurred.";
+      if (error instanceof Error) {
+        errorMessage += ` ${error.message}`;
+      }
+      console.error(errorMessage);
     }
   };
 
@@ -164,13 +269,7 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
             )}
           </Flex>
           <Box>
-            <Tooltip label="New chat">
-              <IconButton
-                aria-label="New Chat"
-                variant="ghost"
-                icon={<IoAdd />}
-              />
-            </Tooltip>
+            <NewChatButton />
             <Tooltip label="Settings">
               <IconButton
                 aria-label="Settings"
@@ -206,7 +305,11 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
           spacing={0}
         >
           <Flex direction="column" align="center" justify="center" w="100%">
-            {loading ? <SkeletonChatList /> : <ChatList />}
+            {loading ? (
+              <SkeletonChatList />
+            ) : (
+              <ChatList conversations={conversations} />
+            )}
           </Flex>
         </VStack>
       </Flex>
@@ -303,13 +406,7 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
 
             {/* Action Buttons */}
             <Box>
-              <Tooltip label="New chat">
-                <IconButton
-                  aria-label="New Chat"
-                  variant="ghost"
-                  icon={<IoAdd />}
-                />
-              </Tooltip>
+              <NewChatButton />
               <Tooltip label="Settings">
                 <IconButton
                   aria-label="Settings"
@@ -339,7 +436,11 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
             borderTopWidth="1px"
             overflowY={loading ? "hidden" : "auto"}
           >
-            {loading ? <SkeletonChatList /> : <ChatList />}
+            {loading ? (
+              <SkeletonChatList />
+            ) : (
+              <ChatList conversations={conversations} />
+            )}
           </DrawerBody>
         </Card>
       </DrawerContent>

@@ -1,30 +1,21 @@
 "use client";
 
 import { useState, useEffect, useRef, FC } from "react";
-import {
-  Input,
-  Box,
-  VStack,
-  Text,
-  Flex,
-  Avatar,
-  Image,
-  Divider,
-  IconButton,
-  Card,
-  Tooltip,
-  SkeletonCircle,
-  useColorMode,
-} from "@chakra-ui/react";
-import { User } from "firebase/auth";
-import { IoIosMic, IoMdSend } from "react-icons/io";
-import { format } from "date-fns";
-import { IoStop } from "react-icons/io5";
+import { Divider } from "@chakra-ui/react";
 import { useSpeechRecognition } from "react-speech-recognition";
 import { speakText } from "@/lib/textToSpeech";
-import { SpeechRecognize } from "@/lib/speechRecognition";
-import ReactMarkdown from "react-markdown";
 import { useAuth } from "@/app/context/Auth";
+import {
+  db,
+  collection,
+  doc,
+  setDoc,
+  addDoc,
+  serverTimestamp,
+} from "@/lib/firebase";
+import { v4 as uuidv4 } from "uuid";
+import { ChatInput, MessagesContainer } from "@/components/";
+import { ChatLayout } from "@/layouts";
 
 // Message Type
 interface Message {
@@ -34,6 +25,7 @@ interface Message {
 }
 
 const Home: FC = () => {
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState<string>("");
   const [isFetchingResponse, setIsFetchingResponse] = useState<boolean>(false);
@@ -71,7 +63,7 @@ const Home: FC = () => {
   }, []);
 
   // Fetch Bot Response
-  const fetchBotResponse = async (userMessage: Message) => {
+  const fetchBotResponse = async (userMessage: Message, convoId: string) => {
     setIsFetchingResponse(true);
 
     try {
@@ -82,13 +74,40 @@ const Home: FC = () => {
       });
 
       const data = await res.json();
-      const botResponse =
+      const botText =
         data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
 
-      setMessages((prev) => [
-        ...prev,
-        { text: botResponse, sender: "bot", timestamp: Date.now() },
-      ]);
+      const botMessage: Message = {
+        text: botText,
+        sender: "bot",
+        timestamp: Date.now(),
+      };
+
+      setMessages((prev) => [...prev, botMessage]);
+      setIsFetchingResponse(false);
+
+      // Save bot message to Firestore
+      const messagesRef = collection(db, "conversations", convoId, "messages");
+
+      await addDoc(messagesRef, {
+        ...botMessage,
+        createdAt: new Date().toISOString(),
+        isGenerated: true,
+      });
+
+      // Optional: update conversation metadata
+      await setDoc(
+        doc(db, "conversations", convoId),
+        {
+          updatedAt: serverTimestamp(),
+          lastMessage: {
+            text: botMessage.text,
+            sender: botMessage.sender,
+            createdAt: new Date().toISOString(),
+          },
+        },
+        { merge: true }
+      );
     } catch (error) {
       console.error("Error fetching response:", error);
       setMessages((prev) => [
@@ -105,186 +124,78 @@ const Home: FC = () => {
   };
 
   // Send Message
-  const sendMessage = () => {
-    if (!input.trim()) return;
+  const sendMessage = async () => {
+    if (!input.trim() || !user) return;
 
     const timestamp = Date.now();
     const userMessage: Message = { text: input, sender: "user", timestamp };
+    const newMessages = [...messages, userMessage];
 
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages(newMessages);
     setInput("");
 
-    fetchBotResponse(userMessage);
+    try {
+      let convoId = conversationId;
+
+      if (!convoId) {
+        // Create a new conversation
+        convoId = uuidv4();
+        setConversationId(convoId);
+
+        await setDoc(doc(db, "conversations", convoId), {
+          userId: user.uid,
+          title: "New Chat",
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          isArchived: false,
+          lastMessage: {
+            text: userMessage.text,
+            sender: userMessage.sender,
+            createdAt: new Date().toISOString(),
+          },
+        });
+      }
+
+      // Save user message
+      const messagesRef = collection(db, "conversations", convoId, "messages");
+
+      await addDoc(messagesRef, {
+        ...userMessage,
+        createdAt: new Date().toISOString(),
+      });
+
+      // Now fetch the bot response and save it
+      fetchBotResponse(userMessage, convoId);
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
   };
 
   return (
-    <Flex direction="column" h="100%">
+    <ChatLayout>
       {/* Messages Container */}
-      <Box flex="1" overflowY="auto" p={4} aria-live="polite">
-        {messages.length === 0 ? (
-          <VStack height="100%">
-            <Flex justify="center" align="center" flex="1">
-              <Text fontSize={{ base: "lg", md: "3xl" }} textAlign="center">
-                Hello, what can I help with?
-              </Text>
-            </Flex>
-          </VStack>
-        ) : (
-          <VStack spacing={4} align="stretch">
-            {messages.map((msg, index) => (
-              <MessageItem
-                key={index}
-                message={msg}
-                user={user}
-                speakText={speakText}
-                playingMessage={playingMessage}
-                setPlayingMessage={setPlayingMessage}
-              />
-            ))}
-          </VStack>
-        )}
-
-        {isFetchingResponse && (
-          <Flex justify="flex-start" align="end" gap={4}>
-            <Image boxSize="24px" src="./favicon.ico" alt="Xeenapz" />
-            <Flex direction="row" gap={1}>
-              {[...Array(3)].map((_, index) => (
-                <SkeletonCircle key={index} size="2" />
-              ))}
-            </Flex>
-          </Flex>
-        )}
-        <Box as="div" ref={messagesEndRef} />
-      </Box>
+      <MessagesContainer
+        messages={messages}
+        isFetchingResponse={isFetchingResponse}
+        user={user}
+        speakText={speakText}
+        playingMessage={playingMessage}
+        setPlayingMessage={setPlayingMessage}
+        messagesEndRef={messagesEndRef}
+      />
 
       <Divider />
 
       {/* Input Area */}
-      <Card p={3} borderRadius={0} variant="unstyled">
-        <Flex gap={2} justify="center" align="center">
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-              }
-            }}
-            placeholder="Write a message..."
-            flex="1"
-            variant="filled"
-          />
-          <Tooltip label={isListening ? "Stop" : "Type by voice"}>
-            <IconButton
-              aria-label="Speech Recognition"
-              variant="ghost"
-              icon={isListening ? <IoStop /> : <IoIosMic />}
-              onClick={() => SpeechRecognize(isListening, resetTranscript)}
-            />
-          </Tooltip>
-          <Tooltip label="Send message">
-            <IconButton
-              aria-label="Send Message"
-              variant="ghost"
-              icon={<IoMdSend />}
-              isDisabled={isFetchingResponse || !input.trim()}
-              onClick={sendMessage}
-            />
-          </Tooltip>
-        </Flex>
-      </Card>
-    </Flex>
-  );
-};
-
-// Message Component
-const MessageItem: FC<{
-  message: Message;
-  user: User | null;
-  speakText: (
-    text: string,
-    playingMessage: string | null,
-    setPlayingMessage: (msg: string | null) => void
-  ) => void;
-  setPlayingMessage: (msg: string | null) => void;
-  playingMessage: string | null;
-}> = ({ message, user, speakText, playingMessage, setPlayingMessage }) => {
-  const { colorMode } = useColorMode();
-  const isUser = message.sender === "user";
-  const formattedTime = format(new Date(message.timestamp), "hh:mm a");
-
-  return (
-    <Flex
-      direction="column"
-      align={isUser ? "flex-end" : "flex-start"}
-      overflowX="hidden"
-    >
-      <Flex align="start" gap={4} maxW="70%">
-        {!isUser && <Image boxSize="24px" src="./favicon.ico" alt="Bot Icon" />}
-        <Box
-          display="flex"
-          flexDirection="column"
-          alignItems={isUser ? "flex-end" : "flex-start"}
-          gap={1}
-        >
-          <Box
-            p={3}
-            borderRadius="lg"
-            color={isUser ? "white" : ""}
-            bg={
-              isUser
-                ? colorMode === "light"
-                  ? "blue.400"
-                  : "blue.500"
-                : colorMode === "light"
-                ? "gray.200"
-                : "gray.700"
-            }
-            maxW="max-content"
-            whiteSpace="pre-wrap"
-          >
-            <ReactMarkdown
-              components={{
-                ul: ({ children }) => (
-                  <ul style={{ paddingLeft: "20px" }}>{children}</ul>
-                ),
-              }}
-            >
-              {message.text}
-            </ReactMarkdown>
-          </Box>
-
-          <Flex align="center" justify="center" gap={1}>
-            <Text fontSize="xs">{formattedTime}</Text>
-            {!isUser && (
-              <Tooltip
-                label={playingMessage === message.text ? "Stop" : "Read aloud"}
-              >
-                <IconButton
-                  aria-label="Read aloud"
-                  icon={
-                    playingMessage === message.text ? <IoStop /> : <IoIosMic />
-                  }
-                  variant="ghost"
-                  size="xs"
-                  onClick={() =>
-                    speakText(message.text, playingMessage, setPlayingMessage)
-                  }
-                />
-              </Tooltip>
-            )}
-          </Flex>
-        </Box>
-        {isUser && (
-          <Avatar
-            size="sm"
-            src={user?.photoURL ?? "default-avatar.png"}
-            name={user?.displayName ?? ""}
-          />
-        )}
-      </Flex>
-    </Flex>
+      <ChatInput
+        input={input}
+        setInput={setInput}
+        isListening={isListening}
+        resetTranscript={resetTranscript}
+        isFetchingResponse={isFetchingResponse}
+        sendMessage={sendMessage}
+      />
+    </ChatLayout>
   );
 };
 
