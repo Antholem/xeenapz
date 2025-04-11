@@ -64,37 +64,49 @@ const ChatList = ({ conversations }: { conversations: Conversation[] }) => {
   const pathname = usePathname();
 
   const handleConversationClick = (conversationId: string) => {
-    router.push(`/conversations/${conversationId}`);
+    router.push(`/chat/${conversationId}`);
   };
 
   return (
     <Fragment>
-      {conversations.map((convo) => {
-        const isActive = pathname === `/conversations/${convo.id}`;
+      {conversations.map((convo, index) => {
+        const isActive = pathname === `/chat/${convo.id}`;
 
-        return (
-          <Button
-            key={convo.id}
-            variant={isActive ? "solid" : "ghost"}
-            mb="1px"
-            w="100%"
-            justifyContent="flex-start"
-            onClick={() => handleConversationClick(convo.id)}
-            cursor="pointer"
-          >
-            <Box
-              as="span"
+        if (convo.title === "New Chat") {
+          return (
+            <Skeleton
+              key={convo.id}
+              height="40px"
+              width="100%"
+              borderRadius="md"
+              mb="1px"
+            />
+          );
+        } else {
+          return (
+            <Button
+              key={convo.id}
+              variant={isActive ? "solid" : "ghost"}
+              mb="1px"
               w="100%"
-              overflow="hidden"
-              textOverflow="ellipsis"
-              whiteSpace="nowrap"
-              display="block"
-              textAlign="left"
+              justifyContent="flex-start"
+              onClick={() => handleConversationClick(convo.id)}
+              cursor="pointer"
             >
-              {convo.id}
-            </Box>
-          </Button>
-        );
+              <Box
+                as="span"
+                w="100%"
+                overflow="hidden"
+                textOverflow="ellipsis"
+                whiteSpace="nowrap"
+                display="block"
+                textAlign="left"
+              >
+                {convo.title}
+              </Box>
+            </Button>
+          );
+        }
       })}
     </Fragment>
   );
