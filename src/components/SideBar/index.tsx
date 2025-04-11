@@ -74,7 +74,13 @@ const ChatList = ({ conversations }: { conversations: Conversation[] }) => {
 
         if (convo.title === "New Chat") {
           return (
-            <Skeleton height="40px" width="100%" borderRadius="md" mb="1px" />
+            <Skeleton
+              key={convo.id}
+              height="40px"
+              width="100%"
+              borderRadius="md"
+              mb="1px"
+            />
           );
         } else {
           return (
