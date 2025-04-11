@@ -12,6 +12,7 @@ import {
   serverTimestamp,
   updateDoc,
   onSnapshot,
+  DocumentReference,
 } from "@/lib/firebase";
 import { Box } from "@chakra-ui/react";
 import { useAuth } from "@/app/context/Auth";
@@ -20,6 +21,11 @@ import MessagesContainer from "@/components/MessagesContainer";
 import ChatInput from "@/components/ChatInput";
 import { useSpeechRecognition } from "react-speech-recognition";
 import { speakText } from "@/lib/textToSpeech";
+
+interface ConversationParams {
+  [key: string]: string | undefined;
+  conversationId?: string;
+}
 
 interface ConversationData {
   title?: string;
@@ -33,7 +39,7 @@ interface Message {
 }
 
 const ConversationPage: FC = () => {
-  const { conversationId } = useParams();
+  const { conversationId } = useParams<ConversationParams>();
   const [conversation, setConversation] = useState<ConversationData | null>(
     null
   );
@@ -56,7 +62,11 @@ const ConversationPage: FC = () => {
     setConversation(null);
     setMessages([]);
 
-    const conversationDocRef = doc(db, "conversations", conversationId);
+    const conversationDocRef: DocumentReference = doc(
+      db,
+      "conversations",
+      conversationId as string
+    );
     const unsubscribeConversation = onSnapshot(
       conversationDocRef,
       (docSnap) => {
@@ -77,7 +87,7 @@ const ConversationPage: FC = () => {
     const messagesCollectionRef = collection(
       db,
       "conversations",
-      conversationId,
+      conversationId as string,
       "messages"
     );
     const messagesQuery = query(messagesCollectionRef, orderBy("createdAt"));
@@ -180,7 +190,7 @@ const ConversationPage: FC = () => {
       const messagesRef = collection(
         db,
         "conversations",
-        conversationId,
+        conversationId as string,
         "messages"
       );
       await addDoc(messagesRef, {
@@ -190,7 +200,7 @@ const ConversationPage: FC = () => {
       });
 
       // Fetch bot response after sending user message
-      fetchBotResponse(userMessage, conversationId);
+      fetchBotResponse(userMessage, conversationId as string);
     } catch (error) {
       console.error("Error sending message:", error);
       // Handle error in UI if needed, although onSnapshot should eventually reflect the state
