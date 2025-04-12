@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment } from "react";
+import { FC, Fragment, useEffect, useState } from "react";
 import {
   Flex,
   Text,
@@ -15,17 +15,75 @@ import {
 } from "@chakra-ui/react";
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
 import { HiPencilAlt } from "react-icons/hi";
-import { auth, provider } from "@/lib/firebase";
+import {
+  auth,
+  provider,
+  db,
+  doc,
+  onSnapshot,
+} from "@/lib/firebase";
 import { signInWithPopup } from "firebase/auth";
 import { IoMdMenu } from "react-icons/io";
 import SideBar from "@/components/SideBar";
 import { useAuth } from "@/app/context/Auth";
+import { usePathname } from "next/navigation";
+import {
 
-const NavigationBar = () => {
+  Unsubscribe, 
+} from "firebase/firestore"; 
+
+interface Conversation {
+  title?: string;
+}
+
+const NavigationBar: FC = () => {
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
   const { user, loading } = useAuth();
+  const pathname = usePathname();
+  const [currentConvoTitle, setCurrentConvoTitle] = useState<string | null>(null);
+  let unsubscribe: Unsubscribe | undefined;
+
+  useEffect(() => {
+    const fetchConvoTitle = async () => {
+      if (pathname?.startsWith("/chat/") && user) {
+        const convoId = pathname.split("/")[2];
+        const docRef = doc(db, "conversations", convoId);
+
+        unsubscribe = onSnapshot(
+          docRef,
+          (docSnap) => {
+            if (docSnap.exists()) {
+              const data = docSnap.data() as Conversation;
+              setCurrentConvoTitle(data.title || null);
+            } else {
+              setCurrentConvoTitle(null);
+            }
+          },
+          (error) => {
+            console.error("Error listening for conversation updates:", error);
+            setCurrentConvoTitle(null);
+          }
+        );
+      } else {
+        setCurrentConvoTitle(null);
+        // Unsubscribe from any previous listener when not on a chat route
+        if (unsubscribe) {
+          unsubscribe();
+        }
+      }
+    };
+
+    fetchConvoTitle();
+
+    // Clean up the listener when the component unmounts or dependencies change
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [pathname, user]);
 
   const handleGoogleSignIn = async () => {
     try {
@@ -51,7 +109,7 @@ const NavigationBar = () => {
             <Fragment>
               <Flex align="center" gap={3}>
                 <Text fontSize="lg" fontWeight="bold" isTruncated>
-                  Xeenapz
+                  {pathname === "/" ? "Xeenapz" : currentConvoTitle || "Xeenapz"}
                 </Text>
               </Flex>
               <Flex align="center" gap={4}>
@@ -81,7 +139,7 @@ const NavigationBar = () => {
                 />
               )}
               <Text fontSize="lg" fontWeight="bold" isTruncated>
-                Xeenapz
+                {pathname === "/" ? "Xeenapz" : currentConvoTitle || "Xeenapz"}
               </Text>
               <Flex align="center" gap={2}>
                 <IconButton

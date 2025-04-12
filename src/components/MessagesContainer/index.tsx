@@ -73,7 +73,7 @@ const MessagesContainer: FC<MessagesContainerProps> = ({
 
       {isFetchingResponse && (
         <Flex justify="flex-start" align="end" gap={4}>
-          <Image boxSize="24px" src="./favicon.ico" alt="Xeenapz" />
+          <Image boxSize="24px" src="/favicon.ico" alt="Xeenapz" />
           <Flex direction="row" gap={1}>
             {[...Array(3)].map((_, index) => (
               <SkeletonCircle key={index} size="2" />
