@@ -32,13 +32,11 @@ import {
   Unsubscribe, 
 } from "firebase/firestore"; 
 
-interface NavigationBarProps { }
-
 interface Conversation {
   title?: string;
 }
 
-const NavigationBar: FC<NavigationBarProps> = () => {
+const NavigationBar: FC = () => {
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
