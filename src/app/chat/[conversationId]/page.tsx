@@ -26,10 +26,6 @@ interface ConversationParams {
   conversationId?: string;
 }
 
-interface ConversationData {
-  title?: string;
-}
-
 interface Message {
   text: string;
   sender: "user" | "bot";
