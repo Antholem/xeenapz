@@ -7,6 +7,7 @@ import {
   Flex,
   Image,
   SkeletonCircle,
+  Spinner,
 } from "@chakra-ui/react";
 import { User } from "firebase/auth";
 import MessageItem from "../MessageItem";
@@ -29,6 +30,8 @@ interface MessagesContainerProps {
   setPlayingMessage: (msg: string | null) => void;
   playingMessage: string | null;
   messagesEndRef: RefObject<HTMLDivElement | null>;
+  isLoading?: boolean;
+  emptyStateText?: string;
 }
 
 const MessagesContainer: FC<MessagesContainerProps> = ({
@@ -39,6 +42,8 @@ const MessagesContainer: FC<MessagesContainerProps> = ({
   playingMessage,
   setPlayingMessage,
   messagesEndRef,
+  isLoading = false,
+  emptyStateText = "Hello, what can I help with?",
 }) => {
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -46,13 +51,24 @@ const MessagesContainer: FC<MessagesContainerProps> = ({
     }
   }, [messages, messagesEndRef]);
 
-  return (
+  return isLoading ? (
+    <Flex
+      flex="1"
+      overflowY="auto"
+      p={4}
+      aria-live="polite"
+      justifyContent="center"
+      alignItems="center"
+    >
+      <Spinner size="xl" />
+    </Flex>
+  ) : (
     <Box flex="1" overflowY="auto" p={4} aria-live="polite">
       {messages.length === 0 ? (
         <VStack height="100%">
           <Flex justify="center" align="center" flex="1">
             <Text fontSize={{ base: "lg", md: "3xl" }} textAlign="center">
-              Hello, what can I help with?
+              {emptyStateText}
             </Text>
           </Flex>
         </VStack>
@@ -70,7 +86,6 @@ const MessagesContainer: FC<MessagesContainerProps> = ({
           ))}
         </VStack>
       )}
-
       {isFetchingResponse && (
         <Flex justify="flex-start" align="end" gap={4}>
           <Image boxSize="24px" src="/favicon.ico" alt="Xeenapz" />

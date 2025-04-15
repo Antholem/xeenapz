@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef, FC } from "react";
-import { Divider } from "@chakra-ui/react";
 import { useSpeechRecognition } from "react-speech-recognition";
 import { speakText } from "@/lib/textToSpeech";
 import { useAuth } from "@/app/context/Auth";
@@ -233,7 +232,6 @@ const Home: FC = () => {
         setPlayingMessage={setPlayingMessage}
         messagesEndRef={messagesEndRef}
       />
-      <Divider />
       <ChatInput
         input={input}
         setInput={setInput}

@@ -28,6 +28,7 @@ import {
   Skeleton,
   SkeletonCircle,
   Button,
+  Spinner,
 } from "@chakra-ui/react";
 import { IoAdd, IoSettingsSharp, IoSearch } from "react-icons/io5";
 import { FiLogOut, FiUserCheck } from "react-icons/fi";
@@ -132,18 +133,28 @@ const NewChatButton = () => {
   );
 };
 
-const SkeletonChatList = () =>
-  [...Array(100)].map((_, index) => (
-    <Skeleton key={index} height="40px" width="100%" borderRadius="md" mb={1} />
-  ));
+const SkeletonChatList = () => (
+  <Flex
+    flex="1"
+    overflowY="auto"
+    p={4}
+    aria-live="polite"
+    justifyContent="center"
+    alignItems="center"
+  >
+    <Spinner size="xl" />
+  </Flex>
+);
 
 const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
+      setLoading(true); // Set loading to true when fetching starts
       const conversationsCollectionRef = collection(db, "conversations");
       const conversationsQuery = query(
         conversationsCollectionRef,
@@ -162,9 +173,11 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
               } as Conversation)
           );
           setConversations(conversationsList);
+          setLoading(false); // Set loading to false when data is received
         },
         (error) => {
           console.error("Error listening for conversations:", error);
+          setLoading(false); // Set loading to false on error as well
           // Handle error appropriately
         }
       );
@@ -172,8 +185,9 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
       // Clean up the listener when the component unmounts or user changes
       return () => unsubscribe();
     } else {
-      // If user is not logged in, set conversations to an empty array
+      // If user is not logged in, set conversations to an empty array and loading to false
       setConversations([]);
+      setLoading(false);
     }
   }, [user]);
 
@@ -220,7 +234,7 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
         >
           {/* Profile Avatar */}
           <Flex align="center" justify="start" gap={3}>
-            {loading ? (
+            {authLoading ? (
               <Fragment>
                 <SkeletonCircle height="32px" width="32px" />
                 <Box width="180px">
@@ -316,13 +330,13 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
           overflowY={loading ? "hidden" : "auto"}
           spacing={0}
         >
-          <Flex direction="column" align="center" justify="center" w="100%">
-            {loading ? (
-              <SkeletonChatList />
-            ) : (
+          {loading ? (
+            <SkeletonChatList />
+          ) : (
+            <Flex direction="column" align="center" justify="center" w="100%">
               <ChatList conversations={conversations} />
-            )}
-          </Flex>
+            </Flex>
+          )}
         </VStack>
       </Flex>
     </Card>
@@ -354,7 +368,7 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
           >
             {/* Profile Section */}
             <Flex align="center" justify="start" gap={3}>
-              {loading ? (
+              {authLoading ? (
                 <Fragment>
                   <SkeletonCircle height="32px" width="32px" />
                   <Box width="150px">
@@ -442,18 +456,17 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
               />
             </InputGroup>
           </Flex>
-
-          <DrawerBody
-            p={3}
-            borderTopWidth="1px"
-            overflowY={loading ? "hidden" : "auto"}
-          >
-            {loading ? (
-              <SkeletonChatList />
-            ) : (
+          {loading ? (
+            <SkeletonChatList />
+          ) : (
+            <DrawerBody
+              p={3}
+              borderTopWidth="1px"
+              overflowY={loading ? "hidden" : "auto"}
+            >
               <ChatList conversations={conversations} />
-            )}
-          </DrawerBody>
+            </DrawerBody>
+          )}
         </Card>
       </DrawerContent>
     </Drawer>
