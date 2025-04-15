@@ -16,6 +16,7 @@ import { v4 as uuidv4 } from "uuid";
 import { ChatInput, MessagesContainer } from "@/components/";
 import { ChatLayout } from "@/layouts";
 import { usePathname } from "next/navigation";
+import { useTemporaryChat } from "./context/TemporaryChat";
 
 interface Message {
   text: string;
@@ -34,11 +35,12 @@ const Home: FC = () => {
   const [isListening, setIsListening] = useState(false);
   const prevTranscriptRef = useRef("");
   const { user } = useAuth();
+  const { isMessageTemporary } = useTemporaryChat();
   const pathname = usePathname();
   const hasMounted = useRef(false);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || isMessageTemporary) return;
 
     if (!hasMounted.current) {
       hasMounted.current = true;
@@ -99,7 +101,7 @@ const Home: FC = () => {
       timestamp: Date.now(),
     };
 
-    if (user && convoId) {
+    if (user && convoId && !isMessageTemporary) {
       try {
         setMessages((prev) => [...prev, botMessage]);
         setIsFetchingResponse(false);
@@ -202,7 +204,7 @@ const Home: FC = () => {
     setInput("");
     setMessages((prev) => [...prev, userMessage]);
 
-    if (user) {
+    if (user && !isMessageTemporary) {
       try {
         let convoId = conversationId;
 
