@@ -22,6 +22,8 @@ import SideBar from "@/components/SideBar";
 import { useAuth } from "@/app/context/Auth";
 import { usePathname } from "next/navigation";
 import { Unsubscribe } from "firebase/firestore";
+import { RiChat3Line, RiChatHistoryLine } from "react-icons/ri";
+import { useTemporaryChat } from "@/app/context/TemporaryChat";
 
 interface Conversation {
   title?: string;
@@ -32,6 +34,7 @@ const NavigationBar: FC = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
   const { user, loading: authLoading } = useAuth();
+  const { isMessageTemporary, setIsMessageTemporary } = useTemporaryChat();
   const pathname = usePathname();
   const [currentConvoTitle, setCurrentConvoTitle] = useState<string | null>(
     null
@@ -61,7 +64,6 @@ const NavigationBar: FC = () => {
         );
       } else {
         setCurrentConvoTitle(null);
-        // Unsubscribe from any previous listener when not on a chat route
         if (unsubscribe) {
           unsubscribe();
         }
@@ -70,7 +72,6 @@ const NavigationBar: FC = () => {
 
     fetchConvoTitle();
 
-    // Clean up the listener when the component unmounts or dependencies change
     return () => {
       if (unsubscribe) {
         unsubscribe();
@@ -84,6 +85,10 @@ const NavigationBar: FC = () => {
     } catch (error) {
       console.error("Google Sign-In Error:", error);
     }
+  };
+
+  const toggleTemporaryChat = () => {
+    setIsMessageTemporary(!isMessageTemporary);
   };
 
   return (
@@ -108,6 +113,20 @@ const NavigationBar: FC = () => {
                 </Text>
               </Flex>
               <Flex align="center" gap={4}>
+                {user && pathname === "/" && (
+                  <IconButton
+                    aria-label="Temporary Chat"
+                    icon={
+                      isMessageTemporary ? (
+                        <RiChatHistoryLine />
+                      ) : (
+                        <RiChat3Line />
+                      )
+                    }
+                    variant="ghost"
+                    onClick={toggleTemporaryChat}
+                  />
+                )}
                 <IconButton
                   aria-label="Toggle Dark Mode"
                   icon={colorMode === "light" ? <MoonIcon /> : <SunIcon />}

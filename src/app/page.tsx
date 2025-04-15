@@ -16,6 +16,7 @@ import { v4 as uuidv4 } from "uuid";
 import { ChatInput, MessagesContainer } from "@/components/";
 import { ChatLayout } from "@/layouts";
 import { usePathname } from "next/navigation";
+import { useTemporaryChat } from "./context/TemporaryChat";
 
 interface Message {
   text: string;
@@ -34,10 +35,13 @@ const Home: FC = () => {
   const [isListening, setIsListening] = useState(false);
   const prevTranscriptRef = useRef("");
   const { user } = useAuth();
+  const { isMessageTemporary } = useTemporaryChat();
   const pathname = usePathname();
   const hasMounted = useRef(false);
 
   useEffect(() => {
+    if (!user || isMessageTemporary) return;
+
     if (!hasMounted.current) {
       hasMounted.current = true;
       if (pathname === "/") {
@@ -75,70 +79,98 @@ const Home: FC = () => {
     };
   }, []);
 
-  const fetchBotResponse = async (userMessage: Message, convoId: string) => {
+  const fetchBotResponse = async (
+    userMessage: Message,
+    convoId?: string | null
+  ) => {
     setIsFetchingResponse(true);
-    try {
-      const res = await fetch("/api/gemini", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
-      });
 
-      const data = await res.json();
-      const botText =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+    const res = await fetch("/api/gemini", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: userMessage.text }),
+    });
 
-      const botMessage: Message = {
-        text: botText,
-        sender: "bot",
-        timestamp: Date.now(),
-      };
+    const data = await res.json();
+    const botResponse =
+      data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
 
-      setMessages((prev) => [...prev, botMessage]);
-      setIsFetchingResponse(false);
+    const botMessage: Message = {
+      text: botResponse,
+      sender: "bot",
+      timestamp: Date.now(),
+    };
 
-      const messagesRef = collection(db, "conversations", convoId, "messages");
-      await addDoc(messagesRef, {
-        ...botMessage,
-        createdAt: new Date().toISOString(),
-        isGenerated: true,
-      });
+    if (user && convoId && !isMessageTemporary) {
+      try {
+        setMessages((prev) => [...prev, botMessage]);
+        setIsFetchingResponse(false);
 
-      await setDoc(
-        doc(db, "conversations", convoId),
-        {
-          updatedAt: serverTimestamp(),
-          lastMessage: {
-            text: botMessage.text,
-            sender: botMessage.sender,
-            createdAt: new Date().toISOString(),
+        const messagesRef = collection(
+          db,
+          "conversations",
+          convoId,
+          "messages"
+        );
+        await addDoc(messagesRef, {
+          ...botMessage,
+          createdAt: new Date().toISOString(),
+          isGenerated: true,
+        });
+
+        await setDoc(
+          doc(db, "conversations", convoId),
+          {
+            updatedAt: serverTimestamp(),
+            lastMessage: {
+              text: botMessage.text,
+              sender: botMessage.sender,
+              createdAt: new Date().toISOString(),
+            },
           },
-        },
-        { merge: true }
-      );
+          { merge: true }
+        );
 
-      if (!conversationId && convoId && pathname === "/") {
-        window.history.pushState({}, "", `/chat/${convoId}`);
-        setConversationId(convoId);
+        if (!conversationId && convoId && pathname === "/") {
+          window.history.pushState({}, "", `/chat/${convoId}`);
+          setConversationId(convoId);
+        }
+      } catch (error) {
+        console.error("Error fetching response:", error);
+        setMessages((prev) => [
+          ...prev,
+          {
+            text: "Error fetching response",
+            sender: "bot",
+            timestamp: Date.now(),
+          },
+        ]);
+      } finally {
+        setIsFetchingResponse(false);
       }
-    } catch (error) {
-      console.error("Error fetching response:", error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          text: "Error fetching response",
-          sender: "bot",
-          timestamp: Date.now(),
-        },
-      ]);
-    } finally {
-      setIsFetchingResponse(false);
+    } else {
+      try {
+        setMessages((prev) => [...prev, botMessage]);
+      } catch (error) {
+        console.error("Error fetching response:", error);
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            text: "Error fetching response",
+            sender: "bot",
+            timestamp: Date.now(),
+          },
+        ]);
+      } finally {
+        setIsFetchingResponse(false);
+      }
     }
   };
 
   const fetchBotSetTitle = async (userMessageText: string, convoId: string) => {
     try {
-      const titlePrompt = `Generate a short, descriptive title (only the title, no extra words) for the following chat message: "${userMessageText}"`;
+      const titlePrompt = `Generate a short, descriptive title/subject/topic (only the title, no extra words) for the following chat message: "${userMessageText}"`;
       const titleResponse = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -164,60 +196,68 @@ const Home: FC = () => {
   };
 
   const sendMessage = async () => {
-    if (!input.trim() || !user) return;
+    if (!input.trim()) return;
 
     const timestamp = Date.now();
     const userMessage: Message = { text: input, sender: "user", timestamp };
-    const newMessages = [...messages, userMessage];
 
-    setMessages(newMessages);
     setInput("");
+    setMessages((prev) => [...prev, userMessage]);
 
-    try {
-      let convoId = conversationId;
+    if (user && !isMessageTemporary) {
+      try {
+        let convoId = conversationId;
 
-      if (!convoId) {
-        convoId = uuidv4();
-        setConversationId(convoId);
+        if (!convoId) {
+          convoId = uuidv4();
+          setConversationId(convoId);
 
-        await setDoc(doc(db, "conversations", convoId), {
-          userId: user.uid,
-          title: "New Chat",
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-          isArchived: false,
-          lastMessage: {
-            text: userMessage.text,
-            sender: userMessage.sender,
-            createdAt: new Date().toISOString(),
-          },
-        });
-
-        fetchBotSetTitle(userMessage.text, convoId);
-      } else {
-        await setDoc(
-          doc(db, "conversations", convoId),
-          {
+          await setDoc(doc(db, "conversations", convoId), {
+            userId: user.uid,
+            title: "New Chat",
+            createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
+            isArchived: false,
             lastMessage: {
               text: userMessage.text,
               sender: userMessage.sender,
               createdAt: new Date().toISOString(),
             },
-          },
-          { merge: true }
+          });
+
+          fetchBotSetTitle(userMessage.text, convoId);
+        } else {
+          await setDoc(
+            doc(db, "conversations", convoId),
+            {
+              updatedAt: serverTimestamp(),
+              lastMessage: {
+                text: userMessage.text,
+                sender: userMessage.sender,
+                createdAt: new Date().toISOString(),
+              },
+            },
+            { merge: true }
+          );
+        }
+
+        const messagesRef = collection(
+          db,
+          "conversations",
+          convoId,
+          "messages"
         );
+        await addDoc(messagesRef, {
+          ...userMessage,
+          createdAt: new Date().toISOString(),
+        });
+
+        fetchBotResponse(userMessage, convoId);
+      } catch (error) {
+        console.error("Error sending message:", error);
       }
-
-      const messagesRef = collection(db, "conversations", convoId, "messages");
-      await addDoc(messagesRef, {
-        ...userMessage,
-        createdAt: new Date().toISOString(),
-      });
-
-      fetchBotResponse(userMessage, convoId);
-    } catch (error) {
-      console.error("Error sending message:", error);
+    } else {
+      fetchBotResponse(userMessage);
     }
   };
 

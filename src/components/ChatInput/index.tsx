@@ -9,6 +9,7 @@ import {
 } from "@chakra-ui/react";
 import { IoStop } from "react-icons/io5";
 import { IoIosMic, IoMdSend } from "react-icons/io";
+import { SpeechRecognize } from "@/lib/speechRecognition";
 
 interface ChatInputProps {
   input: string;
@@ -27,6 +28,10 @@ const ChatInput: FC<ChatInputProps> = ({
   isFetchingResponse,
   sendMessage,
 }) => {
+  const toggleSpeechRecognition = () => {
+    SpeechRecognize(isListening, resetTranscript);
+  };
+
   return (
     <Fragment>
       <Divider orientation="horizontal" />
@@ -50,7 +55,7 @@ const ChatInput: FC<ChatInputProps> = ({
               aria-label="Speech Recognition"
               variant="ghost"
               icon={isListening ? <IoStop /> : <IoIosMic />}
-              onClick={resetTranscript}
+              onClick={toggleSpeechRecognition}
             />
           </Tooltip>
           <Tooltip label="Send message">
@@ -58,7 +63,7 @@ const ChatInput: FC<ChatInputProps> = ({
               aria-label="Send Message"
               variant="ghost"
               icon={<IoMdSend />}
-              isDisabled={isFetchingResponse || !input.trim()}
+              isDisabled={isFetchingResponse || !input.trim() || isListening}
               onClick={sendMessage}
             />
           </Tooltip>
