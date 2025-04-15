@@ -15,22 +15,13 @@ import {
 } from "@chakra-ui/react";
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
 import { HiPencilAlt } from "react-icons/hi";
-import {
-  auth,
-  provider,
-  db,
-  doc,
-  onSnapshot,
-} from "@/lib/firebase";
+import { auth, provider, db, doc, onSnapshot } from "@/lib/firebase";
 import { signInWithPopup } from "firebase/auth";
 import { IoMdMenu } from "react-icons/io";
 import SideBar from "@/components/SideBar";
 import { useAuth } from "@/app/context/Auth";
 import { usePathname } from "next/navigation";
-import {
-
-  Unsubscribe, 
-} from "firebase/firestore"; 
+import { Unsubscribe } from "firebase/firestore";
 
 interface Conversation {
   title?: string;
@@ -40,9 +31,11 @@ const NavigationBar: FC = () => {
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const pathname = usePathname();
-  const [currentConvoTitle, setCurrentConvoTitle] = useState<string | null>(null);
+  const [currentConvoTitle, setCurrentConvoTitle] = useState<string | null>(
+    null
+  );
   let unsubscribe: Unsubscribe | undefined;
 
   useEffect(() => {
@@ -103,13 +96,15 @@ const NavigationBar: FC = () => {
         variant="unstyled"
       >
         <Flex py="3" px="6" align="center" justify="space-between">
-          {loading ? (
+          {authLoading ? (
             <Skeleton height="40px" width="100%" borderRadius="md" />
           ) : isLargeScreen ? (
             <Fragment>
               <Flex align="center" gap={3}>
                 <Text fontSize="lg" fontWeight="bold" isTruncated>
-                  {pathname === "/" ? "Xeenapz" : currentConvoTitle || "Xeenapz"}
+                  {pathname === "/"
+                    ? "Xeenapz"
+                    : currentConvoTitle || "Xeenapz"}
                 </Text>
               </Flex>
               <Flex align="center" gap={4}>

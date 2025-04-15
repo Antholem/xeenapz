@@ -14,7 +14,6 @@ import {
   onSnapshot,
   DocumentReference,
 } from "@/lib/firebase";
-import { Box } from "@chakra-ui/react";
 import { useAuth } from "@/app/context/Auth";
 import ChatLayout from "@/layouts/Chat/layout";
 import MessagesContainer from "@/components/MessagesContainer";
@@ -40,9 +39,6 @@ interface Message {
 
 const ConversationPage: FC = () => {
   const { conversationId } = useParams<ConversationParams>();
-  const [conversation, setConversation] = useState<ConversationData | null>(
-    null
-  );
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +55,6 @@ const ConversationPage: FC = () => {
     if (!conversationId) return;
     setLoading(true);
     setError(null);
-    setConversation(null);
     setMessages([]);
 
     const conversationDocRef: DocumentReference = doc(
@@ -70,9 +65,7 @@ const ConversationPage: FC = () => {
     const unsubscribeConversation = onSnapshot(
       conversationDocRef,
       (docSnap) => {
-        if (docSnap.exists()) {
-          setConversation(docSnap.data() as ConversationData);
-        } else {
+        if (!docSnap.exists()) {
           setError("Conversation not found!");
         }
         setLoading(false);
@@ -152,7 +145,6 @@ const ConversationPage: FC = () => {
         timestamp: Date.now(),
       };
 
-      // Save bot message to Firestore; onSnapshot will update local messages
       const messagesRef = collection(db, "conversations", convoId, "messages");
       await addDoc(messagesRef, {
         ...botMessage,
@@ -160,7 +152,6 @@ const ConversationPage: FC = () => {
         isGenerated: true,
       });
 
-      // Optional: update conversation metadata (lastMessage, updatedAt)
       await updateDoc(doc(db, "conversations", convoId), {
         updatedAt: serverTimestamp(),
         lastMessage: {
@@ -171,7 +162,6 @@ const ConversationPage: FC = () => {
       });
     } catch (error) {
       console.error("Error fetching bot response:", error);
-      // Error state is not set here as onSnapshot should ideally reflect any issues
     } finally {
       setIsFetchingResponse(false);
     }
@@ -198,7 +188,6 @@ const ConversationPage: FC = () => {
         sender: "user",
       });
 
-      // **UPDATE 'updatedAt' WHEN USER SENDS MESSAGE**
       const conversationDocRef = doc(db, "conversations", conversationId);
       await updateDoc(conversationDocRef, {
         updatedAt: serverTimestamp(),
@@ -209,17 +198,11 @@ const ConversationPage: FC = () => {
         },
       });
 
-      // Fetch bot response after sending user message
       fetchBotResponse(userMessage, conversationId as string);
     } catch (error) {
       console.error("Error sending message:", error);
-      // Handle error in UI if needed
     }
   };
-
-  if (loading) return <Box>Loading conversation...</Box>;
-  if (error) return <Box color="red">{error}</Box>;
-  if (!conversation) return <Box>Select a conversation.</Box>;
 
   return (
     <ChatLayout>
@@ -231,6 +214,8 @@ const ConversationPage: FC = () => {
         playingMessage={playingMessage}
         setPlayingMessage={setPlayingMessage}
         messagesEndRef={messagesEndRef}
+        isLoading={loading}
+        emptyStateText={error ? error : "Start a new conversation"}
       />
       <ChatInput
         input={input}
