@@ -113,7 +113,7 @@ const NavigationBar: FC = () => {
                 </Text>
               </Flex>
               <Flex align="center" gap={4}>
-                {user && (
+                {user && pathname === "/" && (
                   <IconButton
                     aria-label="Temporary Chat"
                     icon={
