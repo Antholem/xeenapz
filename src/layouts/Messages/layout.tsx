@@ -9,7 +9,7 @@ import {
   SkeletonCircle,
   Spinner,
 } from "@chakra-ui/react";
-import { User } from "firebase/auth";
+import { User } from "@/lib/firebase";
 import MessageItem from "../../components/MessageItem";
 
 interface Message {

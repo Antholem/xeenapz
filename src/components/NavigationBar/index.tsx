@@ -15,13 +15,19 @@ import {
 } from "@chakra-ui/react";
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
 import { HiPencilAlt } from "react-icons/hi";
-import { auth, provider, db, doc, onSnapshot } from "@/lib/firebase";
-import { signInWithPopup } from "firebase/auth";
+import {
+  auth,
+  provider,
+  db,
+  doc,
+  onSnapshot,
+  Unsubscribe,
+  signInWithPopup,
+} from "@/lib/firebase";
 import { IoMdMenu } from "react-icons/io";
 import SideBar from "@/components/SideBar";
 import { useAuth } from "@/app/context/Auth";
 import { usePathname } from "next/navigation";
-import { Unsubscribe } from "firebase/firestore";
 import { RiChat3Line, RiChatHistoryLine } from "react-icons/ri";
 import { useTemporaryChat } from "@/app/context/TemporaryChat";
 

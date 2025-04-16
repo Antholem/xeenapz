@@ -9,7 +9,7 @@ import {
   Tooltip,
   IconButton,
 } from "@chakra-ui/react";
-import { User } from "firebase/auth";
+import { User } from "@/lib/firebase";
 import { format } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import { IoStop } from "react-icons/io5";

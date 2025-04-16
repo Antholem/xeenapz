@@ -40,8 +40,9 @@ import {
   where,
   orderBy,
   onSnapshot,
+  signInWithPopup,
+  signOut,
 } from "@/lib/firebase";
-import { signInWithPopup, signOut } from "firebase/auth";
 import { useAuth } from "@/app/context/Auth";
 import { useRouter } from "next/navigation";
 import ConversationList from "../ConversationList";
