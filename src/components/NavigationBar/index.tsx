@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, Fragment, useEffect, useState } from "react";
+import { FC, Fragment, useEffect, useRef, useState } from "react";
 import {
   Flex,
   Text,
@@ -40,6 +40,7 @@ const NavigationBar: FC = () => {
     null
   );
   let unsubscribe: Unsubscribe | undefined;
+  const unsubscribeRef = useRef<Unsubscribe | undefined>(undefined);
 
   useEffect(() => {
     const fetchConvoTitle = async () => {
@@ -47,7 +48,7 @@ const NavigationBar: FC = () => {
         const convoId = pathname.split("/")[2];
         const docRef = doc(db, "conversations", convoId);
 
-        unsubscribe = onSnapshot(
+        unsubscribeRef.current = onSnapshot(
           docRef,
           (docSnap) => {
             if (docSnap.exists()) {
@@ -64,8 +65,9 @@ const NavigationBar: FC = () => {
         );
       } else {
         setCurrentConvoTitle(null);
-        if (unsubscribe) {
-          unsubscribe();
+        if (unsubscribeRef.current) {
+          unsubscribeRef.current();
+          unsubscribeRef.current = undefined;
         }
       }
     };
@@ -73,8 +75,9 @@ const NavigationBar: FC = () => {
     fetchConvoTitle();
 
     return () => {
-      if (unsubscribe) {
-        unsubscribe();
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+        unsubscribeRef.current = undefined;
       }
     };
   }, [pathname, user]);

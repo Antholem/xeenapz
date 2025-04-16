@@ -27,7 +27,6 @@ import {
   Icon,
   Skeleton,
   SkeletonCircle,
-  Button,
   Spinner,
 } from "@chakra-ui/react";
 import { IoAdd, IoSettingsSharp, IoSearch } from "react-icons/io5";
@@ -44,7 +43,7 @@ import {
 } from "@/lib/firebase";
 import { signInWithPopup, signOut } from "firebase/auth";
 import { useAuth } from "@/app/context/Auth";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import ConversationList from "../ConversationList";
 
 interface SideBarProps {

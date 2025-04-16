@@ -52,7 +52,7 @@ const Home: FC = () => {
       setMessages([]);
       setConversationId(null);
     }
-  }, [pathname]);
+  }, [pathname, user, isMessageTemporary]);
 
   useEffect(() => {
     if (transcript && transcript !== prevTranscriptRef.current) {
