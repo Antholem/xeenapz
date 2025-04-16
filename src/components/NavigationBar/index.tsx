@@ -39,7 +39,6 @@ const NavigationBar: FC = () => {
   const [currentConvoTitle, setCurrentConvoTitle] = useState<string | null>(
     null
   );
-  let unsubscribe: Unsubscribe | undefined;
   const unsubscribeRef = useRef<Unsubscribe | undefined>(undefined);
 
   useEffect(() => {
