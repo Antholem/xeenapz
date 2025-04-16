@@ -37,7 +37,7 @@ const ConversationPage: FC = () => {
   const { conversationId } = useParams<ConversationParams>();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { user } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [input, setInput] = useState<string>("");
@@ -50,7 +50,7 @@ const ConversationPage: FC = () => {
   useEffect(() => {
     if (!conversationId) return;
     setLoading(true);
-    setError(null);
+    setErrorMessage(null);
     setMessages([]);
 
     const conversationDocRef: DocumentReference = doc(
@@ -62,13 +62,13 @@ const ConversationPage: FC = () => {
       conversationDocRef,
       (docSnap) => {
         if (!docSnap.exists()) {
-          setError("Conversation not found!");
+          setErrorMessage("Conversation not found!");
         }
         setLoading(false);
       },
       (error) => {
         console.error("Error fetching conversation:", error);
-        setError("Failed to fetch conversation.");
+        setErrorMessage("Failed to fetch conversation.");
         setLoading(false);
       }
     );
@@ -93,7 +93,7 @@ const ConversationPage: FC = () => {
       },
       (error) => {
         console.error("Error listening for messages:", error);
-        setError("Failed to fetch messages.");
+        setErrorMessage("Failed to fetch messages.");
       }
     );
 
@@ -197,6 +197,7 @@ const ConversationPage: FC = () => {
       fetchBotResponse(userMessage, conversationId as string);
     } catch (error) {
       console.error("Error sending message:", error);
+      console.log(errorMessage);
     }
   };
 
