@@ -1,6 +1,5 @@
 "use client";
 
-import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import {
   useEffect,
   useState,
@@ -9,7 +8,7 @@ import {
   ReactNode,
 } from "react";
 import { Progress } from "@chakra-ui/react";
-import { app } from "@/lib/firebase";
+import { auth, onAuthStateChanged, User } from "@/lib/firebase";
 
 interface AuthContextType {
   user: User | null;
@@ -22,7 +21,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const auth = getAuth(app);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {

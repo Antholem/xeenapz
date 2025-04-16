@@ -27,7 +27,6 @@ import {
   Icon,
   Skeleton,
   SkeletonCircle,
-  Button,
   Spinner,
 } from "@chakra-ui/react";
 import { IoAdd, IoSettingsSharp, IoSearch } from "react-icons/io5";
@@ -41,10 +40,12 @@ import {
   where,
   orderBy,
   onSnapshot,
+  signInWithPopup,
+  signOut,
 } from "@/lib/firebase";
-import { signInWithPopup, signOut } from "firebase/auth";
 import { useAuth } from "@/app/context/Auth";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
+import ConversationList from "../ConversationList";
 
 interface SideBarProps {
   type: "temporary" | "persistent";
@@ -57,61 +58,9 @@ interface Conversation {
   id: string;
   userId: string;
   updatedAt?: { seconds: number; nanoseconds: number } | null;
+  title?: string;
   [key: string]: any;
 }
-
-const ChatList = ({ conversations }: { conversations: Conversation[] }) => {
-  const router = useRouter();
-  const pathname = usePathname();
-
-  const handleConversationClick = (conversationId: string) => {
-    router.push(`/chat/${conversationId}`);
-  };
-
-  return (
-    <Fragment>
-      {conversations.map((convo) => {
-        const isActive = pathname === `/chat/${convo.id}`;
-
-        if (convo.title === "New Chat") {
-          return (
-            <Skeleton
-              key={convo.id}
-              height="40px"
-              width="100%"
-              borderRadius="md"
-              mb="1px"
-            />
-          );
-        } else {
-          return (
-            <Button
-              key={convo.id}
-              variant={isActive ? "solid" : "ghost"}
-              mb="1px"
-              w="100%"
-              justifyContent="flex-start"
-              onClick={() => handleConversationClick(convo.id)}
-              cursor="pointer"
-            >
-              <Box
-                as="span"
-                w="100%"
-                overflow="hidden"
-                textOverflow="ellipsis"
-                whiteSpace="nowrap"
-                display="block"
-                textAlign="left"
-              >
-                {convo.title}
-              </Box>
-            </Button>
-          );
-        }
-      })}
-    </Fragment>
-  );
-};
 
 const NewChatButton = () => {
   const router = useRouter();
@@ -331,7 +280,6 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
 
         <Divider />
 
-        {/* Chat List */}
         <VStack
           h="100vh"
           p={3}
@@ -343,7 +291,7 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
             <SkeletonChatList />
           ) : (
             <Flex direction="column" align="center" justify="center" w="100%">
-              <ChatList conversations={conversations} />
+              <ConversationList conversations={conversations} />
             </Flex>
           )}
         </VStack>
@@ -473,7 +421,7 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
               borderTopWidth="1px"
               overflowY={loading ? "hidden" : "auto"}
             >
-              <ChatList conversations={conversations} />
+              <ConversationList conversations={conversations} />
             </DrawerBody>
           )}
         </Card>

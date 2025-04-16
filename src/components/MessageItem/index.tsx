@@ -9,13 +9,12 @@ import {
   Tooltip,
   IconButton,
 } from "@chakra-ui/react";
-import { User } from "firebase/auth";
+import { User } from "@/lib/firebase";
 import { format } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import { IoStop } from "react-icons/io5";
 import { IoIosMic } from "react-icons/io";
 
-// Define the Message interface here if it's not globally defined
 interface Message {
   text: string;
   sender: "user" | "bot";
@@ -35,7 +34,6 @@ interface MessageItemProps {
 }
 
 const MessageItem: FC<MessageItemProps> = ({
-  // Corrected FC type annotation
   message,
   user,
   speakText,

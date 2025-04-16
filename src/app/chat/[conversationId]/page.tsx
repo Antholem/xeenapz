@@ -15,9 +15,9 @@ import {
   DocumentReference,
 } from "@/lib/firebase";
 import { useAuth } from "@/app/context/Auth";
-import ChatLayout from "@/layouts/Chat/layout";
-import MessagesContainer from "@/components/MessagesContainer";
-import ChatInput from "@/components/ChatInput";
+import ConversationLayout from "@/layouts/Conversation/layout";
+import MessagesLayout from "@/layouts/Messages/layout";
+import MessageInput from "@/components/MessageInput";
 import { useSpeechRecognition } from "react-speech-recognition";
 import { speakText } from "@/lib/textToSpeech";
 
@@ -33,7 +33,7 @@ interface Message {
   createdAt?: string;
 }
 
-const ConversationPage: FC = () => {
+const Conversation: FC = () => {
   const { conversationId } = useParams<ConversationParams>();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,6 +49,7 @@ const ConversationPage: FC = () => {
 
   useEffect(() => {
     if (!conversationId) return;
+
     setLoading(true);
     setErrorMessage(null);
     setMessages([]);
@@ -202,8 +203,8 @@ const ConversationPage: FC = () => {
   };
 
   return (
-    <ChatLayout>
-      <MessagesContainer
+    <ConversationLayout>
+      <MessagesLayout
         messages={messages}
         isFetchingResponse={isFetchingResponse}
         user={user}
@@ -213,7 +214,7 @@ const ConversationPage: FC = () => {
         messagesEndRef={messagesEndRef}
         isLoading={loading}
       />
-      <ChatInput
+      <MessageInput
         input={input}
         setInput={setInput}
         isListening={isListening}
@@ -221,8 +222,8 @@ const ConversationPage: FC = () => {
         isFetchingResponse={isFetchingResponse}
         sendMessage={sendMessage}
       />
-    </ChatLayout>
+    </ConversationLayout>
   );
 };
 
-export default ConversationPage;
+export default Conversation;

@@ -1,3 +1,3 @@
-import ChatLayout from "./Chat/layout";
+import ConversationLayout from "./Conversation/layout";
 
-export { ChatLayout };
+export { ConversationLayout };
