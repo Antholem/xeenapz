@@ -214,7 +214,7 @@ const Home: FC = () => {
 
           await setDoc(doc(db, "conversations", convoId), {
             userId: user.uid,
-            title: "New Chat",
+            title: "",
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
             isArchived: false,

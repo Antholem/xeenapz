@@ -49,6 +49,7 @@ const Conversation: FC = () => {
 
   useEffect(() => {
     if (!conversationId) return;
+
     setLoading(true);
     setErrorMessage(null);
     setMessages([]);
