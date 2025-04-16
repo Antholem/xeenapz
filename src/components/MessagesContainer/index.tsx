@@ -43,7 +43,7 @@ const MessagesContainer: FC<MessagesContainerProps> = ({
   setPlayingMessage,
   messagesEndRef,
   isLoading = false,
-  emptyStateText = "Hello, what can I help with?",
+  emptyStateText = "",
 }) => {
   useEffect(() => {
     if (messagesEndRef.current) {

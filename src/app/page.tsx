@@ -271,6 +271,7 @@ const Home: FC = () => {
         playingMessage={playingMessage}
         setPlayingMessage={setPlayingMessage}
         messagesEndRef={messagesEndRef}
+        emptyStateText="Hello, what can I help with?"
       />
       <ChatInput
         input={input}

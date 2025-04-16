@@ -211,7 +211,6 @@ const ConversationPage: FC = () => {
         setPlayingMessage={setPlayingMessage}
         messagesEndRef={messagesEndRef}
         isLoading={loading}
-        emptyStateText={error ? error : "Start a new conversation"}
       />
       <ChatInput
         input={input}

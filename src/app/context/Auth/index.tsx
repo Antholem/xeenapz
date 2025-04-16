@@ -14,6 +14,7 @@ import { app } from "@/lib/firebase";
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  setLoading: (loading: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,7 +34,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [auth]);
 
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, loading, setLoading }}>
       {loading ? <Progress size="xs" isIndeterminate /> : children}
     </AuthContext.Provider>
   );
