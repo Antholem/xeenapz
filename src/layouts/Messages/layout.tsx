@@ -73,7 +73,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
           </Flex>
         </VStack>
       ) : (
-        <VStack spacing={4} align="stretch">
+        <VStack spacing={4} align="stretch" flexGrow={1}>
           {messages.map((msg, index) => (
             <MessageItem
               key={index}

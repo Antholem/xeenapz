@@ -7,7 +7,7 @@ interface ConversationLayoutProps {
 
 const ConversationLayout: FC<ConversationLayoutProps> = ({ children }) => {
   return (
-    <Flex direction="column" h="100%">
+    <Flex direction="column" flex="1" h="100%">
       {children}
     </Flex>
   );
