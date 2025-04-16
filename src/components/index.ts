@@ -1,7 +1,7 @@
 import NavigationBar from "./NavigationBar";
 import SideBar from "./SideBar";
-import ChatInput from "./ChatInput";
+import MessageInput from "./MessageInput";
 import MessageItem from "./MessageItem";
-import MessagesContainer from "./MessagesContainer";
+import MessagesLayout from "../layouts/Messages/layout";
 
-export { NavigationBar, SideBar, ChatInput, MessageItem, MessagesContainer };
+export { NavigationBar, SideBar, MessageInput, MessageItem, MessagesLayout };

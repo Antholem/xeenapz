@@ -13,8 +13,8 @@ import {
   serverTimestamp,
 } from "@/lib/firebase";
 import { v4 as uuidv4 } from "uuid";
-import { ChatInput, MessagesContainer } from "@/components/";
-import { ChatLayout } from "@/layouts";
+import { MessageInput, MessagesLayout } from "@/components/";
+import { ConversationLayout } from "@/layouts";
 import { usePathname } from "next/navigation";
 import { useTemporaryChat } from "./context/TemporaryChat";
 
@@ -262,8 +262,8 @@ const Home: FC = () => {
   };
 
   return (
-    <ChatLayout>
-      <MessagesContainer
+    <ConversationLayout>
+      <MessagesLayout
         messages={messages}
         isFetchingResponse={isFetchingResponse}
         user={user}
@@ -273,7 +273,7 @@ const Home: FC = () => {
         messagesEndRef={messagesEndRef}
         emptyStateText="Hello, what can I help with?"
       />
-      <ChatInput
+      <MessageInput
         input={input}
         setInput={setInput}
         isListening={isListening}
@@ -281,7 +281,7 @@ const Home: FC = () => {
         isFetchingResponse={isFetchingResponse}
         sendMessage={sendMessage}
       />
-    </ChatLayout>
+    </ConversationLayout>
   );
 };
 

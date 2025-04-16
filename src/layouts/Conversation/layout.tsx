@@ -1,11 +1,11 @@
 import { FC, ReactNode } from "react";
 import { Flex } from "@chakra-ui/react";
 
-interface ChatLayoutProps {
+interface ConversationLayoutProps {
   children: ReactNode;
 }
 
-const ChatLayout: FC<ChatLayoutProps> = ({ children }) => {
+const ConversationLayout: FC<ConversationLayoutProps> = ({ children }) => {
   return (
     <Flex direction="column" h="100%">
       {children}
@@ -13,4 +13,4 @@ const ChatLayout: FC<ChatLayoutProps> = ({ children }) => {
   );
 };
 
-export default ChatLayout;
+export default ConversationLayout;

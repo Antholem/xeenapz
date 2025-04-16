@@ -11,7 +11,7 @@ import { IoStop } from "react-icons/io5";
 import { IoIosMic, IoMdSend } from "react-icons/io";
 import { SpeechRecognize } from "@/lib/speechRecognition";
 
-interface ChatInputProps {
+interface MessageInputProps {
   input: string;
   setInput: (value: string) => void;
   isListening: boolean;
@@ -20,7 +20,7 @@ interface ChatInputProps {
   sendMessage: () => void;
 }
 
-const ChatInput: FC<ChatInputProps> = ({
+const MessageInput: FC<MessageInputProps> = ({
   input,
   setInput,
   isListening,
@@ -73,4 +73,4 @@ const ChatInput: FC<ChatInputProps> = ({
   );
 };
 
-export default ChatInput;
+export default MessageInput;

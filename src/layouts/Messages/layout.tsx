@@ -10,7 +10,7 @@ import {
   Spinner,
 } from "@chakra-ui/react";
 import { User } from "firebase/auth";
-import MessageItem from "../MessageItem";
+import MessageItem from "../../components/MessageItem";
 
 interface Message {
   text: string;
@@ -18,7 +18,7 @@ interface Message {
   timestamp: number;
 }
 
-interface MessagesContainerProps {
+interface MessagesLayoutProps {
   messages: Message[];
   isFetchingResponse: boolean;
   user: User | null;
@@ -34,7 +34,7 @@ interface MessagesContainerProps {
   emptyStateText?: string;
 }
 
-const MessagesContainer: FC<MessagesContainerProps> = ({
+const MessagesLayout: FC<MessagesLayoutProps> = ({
   messages,
   isFetchingResponse,
   user,
@@ -101,4 +101,4 @@ const MessagesContainer: FC<MessagesContainerProps> = ({
   );
 };
 
-export default MessagesContainer;
+export default MessagesLayout;
