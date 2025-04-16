@@ -20,7 +20,7 @@ import { signInWithPopup } from "firebase/auth";
 import { IoMdMenu } from "react-icons/io";
 import SideBar from "@/components/SideBar";
 import { useAuth } from "@/app/context/Auth";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Unsubscribe } from "firebase/firestore";
 import { RiChat3Line, RiChatHistoryLine } from "react-icons/ri";
 import { useTemporaryChat } from "@/app/context/TemporaryChat";
@@ -33,9 +33,10 @@ const NavigationBar: FC = () => {
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, setLoading: setAuthLoading } = useAuth();
   const { isMessageTemporary, setIsMessageTemporary } = useTemporaryChat();
   const pathname = usePathname();
+  const router = useRouter();
   const [currentConvoTitle, setCurrentConvoTitle] = useState<string | null>(
     null
   );
@@ -82,8 +83,14 @@ const NavigationBar: FC = () => {
   const handleGoogleSignIn = async () => {
     try {
       await signInWithPopup(auth, provider);
+      router.push("/");
+      setAuthLoading(true);
     } catch (error) {
       console.error("Google Sign-In Error:", error);
+    } finally {
+      setTimeout(() => {
+        setAuthLoading(false);
+      }, 2000);
     }
   };
 
@@ -162,11 +169,7 @@ const NavigationBar: FC = () => {
                   onClick={toggleColorMode}
                   variant="ghost"
                 />
-                {!user && (
-                  <Button size="sm" onClick={handleGoogleSignIn}>
-                    Login
-                  </Button>
-                )}
+                {!user && <Button onClick={handleGoogleSignIn}>Login</Button>}
               </Flex>
             </Fragment>
           )}

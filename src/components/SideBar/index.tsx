@@ -148,13 +148,14 @@ const SkeletonChatList = () => (
 
 const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, setLoading: setAuthLoading } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     if (user) {
-      setLoading(true); // Set loading to true when fetching starts
+      setLoading(true);
       const conversationsCollectionRef = collection(db, "conversations");
       const conversationsQuery = query(
         conversationsCollectionRef,
@@ -173,19 +174,15 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
               } as Conversation)
           );
           setConversations(conversationsList);
-          setLoading(false); // Set loading to false when data is received
+          setLoading(false);
         },
         (error) => {
           console.error("Error listening for conversations:", error);
-          setLoading(false); // Set loading to false on error as well
-          // Handle error appropriately
+          setLoading(false);
         }
       );
-
-      // Clean up the listener when the component unmounts or user changes
       return () => unsubscribe();
     } else {
-      // If user is not logged in, set conversations to an empty array and loading to false
       setConversations([]);
       setLoading(false);
     }
@@ -194,18 +191,26 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
   const handleGoogleSignIn = async () => {
     try {
       await signInWithPopup(auth, provider);
+      router.push("/");
+      setAuthLoading(true);
     } catch (error: unknown) {
       let errorMessage = "Google Sign-In Error occurred.";
       if (error instanceof Error) {
         errorMessage += ` ${error.message}`;
       }
       console.error(errorMessage);
+    } finally {
+      setTimeout(() => {
+        setAuthLoading(false);
+      }, 2000);
     }
   };
 
   const handleSignOut = async () => {
     try {
       await signOut(auth);
+      router.push("/");
+      setAuthLoading(true);
       if (onClose) onClose();
     } catch (error: unknown) {
       let errorMessage = "Sign-Out Error occurred.";
@@ -213,6 +218,10 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
         errorMessage += ` ${error.message}`;
       }
       console.error(errorMessage);
+    } finally {
+      setTimeout(() => {
+        setAuthLoading(false);
+      }, 2000);
     }
   };
 
