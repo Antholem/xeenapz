@@ -42,6 +42,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
       onClick={() => onClick(convo.id)}
       cursor="pointer"
       textAlign="left"
+      py={isMessageMatch ? 6 : 0}
     >
       <Box
         as="span"
@@ -52,7 +53,15 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
         display="block"
         textAlign="left"
       >
-        {isMessageMatch ? <Fragment>{highlightedText}</Fragment> : convo.title}
+        {isMessageMatch ? (
+          <Fragment>
+            {convo.title}
+            <br />
+            {highlightedText}
+          </Fragment>
+        ) : (
+          convo.title
+        )}
       </Box>
     </Button>
   );
@@ -97,13 +106,13 @@ const ConversationList: FC<ConversationListProps> = ({
               .indexOf(lowercasedSearchTerm);
             const endIndex = startIndex + searchTerm.length;
             const highlightedText = (
-              <>
+              <Box as="span" fontSize="xs" color="gray.500">
                 {message.text.substring(0, startIndex)}
-                <Box as="span" fontWeight="bold" backgroundColor="blue.200">
+                <Box as="span" fontWeight="bold">
                   {message.text.substring(startIndex, endIndex)}
                 </Box>
                 {message.text.substring(endIndex)}
-              </>
+              </Box>
             );
             messages.push({ convo, message, highlightedText });
           }
@@ -131,7 +140,12 @@ const ConversationList: FC<ConversationListProps> = ({
             {titleResults.length > 0 && (
               <Box>
                 <Box px={4} pb={1}>
-                  <Text fontSize="sm" textAlign="left" color="gray.500">
+                  <Text
+                    fontSize="md"
+                    textAlign="left"
+                    color="gray.500"
+                    fontWeight="bold"
+                  >
                     Titles
                   </Text>
                 </Box>
@@ -151,7 +165,12 @@ const ConversationList: FC<ConversationListProps> = ({
             {messageResults.length > 0 && (
               <Box>
                 <Box px={4} pb={1}>
-                  <Text fontSize="sm" textAlign="left" color="gray.500">
+                  <Text
+                    fontSize="md"
+                    textAlign="left"
+                    color="gray.500"
+                    fontWeight="bold"
+                  >
                     Messages
                   </Text>
                 </Box>
