@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, Fragment, useEffect, useState } from "react";
+import { FC, Fragment, useEffect, useState, useCallback } from "react";
 import {
   Box,
   Flex,
@@ -41,6 +41,7 @@ import {
   signInWithPopup,
   signOut,
   User,
+  getDocs,
 } from "@/lib/firebase";
 import { useAuth } from "@/app/context/Auth";
 import { useRouter } from "next/navigation";
@@ -58,7 +59,15 @@ interface Conversation {
   userId: string;
   updatedAt?: { seconds: number; nanoseconds: number } | null;
   title?: string;
+  messages?: Message[];
   [key: string]: any;
+}
+
+interface Message {
+  id: string;
+  senderId: string;
+  text: string;
+  timestamp: { seconds: number; nanoseconds: number };
 }
 
 interface MenuItemsProps {
@@ -99,7 +108,19 @@ const SettingsButton = () => {
   );
 };
 
-const SearchBar = () => {
+const SearchBar = ({
+  onSearch,
+}: {
+  onSearch: (searchTerm: string) => void;
+}) => {
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setSearchTerm(value);
+    onSearch(value);
+  };
+
   return (
     <InputGroup>
       <InputLeftElement>
@@ -107,8 +128,10 @@ const SearchBar = () => {
       </InputLeftElement>
       <Input
         type="search"
-        placeholder="Search titles, chats..."
+        placeholder="Search titles, messages..."
         variant="filled"
+        value={searchTerm}
+        onChange={handleInputChange}
       />
     </InputGroup>
   );
@@ -163,8 +186,32 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
   const { user, setLoading: setAuthLoading } = useAuth();
   const router = useRouter();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [allConversations, setAllConversations] = useState<Conversation[]>([]);
+  const [filteredConversations, setFilteredConversations] = useState<
+    Conversation[]
+  >([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const fetchConversationMessages = useCallback(
+    async (conversationId: string): Promise<Message[]> => {
+      const messagesCollectionRef = collection(
+        db,
+        "conversations",
+        conversationId,
+        "messages"
+      );
+      const messagesQuery = query(
+        messagesCollectionRef,
+        orderBy("timestamp", "asc")
+      );
+      const messagesSnapshot = await getDocs(messagesQuery);
+      return messagesSnapshot.docs.map(
+        (doc) => ({ id: doc.id, ...doc.data() } as Message)
+      );
+    },
+    []
+  );
 
   useEffect(() => {
     if (user) {
@@ -178,15 +225,19 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
 
       const unsubscribe = onSnapshot(
         conversationsQuery,
-        (snapshot) => {
-          const conversationsList: Conversation[] = snapshot.docs.map(
-            (doc) =>
-              ({
+        async (snapshot) => {
+          const conversationsList: Conversation[] = await Promise.all(
+            snapshot.docs.map(async (doc) => {
+              const conversation = {
                 id: doc.id,
                 ...doc.data(),
-              } as Conversation)
+              } as Conversation;
+              const messages = await fetchConversationMessages(doc.id);
+              return { ...conversation, messages };
+            })
           );
-          setConversations(conversationsList);
+          setAllConversations(conversationsList);
+          setFilteredConversations(conversationsList);
           setLoading(false);
         },
         (error) => {
@@ -196,10 +247,31 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
       );
       return () => unsubscribe();
     } else {
-      setConversations([]);
+      setAllConversations([]);
+      setFilteredConversations([]);
       setLoading(false);
     }
-  }, [user]);
+  }, [user, fetchConversationMessages]);
+
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    if (!term) {
+      setFilteredConversations(allConversations);
+      return;
+    }
+
+    const lowercasedSearchTerm = term.toLowerCase();
+    const results = allConversations.filter((conversation) => {
+      const titleMatch = conversation.title
+        ?.toLowerCase()
+        .includes(lowercasedSearchTerm);
+      const messageMatch = conversation.messages?.some((message) =>
+        message.text.toLowerCase().includes(lowercasedSearchTerm)
+      );
+      return titleMatch || messageMatch;
+    });
+    setFilteredConversations(results);
+  };
 
   const handleGoogleSignIn = async () => {
     try {
@@ -286,7 +358,7 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
           </Box>
         </Flex>
         <Flex p={3} align="center" justify="center">
-          <SearchBar />
+          <SearchBar onSearch={handleSearch} />
         </Flex>
         <Divider />
         <VStack
@@ -300,7 +372,10 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
             <SkeletonChatList />
           ) : (
             <Flex direction="column" align="center" justify="center" w="100%">
-              <ConversationList conversations={conversations} />
+              <ConversationList
+                conversations={filteredConversations}
+                searchTerm={searchTerm}
+              />
             </Flex>
           )}
         </VStack>
@@ -359,7 +434,7 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
             </Box>
           </DrawerHeader>
           <Flex px={3} pb={3}>
-            <SearchBar />
+            <SearchBar onSearch={handleSearch} />
           </Flex>
           {loading ? (
             <SkeletonChatList />
@@ -369,7 +444,10 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
               borderTopWidth="1px"
               overflowY={loading ? "hidden" : "auto"}
             >
-              <ConversationList conversations={conversations} />
+              <ConversationList
+                conversations={filteredConversations}
+                searchTerm={searchTerm}
+              />
             </DrawerBody>
           )}
         </Card>
