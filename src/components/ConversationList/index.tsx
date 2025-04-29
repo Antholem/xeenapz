@@ -21,6 +21,7 @@ interface Conversation {
 interface Message {
   id: string;
   text: string;
+  createdAt?: string;
   timestamp?: { seconds: number; nanoseconds: number };
 }
 
@@ -48,7 +49,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
 
   let formattedTime: string | null = null;
 
-  if (displayTimestampSeconds) {
+  if (displayTimestampSeconds && !isMessageMatch) {
     const date = new Date(displayTimestampSeconds * 1000);
     const now = new Date();
     const hoursAgo = differenceInHours(now, date);
@@ -62,7 +63,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
     } else if (weeksAgo < 52) {
       formattedTime = format(date, "d MMM");
     } else {
-      formattedTime = format(date, "d MMM yyyy");
+      formattedTime = format(date, "d MMM<ctrl98>");
     }
   }
 
@@ -90,18 +91,10 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
         {isMessageMatch ? (
           <Fragment>
             {convo.title}
-            <br />
             {highlightedText}
           </Fragment>
         ) : (
           convo.title
-        )}
-      </Box>
-      <Box>
-        {!isMessageMatch && formattedTime && (
-          <Text fontSize="xs" color="gray.500" textAlign="right" w="30%">
-            {formattedTime}
-          </Text>
         )}
       </Box>
     </Button>
@@ -146,16 +139,46 @@ const ConversationList: FC<ConversationListProps> = ({
               .toLowerCase()
               .indexOf(lowercasedSearchTerm);
             const endIndex = startIndex + searchTerm.length;
-            const highlightedText = (
-              <Box as="span" fontSize="xs" color="gray.500">
-                {message.text.substring(0, startIndex)}
-                <Box as="span" fontWeight="bold">
-                  {message.text.substring(startIndex, endIndex)}
+            let formattedCreatedAt: string | null = null;
+
+            if (message.createdAt) {
+              try {
+                const date = new Date(message.createdAt);
+                formattedCreatedAt = format(date, "d MMM");
+              } catch (error) {
+                console.error("Error formatting createdAt:", error);
+              }
+            }
+
+            const highlightedTextWithDate = (
+              <Flex direction="row" justify="space-between" gap={1} mt={1}>
+                <Box
+                  as="span"
+                  fontSize="xs"
+                  color="gray.500"
+                  w="100%"
+                  overflow="hidden"
+                  textOverflow="ellipsis"
+                  whiteSpace="nowrap"
+                  display="block"
+                  textAlign="left"
+                >
+                  {message.text.substring(0, startIndex)}
+                  <Box as="span" fontWeight="bold">
+                    {message.text.substring(startIndex, endIndex)}
+                  </Box>
+                  {message.text.substring(endIndex)}
                 </Box>
-                {message.text.substring(endIndex)}
-              </Box>
+                <Box as="span" fontSize="xs" color="gray.500">
+                  {formattedCreatedAt}
+                </Box>
+              </Flex>
             );
-            messages.push({ convo, message, highlightedText });
+            messages.push({
+              convo,
+              message,
+              highlightedText: highlightedTextWithDate,
+            });
           }
         });
       });

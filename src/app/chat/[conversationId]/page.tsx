@@ -140,6 +140,7 @@ const Conversation: FC = () => {
         text: botText,
         sender: "bot",
         timestamp: Date.now(),
+        createdAt: new Date().toISOString(),
       };
 
       const messagesRef = collection(db, "conversations", convoId, "messages");
