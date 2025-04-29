@@ -3,16 +3,25 @@
 import { FC, Fragment, useState, useEffect } from "react";
 import { Button, Box, Text, Flex } from "@chakra-ui/react";
 import { useRouter, usePathname } from "next/navigation";
+import {
+  format,
+  isToday,
+  differenceInHours,
+  differenceInDays,
+  differenceInWeeks,
+} from "date-fns";
 
 interface Conversation {
   id: string;
   title?: string;
   messages?: Message[];
+  updatedAt?: { seconds: number; nanoseconds: number } | null;
 }
 
 interface Message {
   id: string;
   text: string;
+  timestamp?: { seconds: number; nanoseconds: number };
 }
 
 interface ConversationItemProps {
@@ -32,6 +41,31 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
   highlightedText,
   isSearchActive,
 }) => {
+  const latestMessageTimestampSeconds = convo.messages?.[0]?.timestamp?.seconds;
+  const conversationUpdatedAtSeconds = convo.updatedAt?.seconds;
+  const displayTimestampSeconds =
+    latestMessageTimestampSeconds || conversationUpdatedAtSeconds;
+
+  let formattedTime: string | null = null;
+
+  if (displayTimestampSeconds) {
+    const date = new Date(displayTimestampSeconds * 1000);
+    const now = new Date();
+    const hoursAgo = differenceInHours(now, date);
+    const daysAgo = differenceInDays(now, date);
+    const weeksAgo = differenceInWeeks(now, date);
+
+    if (hoursAgo < 24 && isToday(date)) {
+      formattedTime = format(date, "hh:mmaaa");
+    } else if (daysAgo < 7) {
+      formattedTime = format(date, "EEE");
+    } else if (weeksAgo < 52) {
+      formattedTime = format(date, "d MMM");
+    } else {
+      formattedTime = format(date, "d MMM yyyy");
+    }
+  }
+
   return (
     <Button
       key={convo.id + (isMessageMatch ? `-${convo.messages?.[0]?.id}` : "")}
@@ -61,6 +95,13 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
           </Fragment>
         ) : (
           convo.title
+        )}
+      </Box>
+      <Box>
+        {!isMessageMatch && formattedTime && (
+          <Text fontSize="xs" color="gray.500" textAlign="right" w="30%">
+            {formattedTime}
+          </Text>
         )}
       </Box>
     </Button>
