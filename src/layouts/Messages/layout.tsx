@@ -1,4 +1,4 @@
-import React, { RefObject, useEffect } from "react";
+import React, { ReactNode, RefObject, useEffect } from "react";
 import { FC } from "react";
 import {
   Box,
@@ -8,9 +8,11 @@ import {
   Image,
   SkeletonCircle,
   Spinner,
+  Divider,
 } from "@chakra-ui/react";
 import { User } from "@/lib/firebase";
 import MessageItem from "../../components/MessageItem";
+import { formatDateGrouping } from "@/utils/dateFormatter";
 
 interface Message {
   text: string;
@@ -65,26 +67,54 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
     </Flex>
   ) : (
     <Box flex="1" overflowY="auto" p={4} aria-live="polite">
-      {messages.length === 0 ? (
+      {messages.length > 0 &&
+        messages.reduce((acc, currentMessage, index, array) => {
+          const currentDate = formatDateGrouping(currentMessage.createdAt);
+          const previousMessage = array[index - 1];
+          const previousDate = previousMessage
+            ? formatDateGrouping(previousMessage.createdAt)
+            : null;
+
+          if (currentDate && currentDate !== previousDate) {
+            acc.push(
+              <Flex
+                key={`date-separator-${currentDate}-${index}`}
+                direction="row"
+                justifyContent="center"
+                alignItems="center"
+                gap={2}
+                mb={4}
+              >
+                <Divider />
+                <Box>
+                  <Text whiteSpace="nowrap" fontSize="xs">
+                    {currentDate}
+                  </Text>
+                </Box>
+                <Divider />
+              </Flex>
+            );
+          }
+
+          acc.push(
+            <MessageItem
+              key={index}
+              message={currentMessage}
+              user={user}
+              speakText={speakText}
+              playingMessage={playingMessage}
+              setPlayingMessage={setPlayingMessage}
+            />
+          );
+          return acc;
+        }, [] as ReactNode[])}
+      {messages.length === 0 && (
         <VStack height="100%">
           <Flex justify="center" align="center" flex="1">
             <Text fontSize={{ base: "lg", md: "3xl" }} textAlign="center">
               {emptyStateText}
             </Text>
           </Flex>
-        </VStack>
-      ) : (
-        <VStack spacing={4} align="stretch" flexGrow={1}>
-          {messages.map((msg, index) => (
-            <MessageItem
-              key={index}
-              message={msg}
-              user={user}
-              speakText={speakText}
-              playingMessage={playingMessage}
-              setPlayingMessage={setPlayingMessage}
-            />
-          ))}
         </VStack>
       )}
       {isFetchingResponse && (
