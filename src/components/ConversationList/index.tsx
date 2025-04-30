@@ -74,6 +74,7 @@ interface SearchResultItem {
   convo: Conversation;
   message?: Message;
   highlightedText?: React.ReactNode;
+  createdAt?: number | null;
 }
 
 interface ConversationListProps {
@@ -95,9 +96,12 @@ const ConversationList: FC<ConversationListProps> = ({
     if (searchTerm) {
       setIsSearchActive(true);
       const lowercasedSearchTerm = searchTerm.toLowerCase();
-      const titles = conversations.filter((convo) =>
-        convo.title?.toLowerCase().includes(lowercasedSearchTerm)
-      );
+
+      const titles = conversations
+        .filter((convo) =>
+          convo.title?.toLowerCase().includes(lowercasedSearchTerm)
+        )
+        .sort((a, b) => (a.title || "").localeCompare(b.title || ""));
       setTitleResults(titles);
 
       const messages: SearchResultItem[] = [];
@@ -108,11 +112,10 @@ const ConversationList: FC<ConversationListProps> = ({
               .toLowerCase()
               .indexOf(lowercasedSearchTerm);
             const endIndex = startIndex + searchTerm.length;
-            const date = timestamp(
-              message.createdAt
-                ? new Date(message.createdAt).getTime() / 1000
-                : null
-            );
+            const createdAtTimestamp = message.createdAt
+              ? new Date(message.createdAt).getTime() / 1000
+              : null;
+            const formattedCreatedAt = timestamp(createdAtTimestamp);
 
             const highlightedTextWithDate = (
               <Flex direction="row" justify="space-between" gap={1} mt={1}>
@@ -128,24 +131,29 @@ const ConversationList: FC<ConversationListProps> = ({
                   textAlign="left"
                 >
                   {message.text.substring(0, startIndex)}
-                  <Box as="span" fontWeight="bold">
+                  <Box as="span" bgColor="blue.400" color="white">
                     {message.text.substring(startIndex, endIndex)}
                   </Box>
                   {message.text.substring(endIndex)}
                 </Box>
-                <Box as="span" fontSize="xs" color="gray.500">
-                  {date}
-                </Box>
+                {formattedCreatedAt && (
+                  <Box as="span" fontSize="xs" color="gray.500">
+                    {formattedCreatedAt}
+                  </Box>
+                )}
               </Flex>
             );
             messages.push({
               convo,
               message,
               highlightedText: highlightedTextWithDate,
+              createdAt: createdAtTimestamp,
             });
           }
         });
       });
+
+      messages.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
       setMessageResults(messages);
     } else {
       setIsSearchActive(false);
@@ -226,6 +234,7 @@ const ConversationList: FC<ConversationListProps> = ({
       ) : (
         conversations
           .filter((convo) => convo.title)
+          .sort((a, b) => (a.title || "").localeCompare(b.title || ""))
           .map((convo) => (
             <ConversationItem
               key={convo.id}
