@@ -22,6 +22,7 @@ interface Message {
   text: string;
   sender: "user" | "bot";
   timestamp: number;
+  createdAt?: string;
 }
 
 const Home: FC = () => {
@@ -99,6 +100,7 @@ const Home: FC = () => {
       text: botResponse,
       sender: "bot",
       timestamp: Date.now(),
+      createdAt: new Date().toISOString(),
     };
 
     if (user && convoId && !isMessageTemporary) {

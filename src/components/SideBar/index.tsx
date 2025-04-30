@@ -1,6 +1,13 @@
 "use client";
 
-import { FC, Fragment, useEffect, useState, useCallback } from "react";
+import {
+  FC,
+  Fragment,
+  useEffect,
+  useState,
+  useCallback,
+  ChangeEvent,
+} from "react";
 import {
   Box,
   Flex,
@@ -115,7 +122,7 @@ const SearchBar = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     setSearchTerm(value);
     onSearch(value);

@@ -1,18 +1,22 @@
 "use client";
 
-import { FC, Fragment, useState, useEffect } from "react";
+import { FC, Fragment, useState, useEffect, ReactNode } from "react";
 import { Button, Box, Text, Flex } from "@chakra-ui/react";
 import { useRouter, usePathname } from "next/navigation";
+import { formatNormalTime } from "@/utils/dateFormatter";
 
 interface Conversation {
   id: string;
   title?: string;
   messages?: Message[];
+  updatedAt?: { seconds: number; nanoseconds: number } | null;
 }
 
 interface Message {
   id: string;
   text: string;
+  createdAt?: string;
+  timestamp?: { seconds: number; nanoseconds: number };
 }
 
 interface ConversationItemProps {
@@ -20,11 +24,11 @@ interface ConversationItemProps {
   isActive: boolean;
   onClick: (id: string) => void;
   isMessageMatch?: boolean;
-  highlightedText?: React.ReactNode;
+  highlightedText?: ReactNode;
   isSearchActive: boolean;
 }
 
-const ConversationItem: React.FC<ConversationItemProps> = ({
+const ConversationItem: FC<ConversationItemProps> = ({
   convo,
   isActive,
   onClick,
@@ -56,7 +60,6 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
         {isMessageMatch ? (
           <Fragment>
             {convo.title}
-            <br />
             {highlightedText}
           </Fragment>
         ) : (
@@ -70,7 +73,8 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
 interface SearchResultItem {
   convo: Conversation;
   message?: Message;
-  highlightedText?: React.ReactNode;
+  highlightedText?: ReactNode;
+  createdAt?: number | null;
 }
 
 interface ConversationListProps {
@@ -92,9 +96,12 @@ const ConversationList: FC<ConversationListProps> = ({
     if (searchTerm) {
       setIsSearchActive(true);
       const lowercasedSearchTerm = searchTerm.toLowerCase();
-      const titles = conversations.filter((convo) =>
-        convo.title?.toLowerCase().includes(lowercasedSearchTerm)
-      );
+
+      const titles = conversations
+        .filter((convo) =>
+          convo.title?.toLowerCase().includes(lowercasedSearchTerm)
+        )
+        .sort((a, b) => (a.title || "").localeCompare(b.title || ""));
       setTitleResults(titles);
 
       const messages: SearchResultItem[] = [];
@@ -105,19 +112,54 @@ const ConversationList: FC<ConversationListProps> = ({
               .toLowerCase()
               .indexOf(lowercasedSearchTerm);
             const endIndex = startIndex + searchTerm.length;
-            const highlightedText = (
-              <Box as="span" fontSize="xs" color="gray.500">
-                {message.text.substring(0, startIndex)}
-                <Box as="span" fontWeight="bold">
-                  {message.text.substring(startIndex, endIndex)}
+            const createdAtTimestamp = message.createdAt
+              ? new Date(message.createdAt).getTime() / 1000
+              : null;
+
+            let formattedDate: string | null = null;
+
+            if (createdAtTimestamp) {
+              const date = new Date(createdAtTimestamp * 1000);
+              formattedDate = formatNormalTime(date);
+            }
+
+            const highlightedTextWithDate = (
+              <Flex direction="row" justify="space-between" gap={1} mt={1}>
+                <Box
+                  as="span"
+                  fontSize="xs"
+                  color="gray.500"
+                  w="100%"
+                  overflow="hidden"
+                  textOverflow="ellipsis"
+                  whiteSpace="nowrap"
+                  display="block"
+                  textAlign="left"
+                >
+                  {message.text.substring(0, startIndex)}
+                  <Box as="span" bgColor="blue.400" color="white">
+                    {message.text.substring(startIndex, endIndex)}
+                  </Box>
+                  {message.text.substring(endIndex)}
                 </Box>
-                {message.text.substring(endIndex)}
-              </Box>
+                {formattedDate && (
+                  <Box as="span" fontSize="xs" color="gray.500">
+                    {formattedDate}
+                  </Box>
+                )}
+              </Flex>
             );
-            messages.push({ convo, message, highlightedText });
+            messages.push({
+              convo,
+              message,
+              highlightedText: highlightedTextWithDate,
+              createdAt: createdAtTimestamp,
+            });
           }
         });
       });
+
+      messages.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
       setMessageResults(messages);
     } else {
       setIsSearchActive(false);
@@ -198,6 +240,7 @@ const ConversationList: FC<ConversationListProps> = ({
       ) : (
         conversations
           .filter((convo) => convo.title)
+          .sort((a, b) => (a.title || "").localeCompare(b.title || ""))
           .map((convo) => (
             <ConversationItem
               key={convo.id}
