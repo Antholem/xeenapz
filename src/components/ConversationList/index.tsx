@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, Fragment, useState, useEffect } from "react";
+import { FC, Fragment, useState, useEffect, ReactNode } from "react";
 import { Button, Box, Text, Flex } from "@chakra-ui/react";
 import { useRouter, usePathname } from "next/navigation";
 import { formatNormalTime } from "@/utils/dateFormatter";
@@ -24,11 +24,11 @@ interface ConversationItemProps {
   isActive: boolean;
   onClick: (id: string) => void;
   isMessageMatch?: boolean;
-  highlightedText?: React.ReactNode;
+  highlightedText?: ReactNode;
   isSearchActive: boolean;
 }
 
-const ConversationItem: React.FC<ConversationItemProps> = ({
+const ConversationItem: FC<ConversationItemProps> = ({
   convo,
   isActive,
   onClick,
@@ -73,7 +73,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
 interface SearchResultItem {
   convo: Conversation;
   message?: Message;
-  highlightedText?: React.ReactNode;
+  highlightedText?: ReactNode;
   createdAt?: number | null;
 }
 
