@@ -16,6 +16,7 @@ interface Message {
   text: string;
   sender: "user" | "bot";
   timestamp: number;
+  createdAt?: string;
 }
 
 interface MessagesLayoutProps {
@@ -47,7 +48,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
 }) => {
   useEffect(() => {
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+      messagesEndRef.current.scrollIntoView();
     }
   }, [messages, messagesEndRef]);
 

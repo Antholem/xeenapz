@@ -68,10 +68,6 @@ const Home: FC = () => {
   }, [listening]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  useEffect(() => {
     const handleBeforeUnload = () => speechSynthesis.cancel();
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => {
