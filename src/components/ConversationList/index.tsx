@@ -3,13 +3,7 @@
 import { FC, Fragment, useState, useEffect } from "react";
 import { Button, Box, Text, Flex } from "@chakra-ui/react";
 import { useRouter, usePathname } from "next/navigation";
-import {
-  format,
-  isToday,
-  differenceInHours,
-  differenceInDays,
-  differenceInWeeks,
-} from "date-fns";
+import { timestamp } from "@/utils/dateFormatter";
 
 interface Conversation {
   id: string;
@@ -42,31 +36,6 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
   highlightedText,
   isSearchActive,
 }) => {
-  const latestMessageTimestampSeconds = convo.messages?.[0]?.timestamp?.seconds;
-  const conversationUpdatedAtSeconds = convo.updatedAt?.seconds;
-  const displayTimestampSeconds =
-    latestMessageTimestampSeconds || conversationUpdatedAtSeconds;
-
-  let formattedTime: string | null = null;
-
-  if (displayTimestampSeconds && !isMessageMatch) {
-    const date = new Date(displayTimestampSeconds * 1000);
-    const now = new Date();
-    const hoursAgo = differenceInHours(now, date);
-    const daysAgo = differenceInDays(now, date);
-    const weeksAgo = differenceInWeeks(now, date);
-
-    if (hoursAgo < 24 && isToday(date)) {
-      formattedTime = format(date, "hh:mmaaa");
-    } else if (daysAgo < 7) {
-      formattedTime = format(date, "EEE");
-    } else if (weeksAgo < 52) {
-      formattedTime = format(date, "d MMM");
-    } else {
-      formattedTime = format(date, "d MMM<ctrl98>");
-    }
-  }
-
   return (
     <Button
       key={convo.id + (isMessageMatch ? `-${convo.messages?.[0]?.id}` : "")}
@@ -139,16 +108,11 @@ const ConversationList: FC<ConversationListProps> = ({
               .toLowerCase()
               .indexOf(lowercasedSearchTerm);
             const endIndex = startIndex + searchTerm.length;
-            let formattedCreatedAt: string | null = null;
-
-            if (message.createdAt) {
-              try {
-                const date = new Date(message.createdAt);
-                formattedCreatedAt = format(date, "d MMM");
-              } catch (error) {
-                console.error("Error formatting createdAt:", error);
-              }
-            }
+            const date = timestamp(
+              message.createdAt
+                ? new Date(message.createdAt).getTime() / 1000
+                : null
+            );
 
             const highlightedTextWithDate = (
               <Flex direction="row" justify="space-between" gap={1} mt={1}>
@@ -170,7 +134,7 @@ const ConversationList: FC<ConversationListProps> = ({
                   {message.text.substring(endIndex)}
                 </Box>
                 <Box as="span" fontSize="xs" color="gray.500">
-                  {formattedCreatedAt}
+                  {date}
                 </Box>
               </Flex>
             );
