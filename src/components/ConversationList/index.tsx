@@ -3,7 +3,7 @@
 import { FC, Fragment, useState, useEffect } from "react";
 import { Button, Box, Text, Flex } from "@chakra-ui/react";
 import { useRouter, usePathname } from "next/navigation";
-import { timestamp } from "@/utils/dateFormatter";
+import { formatNormalTime } from "@/utils/dateFormatter";
 
 interface Conversation {
   id: string;
@@ -115,7 +115,13 @@ const ConversationList: FC<ConversationListProps> = ({
             const createdAtTimestamp = message.createdAt
               ? new Date(message.createdAt).getTime() / 1000
               : null;
-            const formattedCreatedAt = timestamp(createdAtTimestamp);
+
+            let formattedDate: string | null = null;
+
+            if (createdAtTimestamp) {
+              const date = new Date(createdAtTimestamp * 1000);
+              formattedDate = formatNormalTime(date);
+            }
 
             const highlightedTextWithDate = (
               <Flex direction="row" justify="space-between" gap={1} mt={1}>
@@ -136,9 +142,9 @@ const ConversationList: FC<ConversationListProps> = ({
                   </Box>
                   {message.text.substring(endIndex)}
                 </Box>
-                {formattedCreatedAt && (
+                {formattedDate && (
                   <Box as="span" fontSize="xs" color="gray.500">
-                    {formattedCreatedAt}
+                    {formattedDate}
                   </Box>
                 )}
               </Flex>
