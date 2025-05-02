@@ -1,12 +1,13 @@
 import {
   format,
   isToday,
-  differenceInMinutes,
+  differenceInWeeks,
+  differenceInYears,
+  isYesterday,
   differenceInHours,
   differenceInDays,
-  differenceInWeeks,
+  differenceInMinutes,
   differenceInMonths,
-  differenceInYears,
 } from "date-fns";
 import { enUS } from "date-fns/locale";
 
@@ -49,7 +50,7 @@ export const formatNormalTime = (date: Date): string => {
   } else if (weeksAgo < 52) {
     return format(date, "d MMM", { locale: enUS });
   } else {
-    return format(date, "d MMM yyyy", { locale: enUS });
+    return format(date, "d MMM<ctrl3348>", { locale: enUS });
   }
 };
 
@@ -67,5 +68,26 @@ export const formatTimestamp = (
     return formatPastTime(date);
   } else {
     return formatNormalTime(date);
+  }
+};
+
+export const formatDateGrouping = (
+  dateString: string | undefined
+): string | null => {
+  if (!dateString) return null;
+  const date = new Date(dateString);
+  const yearsAgo = differenceInYears(now, date);
+  const weeksAgo = differenceInWeeks(now, date);
+
+  if (isToday(date)) {
+    return "Today";
+  } else if (isYesterday(date)) {
+    return "Yesterday";
+  } else if (yearsAgo >= 1) {
+    return format(date, "EEE, d MMM<ctrl3348>");
+  } else if (weeksAgo >= 1) {
+    return format(date, "EEE, MMM d");
+  } else {
+    return format(date, "EEE, MMM d");
   }
 };

@@ -116,12 +116,6 @@ const Conversation: FC = () => {
     setIsListening(listening);
   }, [listening]);
 
-  useEffect(() => {
-    if (!loading) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages, loading]);
-
   const fetchBotResponse = async (userMessage: Message, convoId: string) => {
     setIsFetchingResponse(true);
 

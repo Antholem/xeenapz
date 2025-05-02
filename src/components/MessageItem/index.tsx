@@ -52,6 +52,7 @@ const MessageItem: FC<MessageItemProps> = ({
       direction="column"
       align={isUser ? "flex-end" : "flex-start"}
       overflowX="hidden"
+      my={2}
     >
       <Flex align="start" gap={4} maxW="70%">
         {!isUser && <Image boxSize="24px" src="/favicon.ico" alt="Bot Icon" />}
