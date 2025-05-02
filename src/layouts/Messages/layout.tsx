@@ -83,15 +83,15 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
                 justifyContent="center"
                 alignItems="center"
                 gap={2}
-                mb={4}
+                my={2}
               >
-                <Divider />
+                <Divider orientation="horizontal" />
                 <Box>
                   <Text whiteSpace="nowrap" fontSize="xs">
                     {currentDate}
                   </Text>
                 </Box>
-                <Divider />
+                <Divider orientation="horizontal" />
               </Flex>
             );
           }
