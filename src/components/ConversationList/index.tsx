@@ -240,7 +240,6 @@ const ConversationList: FC<ConversationListProps> = ({
       ) : (
         conversations
           .filter((convo) => convo.title)
-          .sort((a, b) => (a.title || "").localeCompare(b.title || ""))
           .map((convo) => (
             <ConversationItem
               key={convo.id}
