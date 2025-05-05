@@ -197,7 +197,13 @@ const Home: FC = () => {
     if (!input.trim()) return;
 
     const timestamp = Date.now();
-    const userMessage: Message = { text: input, sender: "user", timestamp };
+    const now = new Date().toISOString();
+    const userMessage: Message = {
+      text: input,
+      sender: "user",
+      timestamp,
+      createdAt: now,
+    };
 
     setInput("");
     setMessages((prev) => [...prev, userMessage]);
@@ -219,7 +225,7 @@ const Home: FC = () => {
             lastMessage: {
               text: userMessage.text,
               sender: userMessage.sender,
-              createdAt: new Date().toISOString(),
+              createdAt: now,
             },
           });
 
@@ -232,7 +238,7 @@ const Home: FC = () => {
               lastMessage: {
                 text: userMessage.text,
                 sender: userMessage.sender,
-                createdAt: new Date().toISOString(),
+                createdAt: now,
               },
             },
             { merge: true }
@@ -247,7 +253,7 @@ const Home: FC = () => {
         );
         await addDoc(messagesRef, {
           ...userMessage,
-          createdAt: new Date().toISOString(),
+          createdAt: now,
         });
 
         fetchBotResponse(userMessage, convoId);

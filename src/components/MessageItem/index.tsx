@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import { IoStop } from "react-icons/io5";
 import { IoIosMic } from "react-icons/io";
+import { enUS } from "date-fns/locale";
 
 interface Message {
   text: string;
@@ -42,17 +43,16 @@ const MessageItem: FC<MessageItemProps> = ({
 }) => {
   const { colorMode } = useColorMode();
   const isUser = message.sender === "user";
-  const formattedTime = format(
-    new Date(message.timestamp),
-    "MMM dd, yyyy hh:mm a"
-  );
+  const formattedTime = format(new Date(message.timestamp), "hh:mm a", {
+    locale: enUS,
+  });
 
   return (
     <Flex
       direction="column"
       align={isUser ? "flex-end" : "flex-start"}
       overflowX="hidden"
-      my={2}
+      my={1}
     >
       <Flex align="start" gap={4} maxW="70%">
         {!isUser && <Image boxSize="24px" src="/favicon.ico" alt="Bot Icon" />}
