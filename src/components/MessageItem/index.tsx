@@ -42,17 +42,14 @@ const MessageItem: FC<MessageItemProps> = ({
 }) => {
   const { colorMode } = useColorMode();
   const isUser = message.sender === "user";
-  const formattedTime = format(
-    new Date(message.timestamp),
-    "MMM dd, yyyy hh:mm a"
-  );
+  const formattedTime = format(new Date(message.timestamp), "hh:mm a");
 
   return (
     <Flex
       direction="column"
       align={isUser ? "flex-end" : "flex-start"}
       overflowX="hidden"
-      my={2}
+      my={1}
     >
       <Flex align="start" gap={4} maxW="70%">
         {!isUser && <Image boxSize="24px" src="/favicon.ico" alt="Bot Icon" />}
