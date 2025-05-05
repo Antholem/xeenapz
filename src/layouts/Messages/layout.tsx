@@ -1,4 +1,4 @@
-import React, { ReactNode, RefObject, useEffect } from "react";
+import React, { Fragment, ReactNode, RefObject, useEffect } from "react";
 import { FC } from "react";
 import {
   Box,
@@ -68,46 +68,46 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
   ) : (
     <Box flex="1" overflowY="auto" p={4} aria-live="polite">
       {messages.length > 0 &&
-        messages.reduce((acc, currentMessage, index, array) => {
+        messages.map((currentMessage, index, array) => {
           const currentDate = formatDateGrouping(currentMessage.createdAt);
           const previousMessage = array[index - 1];
           const previousDate = previousMessage
             ? formatDateGrouping(previousMessage.createdAt)
             : null;
 
-          if (currentDate && currentDate !== previousDate) {
-            acc.push(
-              <Flex
-                key={`date-separator-${currentDate}-${index}`}
-                direction="row"
-                justifyContent="center"
-                alignItems="center"
-                gap={2}
-                my={2}
-              >
-                <Divider orientation="horizontal" />
-                <Box>
-                  <Text whiteSpace="nowrap" fontSize="xs">
-                    {currentDate}
-                  </Text>
-                </Box>
-                <Divider orientation="horizontal" />
-              </Flex>
-            );
-          }
+          const shouldShowDateSeparator =
+            index === 0 || (currentDate && currentDate !== previousDate);
 
-          acc.push(
-            <MessageItem
-              key={index}
-              message={currentMessage}
-              user={user}
-              speakText={speakText}
-              playingMessage={playingMessage}
-              setPlayingMessage={setPlayingMessage}
-            />
+          return (
+            <Fragment key={index}>
+              {shouldShowDateSeparator && currentDate && (
+                <Flex
+                  key={`date-separator-${currentDate}-${index}`}
+                  direction="row"
+                  justifyContent="center"
+                  alignItems="center"
+                  gap={2}
+                  my={2}
+                >
+                  <Divider orientation="horizontal" />
+                  <Box>
+                    <Text whiteSpace="nowrap" fontSize="xs">
+                      {currentDate}
+                    </Text>
+                  </Box>
+                  <Divider orientation="horizontal" />
+                </Flex>
+              )}
+              <MessageItem
+                message={currentMessage}
+                user={user}
+                speakText={speakText}
+                playingMessage={playingMessage}
+                setPlayingMessage={setPlayingMessage}
+              />
+            </Fragment>
           );
-          return acc;
-        }, [] as ReactNode[])}
+        })}
       {messages.length === 0 && (
         <VStack height="100%">
           <Flex justify="center" align="center" flex="1">

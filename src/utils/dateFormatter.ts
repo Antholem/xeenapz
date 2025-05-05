@@ -44,7 +44,7 @@ export const formatNormalTime = (date: Date): string => {
   const weeksAgo = differenceInWeeks(now, date);
 
   if (hoursAgo < 24 && isToday(date)) {
-    return format(date, "hh:mmaaa", { locale: enUS });
+    return format(date, "hh:mm a", { locale: enUS });
   } else if (daysAgo < 7) {
     return format(date, "EEE", { locale: enUS });
   } else if (weeksAgo < 52) {

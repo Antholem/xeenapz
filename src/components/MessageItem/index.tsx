@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import { IoStop } from "react-icons/io5";
 import { IoIosMic } from "react-icons/io";
+import { enUS } from "date-fns/locale";
 
 interface Message {
   text: string;
@@ -42,7 +43,9 @@ const MessageItem: FC<MessageItemProps> = ({
 }) => {
   const { colorMode } = useColorMode();
   const isUser = message.sender === "user";
-  const formattedTime = format(new Date(message.timestamp), "hh:mm a");
+  const formattedTime = format(new Date(message.timestamp), "hh:mm a", {
+    locale: enUS,
+  });
 
   return (
     <Flex
