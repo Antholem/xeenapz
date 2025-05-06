@@ -34,13 +34,14 @@ interface MessageItemProps {
   playingMessage: string | null;
 }
 
-const MessageItem = memo(function MessageItem({
+// ✅ Named function for better stack traces and lint compatibility
+const MessageItemComponent = ({
   message,
   user,
   speakText,
   playingMessage,
   setPlayingMessage,
-}: MessageItemProps) {
+}: MessageItemProps) => {
   const { colorMode } = useColorMode();
   const isUser = message.sender === "user";
   const formattedTime = format(new Date(message.timestamp), "hh:mm a", {
@@ -120,6 +121,12 @@ const MessageItem = memo(function MessageItem({
       </Flex>
     </Flex>
   );
-});
+};
+
+// ✅ Wrap in memo
+const MessageItem = memo(MessageItemComponent);
+
+// ✅ Manually add displayName to satisfy ESLint
+MessageItem.displayName = "MessageItem";
 
 export default MessageItem;
