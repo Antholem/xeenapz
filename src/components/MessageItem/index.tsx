@@ -126,4 +126,6 @@ const MessageItem: FC<MessageItemProps> = memo(
   }
 );
 
+MessageItem.displayName = "MessageItem";
+
 export default MessageItem;
