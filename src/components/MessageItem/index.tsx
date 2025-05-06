@@ -34,98 +34,97 @@ interface MessageItemProps {
   playingMessage: string | null;
 }
 
-const MessageItem: FC<MessageItemProps> = memo(
-  ({ message, user, speakText, playingMessage, setPlayingMessage }) => {
-    const { colorMode } = useColorMode();
-    const isUser = message.sender === "user";
-    const formattedTime = format(new Date(message.timestamp), "hh:mm a", {
-      locale: enUS,
-    });
+// ✅ Define the component separately
+const MessageItemComponent: FC<MessageItemProps> = ({
+  message,
+  user,
+  speakText,
+  playingMessage,
+  setPlayingMessage,
+}) => {
+  const { colorMode } = useColorMode();
+  const isUser = message.sender === "user";
+  const formattedTime = format(new Date(message.timestamp), "hh:mm a", {
+    locale: enUS,
+  });
 
-    return (
-      <Flex
-        direction="column"
-        align={isUser ? "flex-end" : "flex-start"}
-        overflowX="hidden"
-        my={1}
-      >
-        <Flex align="start" gap={4} maxW="70%">
-          {!isUser && (
-            <Image boxSize="24px" src="/favicon.ico" alt="Bot Icon" />
-          )}
+  return (
+    <Flex
+      direction="column"
+      align={isUser ? "flex-end" : "flex-start"}
+      overflowX="hidden"
+      my={1}
+    >
+      <Flex align="start" gap={4} maxW="70%">
+        {!isUser && <Image boxSize="24px" src="/favicon.ico" alt="Bot Icon" />}
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems={isUser ? "flex-end" : "flex-start"}
+          gap={1}
+        >
           <Box
-            display="flex"
-            flexDirection="column"
-            alignItems={isUser ? "flex-end" : "flex-start"}
-            gap={1}
+            p={3}
+            borderRadius="lg"
+            color={isUser ? "white" : ""}
+            bg={
+              isUser
+                ? colorMode === "light"
+                  ? "blue.400"
+                  : "blue.500"
+                : colorMode === "light"
+                ? "gray.200"
+                : "gray.700"
+            }
+            maxW="max-content"
+            whiteSpace="pre-wrap"
           >
-            <Box
-              p={3}
-              borderRadius="lg"
-              color={isUser ? "white" : ""}
-              bg={
-                isUser
-                  ? colorMode === "light"
-                    ? "blue.400"
-                    : "blue.500"
-                  : colorMode === "light"
-                  ? "gray.200"
-                  : "gray.700"
-              }
-              maxW="max-content"
-              whiteSpace="pre-wrap"
+            <ReactMarkdown
+              components={{
+                ul: ({ children }) => (
+                  <ul style={{ paddingLeft: "20px" }}>{children}</ul>
+                ),
+              }}
             >
-              <ReactMarkdown
-                components={{
-                  ul: ({ children }) => (
-                    <ul style={{ paddingLeft: "20px" }}>{children}</ul>
-                  ),
-                }}
-              >
-                {message.text}
-              </ReactMarkdown>
-            </Box>
-
-            <Flex align="center" justify="center" gap={1}>
-              <Text fontSize="xs">{formattedTime}</Text>
-              {!isUser && (
-                <Tooltip
-                  label={
-                    playingMessage === message.text ? "Stop" : "Read aloud"
-                  }
-                >
-                  <IconButton
-                    aria-label="Read aloud"
-                    icon={
-                      playingMessage === message.text ? (
-                        <IoStop />
-                      ) : (
-                        <IoIosMic />
-                      )
-                    }
-                    variant="ghost"
-                    size="xs"
-                    onClick={() =>
-                      speakText(message.text, playingMessage, setPlayingMessage)
-                    }
-                  />
-                </Tooltip>
-              )}
-            </Flex>
+              {message.text}
+            </ReactMarkdown>
           </Box>
-          {isUser && (
-            <Avatar
-              size="sm"
-              src={user?.photoURL ?? "default-avatar.png"}
-              name={user?.displayName ?? ""}
-            />
-          )}
-        </Flex>
-      </Flex>
-    );
-  }
-);
 
+          <Flex align="center" justify="center" gap={1}>
+            <Text fontSize="xs">{formattedTime}</Text>
+            {!isUser && (
+              <Tooltip
+                label={playingMessage === message.text ? "Stop" : "Read aloud"}
+              >
+                <IconButton
+                  aria-label="Read aloud"
+                  icon={
+                    playingMessage === message.text ? <IoStop /> : <IoIosMic />
+                  }
+                  variant="ghost"
+                  size="xs"
+                  onClick={() =>
+                    speakText(message.text, playingMessage, setPlayingMessage)
+                  }
+                />
+              </Tooltip>
+            )}
+          </Flex>
+        </Box>
+        {isUser && (
+          <Avatar
+            size="sm"
+            src={user?.photoURL ?? "default-avatar.png"}
+            name={user?.displayName ?? ""}
+          />
+        )}
+      </Flex>
+    </Flex>
+  );
+};
+
+// ✅ Wrap the named component in `memo`
+const MessageItem = memo(MessageItemComponent);
 MessageItem.displayName = "MessageItem";
 
 export default MessageItem;
