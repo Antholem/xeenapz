@@ -83,8 +83,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
     }
   };
 
-  const { initial: initialLoadCount, more: loadMoreCount } =
-    getLoadCounts(loadPreference);
+  const { more: loadMoreCount } = getLoadCounts(loadPreference);
 
   useEffect(() => {
     if (initialLoading) {
