@@ -1,4 +1,4 @@
-import React, { FC, memo } from "react";
+import React, { memo } from "react";
 import {
   Box,
   Flex,
@@ -34,14 +34,13 @@ interface MessageItemProps {
   playingMessage: string | null;
 }
 
-// ✅ Define the component separately
-const MessageItemComponent: FC<MessageItemProps> = ({
+const MessageItem = memo(function MessageItem({
   message,
   user,
   speakText,
   playingMessage,
   setPlayingMessage,
-}) => {
+}: MessageItemProps) {
   const { colorMode } = useColorMode();
   const isUser = message.sender === "user";
   const formattedTime = format(new Date(message.timestamp), "hh:mm a", {
@@ -121,10 +120,6 @@ const MessageItemComponent: FC<MessageItemProps> = ({
       </Flex>
     </Flex>
   );
-};
-
-// ✅ Wrap the named component in `memo`
-const MessageItem = memo(MessageItemComponent);
-MessageItem.displayName = "MessageItem";
+});
 
 export default MessageItem;
