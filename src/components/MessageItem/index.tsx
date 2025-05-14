@@ -1,4 +1,4 @@
-import { FC } from "react";
+import React, { memo } from "react";
 import {
   Box,
   Flex,
@@ -34,13 +34,14 @@ interface MessageItemProps {
   playingMessage: string | null;
 }
 
-const MessageItem: FC<MessageItemProps> = ({
+// ✅ Named function for better stack traces and lint compatibility
+const MessageItemComponent = ({
   message,
   user,
   speakText,
   playingMessage,
   setPlayingMessage,
-}) => {
+}: MessageItemProps) => {
   const { colorMode } = useColorMode();
   const isUser = message.sender === "user";
   const formattedTime = format(new Date(message.timestamp), "hh:mm a", {
@@ -121,5 +122,11 @@ const MessageItem: FC<MessageItemProps> = ({
     </Flex>
   );
 };
+
+// ✅ Wrap in memo
+const MessageItem = memo(MessageItemComponent);
+
+// ✅ Manually add displayName to satisfy ESLint
+MessageItem.displayName = "MessageItem";
 
 export default MessageItem;
