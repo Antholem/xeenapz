@@ -5,6 +5,8 @@ import React, {
   useEffect,
   useRef,
   useState,
+  useCallback,
+  memo,
 } from "react";
 import { FC } from "react";
 import {
@@ -23,6 +25,7 @@ import MessageItem from "../../components/MessageItem";
 import { formatDateGrouping } from "@/utils/dateFormatter";
 
 interface Message {
+  id?: string;
   text: string;
   sender: "user" | "bot";
   timestamp: number;
@@ -48,7 +51,7 @@ interface MessagesLayoutProps {
   loadPreference?: LoadPreference;
 }
 
-const MessagesLayout: FC<MessagesLayoutProps> = ({
+const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
   messages,
   isFetchingResponse,
   user,
@@ -56,7 +59,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
   playingMessage,
   setPlayingMessage,
   messagesEndRef,
-  isLoading: initialLoading = false,
+  isLoading: parentIsLoading = false,
   emptyStateText = "",
   loadPreference = "balanced",
 }) => {
@@ -64,14 +67,17 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const isInitialLoad = useRef(true);
-  const shouldScrollBottom = useRef(false);
+  const isInitialRenderOrNewMessagesRef = useRef(true);
+  const userInteractedWithScrollRef = useRef(false);
+  const prevMessagesRef = useRef<Message[]>(messages);
 
-  const getLoadCounts = (preference: LoadPreference) => {
+  const getLoadCounts = useCallback((preference: LoadPreference) => {
     if (typeof preference === "number") {
-      return { initial: preference, more: Math.ceil(preference / 2) };
+      return {
+        initial: Math.max(20, preference),
+        more: Math.max(10, Math.ceil(preference / 2)),
+      };
     }
-
     switch (preference) {
       case "fast":
         return { initial: 75, more: 50 };
@@ -81,78 +87,131 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
       default:
         return { initial: 50, more: 33 };
     }
-  };
+  }, []);
 
-  const { more: loadMoreCount } = getLoadCounts(loadPreference);
+  const { initial: initialDisplayCount, more: loadMoreCount } =
+    getLoadCounts(loadPreference);
 
   useEffect(() => {
-    if (initialLoading) {
+    if (parentIsLoading) {
+      setLoadedMessages([]);
+      setHasMore(false);
+      isInitialRenderOrNewMessagesRef.current = true;
       return;
     }
 
-    setLoadedMessages(messages);
-    setHasMore(false);
+    const messagesChanged = messages !== prevMessagesRef.current;
+    const initialLoadWithMessages =
+      loadedMessages.length === 0 && messages.length > 0;
+    const newMessagesAdded = messages.length > prevMessagesRef.current.length;
 
-    shouldScrollBottom.current = true;
-  }, [messages, initialLoading]);
+    if (messagesChanged || initialLoadWithMessages) {
+      const totalMessagesCount = messages.length;
+      if (totalMessagesCount > 0) {
+        const initialToShow = messages.slice(-initialDisplayCount);
+        setLoadedMessages(initialToShow);
+        setHasMore(totalMessagesCount > initialDisplayCount);
+        isInitialRenderOrNewMessagesRef.current = true;
+        userInteractedWithScrollRef.current = false;
+      } else {
+        setLoadedMessages([]);
+        setHasMore(false);
+      }
+      prevMessagesRef.current = messages;
+    } else if (newMessagesAdded && !userInteractedWithScrollRef.current) {
+      const newMessagesCount = messages.length - prevMessagesRef.current.length;
+      const newMessages = messages.slice(-newMessagesCount);
+      setLoadedMessages((prevLoaded) => {
+        const combined = [...prevLoaded, ...newMessages];
+        return combined.slice(-(initialDisplayCount + loadMoreCount));
+      });
+      isInitialRenderOrNewMessagesRef.current = true;
+      prevMessagesRef.current = messages;
+    }
+  }, [
+    messages,
+    parentIsLoading,
+    initialDisplayCount,
+    loadMoreCount,
+    loadedMessages.length,
+  ]);
 
   useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
     if (
+      scrollContainer &&
       messagesEndRef.current &&
-      loadedMessages.length > 0 &&
-      shouldScrollBottom.current
+      loadedMessages.length > 0
     ) {
-      messagesEndRef.current.scrollIntoView();
-      shouldScrollBottom.current = false;
-      isInitialLoad.current = false;
+      if (isInitialRenderOrNewMessagesRef.current) {
+        messagesEndRef.current.scrollIntoView();
+        isInitialRenderOrNewMessagesRef.current = false;
+      }
     }
   }, [loadedMessages, messagesEndRef]);
 
-  const loadMoreMessages = () => {
+  const loadMoreMessages = useCallback(() => {
     if (loadingMore || !hasMore) {
       return;
     }
 
     setLoadingMore(true);
-    const currentScrollPosition = scrollContainerRef.current
-      ? scrollContainerRef.current.scrollTop
-      : 0;
-    const currentLoadedCount = loadedMessages.length;
-    const remainingMessages = messages.length - currentLoadedCount;
-    const messagesToLoad = Math.min(loadMoreCount, remainingMessages);
-    const startIndex = Math.max(
-      0,
-      messages.length - currentLoadedCount - messagesToLoad
-    );
-    const nextMessages = messages.slice(
-      startIndex,
-      messages.length - currentLoadedCount
-    );
 
     setTimeout(() => {
-      const previousScrollHeight = scrollContainerRef.current
-        ? scrollContainerRef.current.scrollHeight
-        : 0;
-      setLoadedMessages((prev) => [...nextMessages, ...prev]);
-      setHasMore(messages.length > loadedMessages.length + messagesToLoad);
-      setLoadingMore(false);
+      const currentTotalLoadedCount = loadedMessages.length;
+      const olderMessagesInPropCount =
+        messages.length - currentTotalLoadedCount;
 
-      if (scrollContainerRef.current) {
-        const newScrollHeight = scrollContainerRef.current.scrollHeight;
-        scrollContainerRef.current.scrollTop =
-          currentScrollPosition + (newScrollHeight - previousScrollHeight);
+      const numberToLoad = Math.min(loadMoreCount, olderMessagesInPropCount);
+
+      if (numberToLoad > 0) {
+        const nextChunkToPrepend = messages.slice(
+          olderMessagesInPropCount - numberToLoad,
+          olderMessagesInPropCount
+        );
+
+        const scrollContainer = scrollContainerRef.current;
+        const previousScrollHeight = scrollContainer?.scrollHeight || 0;
+        const previousScrollTop = scrollContainer?.scrollTop || 0;
+
+        setLoadedMessages((prev) => [...nextChunkToPrepend, ...prev]);
+        setHasMore(olderMessagesInPropCount - numberToLoad > 0);
+
+        requestAnimationFrame(() => {
+          if (scrollContainer) {
+            scrollContainer.scrollTop =
+              previousScrollTop +
+              (scrollContainer.scrollHeight - previousScrollHeight);
+          }
+        });
+      } else {
+        setHasMore(false);
       }
+      setLoadingMore(false);
     }, 500);
-  };
+  }, [loadingMore, hasMore, loadedMessages, messages, loadMoreCount]);
 
   const handleScroll = (event: UIEvent<HTMLDivElement>) => {
     const target = event.currentTarget;
-    if (target.scrollTop === 0 && hasMore && !loadingMore) {
+    const atTopThreshold = 10;
+    const atBottomThresholdStick = 50;
+
+    if (target.scrollTop <= atTopThreshold && hasMore && !loadingMore) {
+      userInteractedWithScrollRef.current = true;
       loadMoreMessages();
+    }
+
+    if (
+      target.scrollHeight - target.scrollTop - target.clientHeight >
+      atBottomThresholdStick
+    ) {
+      userInteractedWithScrollRef.current = true;
+    } else {
+      userInteractedWithScrollRef.current = false;
     }
   };
 
-  return initialLoading ? (
+  return parentIsLoading && loadedMessages.length === 0 ? (
     <Flex
       flex="1"
       overflowY="auto"
@@ -164,7 +223,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
       <Spinner size="xl" />
     </Flex>
   ) : (
-    <>
+    <Fragment>
       {loadingMore && <Progress size="xs" isIndeterminate />}
       <Box
         flex="1"
@@ -176,20 +235,35 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
       >
         {loadedMessages.length > 0 &&
           loadedMessages.map((currentMessage, index, array) => {
-            const currentDate = formatDateGrouping(currentMessage.createdAt);
-            const previousMessage = array[index - 1];
-            const previousDate = previousMessage
-              ? formatDateGrouping(previousMessage.createdAt)
+            const msgDateForGrouping =
+              currentMessage.createdAt ||
+              (currentMessage.timestamp
+                ? new Date(currentMessage.timestamp).toISOString()
+                : undefined);
+            const currentDate = formatDateGrouping(msgDateForGrouping);
+
+            const prevMsg = array[index - 1];
+            const prevMsgDateForGrouping =
+              prevMsg?.createdAt ||
+              (prevMsg?.timestamp
+                ? new Date(prevMsg.timestamp).toISOString()
+                : undefined);
+            const previousDate = prevMsg
+              ? formatDateGrouping(prevMsgDateForGrouping)
               : null;
 
             const shouldShowDateSeparator =
               index === 0 || (currentDate && currentDate !== previousDate);
 
+            const messageKey =
+              currentMessage.id ||
+              `${currentMessage.timestamp}-${currentMessage.sender}-${index}`;
+
             return (
-              <Fragment key={index}>
+              <Fragment key={messageKey}>
                 {shouldShowDateSeparator && currentDate && (
                   <Flex
-                    key={`date-separator-${currentDate}-${index}`}
+                    key={`date-separator-${currentDate}-${messageKey}`}
                     direction="row"
                     justifyContent="center"
                     alignItems="center"
@@ -215,7 +289,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
               </Fragment>
             );
           })}
-        {loadedMessages.length === 0 && !initialLoading && (
+        {loadedMessages.length === 0 && !parentIsLoading && (
           <VStack height="100%">
             <Flex justify="center" align="center" flex="1">
               <Text fontSize={{ base: "lg", md: "3xl" }} textAlign="center">
@@ -236,8 +310,11 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
         )}
         <Box as="div" ref={messagesEndRef} />
       </Box>
-    </>
+    </Fragment>
   );
 };
+
+const MessagesLayout = memo(MessagesLayoutComponent);
+MessagesLayout.displayName = "MessagesLayout";
 
 export default MessagesLayout;
