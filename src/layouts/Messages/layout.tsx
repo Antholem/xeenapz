@@ -6,6 +6,7 @@ import React, {
   useRef,
   useState,
   useCallback,
+  memo,
 } from "react";
 import { FC } from "react";
 import {
@@ -50,7 +51,7 @@ interface MessagesLayoutProps {
   loadPreference?: LoadPreference;
 }
 
-const MessagesLayout: FC<MessagesLayoutProps> = ({
+const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
   messages,
   isFetchingResponse,
   user,
@@ -253,7 +254,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
               index === 0 || (currentDate && currentDate !== previousDate);
 
             const messageKey =
-              (currentMessage as any).id ||
+              currentMessage.id ||
               `${currentMessage.timestamp}-${currentMessage.sender}-${index}`;
 
             return (
@@ -310,5 +311,8 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
     </Fragment>
   );
 };
+
+const MessagesLayout = memo(MessagesLayoutComponent);
+MessagesLayout.displayName = "MessagesLayout";
 
 export default MessagesLayout;
