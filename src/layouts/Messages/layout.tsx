@@ -19,6 +19,7 @@ import {
   Spinner,
   Divider,
   Progress,
+  useColorMode,
 } from "@chakra-ui/react";
 import { User } from "@/lib/firebase";
 import MessageItem from "../../components/MessageItem";
@@ -70,6 +71,7 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
   const isInitialRenderOrNewMessagesRef = useRef(true);
   const userInteractedWithScrollRef = useRef(false);
   const prevMessagesRef = useRef<Message[]>(messages);
+  const { colorMode } = useColorMode();
 
   const getLoadCounts = useCallback((preference: LoadPreference) => {
     if (typeof preference === "number") {
@@ -85,7 +87,7 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
         return { initial: 25, more: 15 };
       case "balanced":
       default:
-        return { initial: 50, more: 33 };
+        return { initial: 50, more: 30 };
     }
   }, []);
 
@@ -268,11 +270,20 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
                     justifyContent="center"
                     alignItems="center"
                     gap={2}
-                    my={2}
+                    my={3}
                   >
                     <Divider orientation="horizontal" />
                     <Box>
-                      <Text whiteSpace="nowrap" fontSize="xs">
+                      <Text
+                        whiteSpace="nowrap"
+                        fontSize="xs"
+                        bgColor={
+                          colorMode === "light" ? "gray.200" : "gray.700"
+                        }
+                        px={2}
+                        py={1}
+                        borderRadius="full"
+                      >
                         {currentDate}
                       </Text>
                     </Box>

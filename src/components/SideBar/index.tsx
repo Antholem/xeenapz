@@ -7,6 +7,8 @@ import {
   useState,
   useCallback,
   ChangeEvent,
+  UIEvent,
+  useRef,
 } from "react";
 import {
   Box,
@@ -33,6 +35,7 @@ import {
   MenuItem,
   Icon,
   Spinner,
+  Progress,
 } from "@chakra-ui/react";
 import { IoAdd, IoSettingsSharp, IoSearch } from "react-icons/io5";
 import { FiLogOut, FiUserCheck } from "react-icons/fi";
@@ -54,11 +57,13 @@ import { useAuth } from "@/app/context/Auth";
 import { useRouter } from "next/navigation";
 import ConversationList from "../ConversationList";
 
+type LoadPreference = "fast" | "balanced" | "slow" | number;
 interface SideBarProps {
   type: "temporary" | "persistent";
   isOpen?: boolean;
   placement?: "left" | "right" | "top" | "bottom";
   onClose?: () => void;
+  loadPreference?: LoadPreference;
 }
 
 interface Conversation {
@@ -189,16 +194,50 @@ const SkeletonChatList = () => (
   </Flex>
 );
 
-const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
+const SideBar = ({
+  type,
+  isOpen,
+  placement,
+  onClose,
+  loadPreference = "balanced",
+}: SideBarProps) => {
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
   const { user, setLoading: setAuthLoading } = useAuth();
   const router = useRouter();
   const [allConversations, setAllConversations] = useState<Conversation[]>([]);
-  const [filteredConversations, setFilteredConversations] = useState<
+  const [displayedConversations, setDisplayedConversations] = useState<
     Conversation[]
   >([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMoreConversations, setLoadingMoreConversations] =
+    useState(false);
+  const [hasMoreConversations, setHasMoreConversations] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const getLoadCounts = useCallback((preference: LoadPreference) => {
+    if (typeof preference === "number") {
+      return {
+        initial: Math.max(20, preference),
+        more: Math.max(10, Math.ceil(preference / 2)),
+      };
+    }
+    switch (preference) {
+      case "fast":
+        return { initial: 40, more: 10 };
+      case "slow":
+        return { initial: 20, more: 10 };
+      case "balanced":
+      default:
+        return { initial: 30, more: 10 };
+    }
+  }, []);
+
+  const {
+    initial: CONVERSATIONS_INITIAL_LOAD_COUNT,
+    more: CONVERSATIONS_LOAD_MORE_COUNT,
+  } = getLoadCounts(loadPreference);
 
   const fetchConversationMessages = useCallback(
     async (conversationId: string): Promise<Message[]> => {
@@ -244,7 +283,12 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
             })
           );
           setAllConversations(conversationsList);
-          setFilteredConversations(conversationsList);
+          setDisplayedConversations(
+            conversationsList.slice(0, CONVERSATIONS_INITIAL_LOAD_COUNT)
+          );
+          setHasMoreConversations(
+            conversationsList.length > CONVERSATIONS_INITIAL_LOAD_COUNT
+          );
           setLoading(false);
         },
         (error) => {
@@ -255,29 +299,79 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
       return () => unsubscribe();
     } else {
       setAllConversations([]);
-      setFilteredConversations([]);
+      setDisplayedConversations([]);
       setLoading(false);
+      setHasMoreConversations(false);
     }
-  }, [user, fetchConversationMessages]);
+  }, [user, fetchConversationMessages, CONVERSATIONS_INITIAL_LOAD_COUNT]);
 
-  const handleSearch = (term: string) => {
-    setSearchTerm(term);
-    if (!term) {
-      setFilteredConversations(allConversations);
+  useEffect(() => {
+    if (!searchTerm) {
+      setDisplayedConversations(
+        allConversations.slice(0, CONVERSATIONS_INITIAL_LOAD_COUNT)
+      );
+      setHasMoreConversations(
+        allConversations.length > CONVERSATIONS_INITIAL_LOAD_COUNT
+      );
+    } else {
+      const lowercasedSearchTerm = searchTerm.toLowerCase();
+      const results = allConversations.filter((conversation) => {
+        const titleMatch = conversation.title
+          ?.toLowerCase()
+          .includes(lowercasedSearchTerm);
+        const messageMatch = conversation.messages?.some((message) =>
+          message.text.toLowerCase().includes(lowercasedSearchTerm)
+        );
+        return titleMatch || messageMatch;
+      });
+      setDisplayedConversations(results);
+      setHasMoreConversations(false);
+    }
+  }, [searchTerm, allConversations, CONVERSATIONS_INITIAL_LOAD_COUNT]);
+
+  const loadMoreConversations = useCallback(() => {
+    if (loadingMoreConversations || !hasMoreConversations) {
       return;
     }
 
-    const lowercasedSearchTerm = term.toLowerCase();
-    const results = allConversations.filter((conversation) => {
-      const titleMatch = conversation.title
-        ?.toLowerCase()
-        .includes(lowercasedSearchTerm);
-      const messageMatch = conversation.messages?.some((message) =>
-        message.text.toLowerCase().includes(lowercasedSearchTerm)
+    setLoadingMoreConversations(true);
+
+    setTimeout(() => {
+      const currentLoadedCount = displayedConversations.length;
+      const nextBatch = allConversations.slice(
+        currentLoadedCount,
+        currentLoadedCount + CONVERSATIONS_LOAD_MORE_COUNT
       );
-      return titleMatch || messageMatch;
-    });
-    setFilteredConversations(results);
+
+      setDisplayedConversations((prev) => [...prev, ...nextBatch]);
+      setHasMoreConversations(
+        allConversations.length > currentLoadedCount + nextBatch.length
+      );
+      setLoadingMoreConversations(false);
+    }, 500);
+  }, [
+    loadingMoreConversations,
+    hasMoreConversations,
+    displayedConversations,
+    allConversations,
+    CONVERSATIONS_LOAD_MORE_COUNT,
+  ]);
+
+  const handleScroll = (event: UIEvent<HTMLDivElement>) => {
+    if (searchTerm) return;
+
+    const target = event.currentTarget;
+    const atBottomThreshold = 50;
+    if (
+      target.scrollHeight - target.scrollTop - target.clientHeight <
+      atBottomThreshold
+    ) {
+      loadMoreConversations();
+    }
+  };
+
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
   };
 
   const handleGoogleSignIn = async () => {
@@ -322,8 +416,9 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
       borderRadius={0}
       variant="unstyled"
       display={!isLargeScreen || !user ? "none" : "block"}
+      h="100vh"
     >
-      <Flex direction="column" h="100vh" w="350px">
+      <Flex direction="column" h="100%" w="350px">
         <Flex
           px={3}
           pt={2}
@@ -368,19 +463,24 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
           <SearchBar onSearch={handleSearch} />
         </Flex>
         <Divider />
+        {loadingMoreConversations && searchTerm === "" && (
+          <Progress size="xs" isIndeterminate />
+        )}
         <VStack
-          h="100vh"
+          flex="1"
           p={3}
           align="stretch"
-          overflowY={loading ? "hidden" : "auto"}
+          overflowY="auto"
           spacing={0}
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
         >
           {loading ? (
             <SkeletonChatList />
           ) : (
             <Flex direction="column" align="center" justify="center" w="100%">
               <ConversationList
-                conversations={filteredConversations}
+                conversations={displayedConversations}
                 searchTerm={searchTerm}
               />
             </Flex>
@@ -443,16 +543,22 @@ const SideBar = ({ type, isOpen, placement, onClose }: SideBarProps) => {
           <Flex px={3} pb={3}>
             <SearchBar onSearch={handleSearch} />
           </Flex>
+          {loadingMoreConversations && searchTerm === "" && (
+            <Progress size="xs" isIndeterminate />
+          )}
           {loading ? (
             <SkeletonChatList />
           ) : (
             <DrawerBody
+              flex="1"
               p={3}
               borderTopWidth="1px"
-              overflowY={loading ? "hidden" : "auto"}
+              overflowY="auto"
+              ref={scrollContainerRef}
+              onScroll={handleScroll}
             >
               <ConversationList
-                conversations={filteredConversations}
+                conversations={displayedConversations}
                 searchTerm={searchTerm}
               />
             </DrawerBody>
