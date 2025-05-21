@@ -181,7 +181,7 @@ const MenuItems: FC<MenuItemsProps> = ({ user, switchAccount, signOut }) => {
   );
 };
 
-const SkeletonChatList = () => (
+const Loader = () => (
   <Flex
     flex="1"
     overflowY="auto"
@@ -476,7 +476,7 @@ const SideBar = ({
           onScroll={handleScroll}
         >
           {loading ? (
-            <SkeletonChatList />
+            <Loader />
           ) : (
             <Flex direction="column" align="center" justify="center" w="100%">
               <ConversationList
@@ -547,7 +547,7 @@ const SideBar = ({
             <Progress size="xs" isIndeterminate />
           )}
           {loading ? (
-            <SkeletonChatList />
+            <Loader />
           ) : (
             <DrawerBody
               flex="1"
