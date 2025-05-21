@@ -34,7 +34,6 @@ interface MessageItemProps {
   playingMessage: string | null;
 }
 
-// ✅ Named function for better stack traces and lint compatibility
 const MessageItemComponent = ({
   message,
   user,
@@ -123,10 +122,7 @@ const MessageItemComponent = ({
   );
 };
 
-// ✅ Wrap in memo
 const MessageItem = memo(MessageItemComponent);
-
-// ✅ Manually add displayName to satisfy ESLint
 MessageItem.displayName = "MessageItem";
 
 export default MessageItem;

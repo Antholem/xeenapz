@@ -100,10 +100,12 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
       return;
     }
 
-    if (
-      messages !== prevMessagesRef.current ||
-      (loadedMessages.length === 0 && messages.length > 0)
-    ) {
+    const messagesChanged = messages !== prevMessagesRef.current;
+    const initialLoadWithMessages =
+      loadedMessages.length === 0 && messages.length > 0;
+    const newMessagesAdded = messages.length > prevMessagesRef.current.length;
+
+    if (messagesChanged || initialLoadWithMessages) {
       const totalMessagesCount = messages.length;
       if (totalMessagesCount > 0) {
         const initialToShow = messages.slice(-initialDisplayCount);
@@ -116,10 +118,7 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
         setHasMore(false);
       }
       prevMessagesRef.current = messages;
-    } else if (
-      messages.length > prevMessagesRef.current.length &&
-      !userInteractedWithScrollRef.current
-    ) {
+    } else if (newMessagesAdded && !userInteractedWithScrollRef.current) {
       const newMessagesCount = messages.length - prevMessagesRef.current.length;
       const newMessages = messages.slice(-newMessagesCount);
       setLoadedMessages((prevLoaded) => {
@@ -138,13 +137,16 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
   ]);
 
   useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
     if (
-      isInitialRenderOrNewMessagesRef.current &&
+      scrollContainer &&
       messagesEndRef.current &&
       loadedMessages.length > 0
     ) {
-      messagesEndRef.current.scrollIntoView({ behavior: "auto" });
-      isInitialRenderOrNewMessagesRef.current = false;
+      if (isInitialRenderOrNewMessagesRef.current) {
+        messagesEndRef.current.scrollIntoView();
+        isInitialRenderOrNewMessagesRef.current = false;
+      }
     }
   }, [loadedMessages, messagesEndRef]);
 
@@ -192,13 +194,13 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
   const handleScroll = (event: UIEvent<HTMLDivElement>) => {
     const target = event.currentTarget;
     const atTopThreshold = 10;
+    const atBottomThresholdStick = 50;
 
     if (target.scrollTop <= atTopThreshold && hasMore && !loadingMore) {
       userInteractedWithScrollRef.current = true;
       loadMoreMessages();
     }
 
-    const atBottomThresholdStick = 50;
     if (
       target.scrollHeight - target.scrollTop - target.clientHeight >
       atBottomThresholdStick
