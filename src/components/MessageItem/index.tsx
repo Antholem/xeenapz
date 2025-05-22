@@ -129,7 +129,4 @@ const MessageItemComponent = ({
   );
 };
 
-const MessageItem = memo(MessageItemComponent);
-MessageItem.displayName = "MessageItem";
-
-export default MessageItem;
+export default memo(MessageItemComponent);
