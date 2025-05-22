@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, Fragment, useState, useEffect, ReactNode } from "react";
+import { FC, Fragment, ReactNode, memo, useMemo } from "react";
 import { Button, Box, Text, Flex } from "@chakra-ui/react";
 import { useRouter, usePathname } from "next/navigation";
 import { formatNormalTime } from "@/utils/dateFormatter";
@@ -88,84 +88,79 @@ const ConversationList: FC<ConversationListProps> = ({
 }) => {
   const router = useRouter();
   const pathname = usePathname();
-  const [isSearchActive, setIsSearchActive] = useState(false);
-  const [titleResults, setTitleResults] = useState<Conversation[]>([]);
-  const [messageResults, setMessageResults] = useState<SearchResultItem[]>([]);
 
-  useEffect(() => {
-    if (searchTerm) {
-      setIsSearchActive(true);
-      const lowercasedSearchTerm = searchTerm.toLowerCase();
+  const isSearchActive = !!searchTerm;
 
-      const titles = conversations
-        .filter((convo) =>
-          convo.title?.toLowerCase().includes(lowercasedSearchTerm)
-        )
-        .sort((a, b) => (a.title || "").localeCompare(b.title || ""));
-      setTitleResults(titles);
+  const { titleResults, messageResults } = useMemo(() => {
+    if (!searchTerm) return { titleResults: [], messageResults: [] };
 
-      const messages: SearchResultItem[] = [];
-      conversations.forEach((convo) => {
-        convo.messages?.forEach((message) => {
-          if (message.text.toLowerCase().includes(lowercasedSearchTerm)) {
-            const startIndex = message.text
-              .toLowerCase()
-              .indexOf(lowercasedSearchTerm);
-            const endIndex = startIndex + searchTerm.length;
-            const createdAtTimestamp = message.createdAt
-              ? new Date(message.createdAt).getTime() / 1000
-              : null;
+    const lowercasedSearchTerm = searchTerm.toLowerCase();
 
-            let formattedDate: string | null = null;
+    const titles = conversations
+      .filter((convo) =>
+        convo.title?.toLowerCase().includes(lowercasedSearchTerm)
+      )
+      .sort((a, b) => (a.title || "").localeCompare(b.title || ""));
 
-            if (createdAtTimestamp) {
-              const date = new Date(createdAtTimestamp * 1000);
-              formattedDate = formatNormalTime(date);
-            }
+    const messages: SearchResultItem[] = [];
 
-            const highlightedTextWithDate = (
-              <Flex direction="row" justify="space-between" gap={1} mt={1}>
-                <Box
-                  as="span"
-                  fontSize="xs"
-                  color="gray.500"
-                  w="100%"
-                  overflow="hidden"
-                  textOverflow="ellipsis"
-                  whiteSpace="nowrap"
-                  display="block"
-                  textAlign="left"
-                >
-                  {message.text.substring(0, startIndex)}
-                  <Box as="span" bgColor="blue.400" color="white">
-                    {message.text.substring(startIndex, endIndex)}
-                  </Box>
-                  {message.text.substring(endIndex)}
-                </Box>
-                {formattedDate && (
-                  <Box as="span" fontSize="xs" color="gray.500">
-                    {formattedDate}
-                  </Box>
-                )}
-              </Flex>
-            );
-            messages.push({
-              convo,
-              message,
-              highlightedText: highlightedTextWithDate,
-              createdAt: createdAtTimestamp,
-            });
+    conversations.forEach((convo) => {
+      convo.messages?.forEach((message) => {
+        if (message.text.toLowerCase().includes(lowercasedSearchTerm)) {
+          const startIndex = message.text
+            .toLowerCase()
+            .indexOf(lowercasedSearchTerm);
+          const endIndex = startIndex + searchTerm.length;
+
+          const createdAtTimestamp = message.createdAt
+            ? new Date(message.createdAt).getTime() / 1000
+            : null;
+
+          let formattedDate: string | null = null;
+          if (createdAtTimestamp) {
+            const date = new Date(createdAtTimestamp * 1000);
+            formattedDate = formatNormalTime(date);
           }
-        });
-      });
 
-      messages.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-      setMessageResults(messages);
-    } else {
-      setIsSearchActive(false);
-      setTitleResults([]);
-      setMessageResults([]);
-    }
+          const highlightedTextWithDate = (
+            <Flex direction="row" justify="space-between" gap={1} mt={1}>
+              <Box
+                as="span"
+                fontSize="xs"
+                color="gray.500"
+                w="100%"
+                overflow="hidden"
+                textOverflow="ellipsis"
+                whiteSpace="nowrap"
+                display="block"
+                textAlign="left"
+              >
+                {message.text.substring(0, startIndex)}
+                <Box as="span" bgColor="blue.400" color="white">
+                  {message.text.substring(startIndex, endIndex)}
+                </Box>
+                {message.text.substring(endIndex)}
+              </Box>
+              {formattedDate && (
+                <Box as="span" fontSize="xs" color="gray.500">
+                  {formattedDate}
+                </Box>
+              )}
+            </Flex>
+          );
+
+          messages.push({
+            convo,
+            message,
+            highlightedText: highlightedTextWithDate,
+            createdAt: createdAtTimestamp,
+          });
+        }
+      });
+    });
+
+    messages.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    return { titleResults: titles, messageResults: messages };
   }, [conversations, searchTerm]);
 
   const handleConversationClick = (conversationId: string) => {
@@ -254,4 +249,4 @@ const ConversationList: FC<ConversationListProps> = ({
   );
 };
 
-export default ConversationList;
+export default memo(ConversationList);
