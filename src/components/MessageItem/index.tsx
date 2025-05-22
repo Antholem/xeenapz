@@ -85,7 +85,7 @@ const MessageItemComponent = ({
                 ul: ({ children }) => (
                   <ul style={{ paddingLeft: "20px" }}>{children}</ul>
                 ),
-                a: ({ node, ...props }) => (
+                a: ({ ...props }) => (
                   <a
                     {...props}
                     style={{
