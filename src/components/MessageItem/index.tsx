@@ -52,7 +52,7 @@ const MessageItemComponent = ({
       direction="column"
       align={isUser ? "flex-end" : "flex-start"}
       overflowX="hidden"
-      my={1}
+      my={2}
     >
       <Flex align="start" gap={4} maxW="70%">
         {!isUser && <Image boxSize="24px" src="/favicon.ico" alt="Bot Icon" />}
@@ -77,11 +77,22 @@ const MessageItemComponent = ({
             }
             maxW="max-content"
             whiteSpace="pre-wrap"
+            wordBreak="break-word"
+            overflowWrap="anywhere"
           >
             <ReactMarkdown
               components={{
                 ul: ({ children }) => (
                   <ul style={{ paddingLeft: "20px" }}>{children}</ul>
+                ),
+                a: ({ ...props }) => (
+                  <a
+                    {...props}
+                    style={{
+                      wordBreak: "break-all",
+                      overflowWrap: "break-word",
+                    }}
+                  />
                 ),
               }}
             >
