@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, Fragment, useEffect, useRef, useState } from "react";
+import { FC, Fragment, memo, useEffect, useRef, useState } from "react";
 import {
   Flex,
   Text,
@@ -203,4 +203,4 @@ const NavigationBar: FC = () => {
   );
 };
 
-export default NavigationBar;
+export default memo(NavigationBar);

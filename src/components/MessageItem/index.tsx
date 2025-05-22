@@ -5,7 +5,6 @@ import {
   Text,
   Image,
   Avatar,
-  useColorMode,
   Tooltip,
   IconButton,
 } from "@chakra-ui/react";
@@ -15,6 +14,7 @@ import ReactMarkdown from "react-markdown";
 import { IoStop } from "react-icons/io5";
 import { IoIosMic } from "react-icons/io";
 import { enUS } from "date-fns/locale";
+import { useColorModeValue } from "@chakra-ui/react";
 
 interface Message {
   text: string;
@@ -41,11 +41,13 @@ const MessageItemComponent = ({
   playingMessage,
   setPlayingMessage,
 }: MessageItemProps) => {
-  const { colorMode } = useColorMode();
   const isUser = message.sender === "user";
   const formattedTime = format(new Date(message.timestamp), "hh:mm a", {
     locale: enUS,
   });
+
+  const userBg = useColorModeValue("blue.400", "blue.500");
+  const botBg = useColorModeValue("gray.200", "gray.700");
 
   return (
     <Flex
@@ -53,6 +55,8 @@ const MessageItemComponent = ({
       align={isUser ? "flex-end" : "flex-start"}
       overflowX="hidden"
       my={2}
+      py={1}
+      mx={4}
     >
       <Flex align="start" gap={4} maxW="70%">
         {!isUser && <Image boxSize="24px" src="/favicon.ico" alt="Bot Icon" />}
@@ -66,15 +70,7 @@ const MessageItemComponent = ({
             p={3}
             borderRadius="lg"
             color={isUser ? "white" : ""}
-            bg={
-              isUser
-                ? colorMode === "light"
-                  ? "blue.400"
-                  : "blue.500"
-                : colorMode === "light"
-                ? "gray.200"
-                : "gray.700"
-            }
+            bg={isUser ? userBg : botBg}
             maxW="max-content"
             whiteSpace="pre-wrap"
             wordBreak="break-word"

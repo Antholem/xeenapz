@@ -19,9 +19,9 @@ const RootLayout = ({ children }: { children: ReactNode }) => {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body>
-        <Providers>
-          <AuthProvider>
-            <TemporaryChatProvider>
+        <AuthProvider>
+          <TemporaryChatProvider>
+            <Providers>
               <Flex h="100vh" overflow="hidden">
                 <SideBar type="persistent" />
                 <Flex direction="column" flex="1">
@@ -31,9 +31,9 @@ const RootLayout = ({ children }: { children: ReactNode }) => {
                   </Box>
                 </Flex>
               </Flex>
-            </TemporaryChatProvider>
-          </AuthProvider>
-        </Providers>
+            </Providers>
+          </TemporaryChatProvider>
+        </AuthProvider>
       </body>
     </html>
   );

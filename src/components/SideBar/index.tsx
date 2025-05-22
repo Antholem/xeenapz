@@ -9,6 +9,7 @@ import {
   ChangeEvent,
   UIEvent,
   useRef,
+  memo,
 } from "react";
 import {
   Box,
@@ -569,4 +570,4 @@ const SideBar = ({
   );
 };
 
-export default SideBar;
+export default memo(SideBar);
