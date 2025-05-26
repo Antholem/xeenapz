@@ -107,7 +107,7 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
         ) : (
           <Virtuoso
             ref={virtuosoRef}
-            style={{ height: "100%" }}
+            style={{ height: "100%", minHeight: 100 }}
             data={virtualMessages}
             followOutput="auto"
             initialTopMostItemIndex={{
@@ -164,7 +164,4 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
   );
 };
 
-const MessagesLayout = memo(MessagesLayoutComponent);
-MessagesLayout.displayName = "MessagesLayout";
-
-export default MessagesLayout;
+export default memo(MessagesLayoutComponent);
