@@ -114,10 +114,20 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
               index: virtualMessages.length - 1,
               offset: 1000000,
             }}
-            itemContent={(_, item) => {
+            itemContent={(index, item) => {
+              const isFirst = index === 0;
+              const isLast = index === virtualMessages.length - 1;
+
               if (item.type === "separator") {
                 return (
-                  <Flex justify="center" align="center" my={3} gap={2}>
+                  <Flex
+                    justify="center"
+                    align="center"
+                    my={3}
+                    mx={4}
+                    mt={isFirst ? 3 : 0}
+                    gap={2}
+                  >
                     <Divider />
                     <Box bg={bgColor} px={2} py={1} borderRadius="full">
                       <Text fontSize="xs" whiteSpace="nowrap">
@@ -144,7 +154,7 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
 
               const msg = item.value as Message;
               return (
-                <Box>
+                <Box px={6} pb={isLast ? 2 : 0}>
                   <MessageItem
                     message={msg}
                     user={user}
