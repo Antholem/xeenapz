@@ -1,6 +1,15 @@
 "use client";
 
-import React, { FC, Fragment, useMemo, useRef, memo } from "react";
+import React, {
+  FC,
+  Fragment,
+  useMemo,
+  useRef,
+  memo,
+  RefObject,
+  useEffect,
+  useState,
+} from "react";
 import {
   Box,
   VStack,
@@ -14,7 +23,7 @@ import {
 } from "@chakra-ui/react";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import { User } from "@/lib/firebase";
-import MessageItem from "../../components/MessageItem";
+import { MessageItem } from "@/components";
 import { formatDateGrouping } from "@/utils/dateFormatter";
 
 interface Message {
@@ -36,7 +45,7 @@ interface MessagesLayoutProps {
   ) => void;
   setPlayingMessage: (msg: string | null) => void;
   playingMessage: string | null;
-  messagesEndRef: React.RefObject<HTMLDivElement | null>;
+  messagesEndRef: RefObject<HTMLDivElement | null>;
   isLoading?: boolean;
   emptyStateText?: string;
 }
@@ -54,12 +63,14 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
 }) => {
   const bgColor = useColorModeValue("gray.200", "gray.700");
   const virtuosoRef = useRef<VirtuosoHandle>(null);
+  const [readyToRender, setReadyToRender] = useState(false);
 
   const virtualMessages = useMemo(() => {
     const result: Array<{
       type: "separator" | "message" | "loader";
       value?: any;
     }> = [];
+
     let lastDate: string | null = null;
 
     messages.forEach((msg) => {
@@ -78,6 +89,23 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
 
     return result;
   }, [messages, isFetchingResponse]);
+
+  useEffect(() => {
+    if (!readyToRender && virtualMessages.length > 0) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          virtuosoRef.current?.scrollToIndex({
+            index: virtualMessages.length - 1,
+            behavior: "auto",
+            offset: 1000000,
+          });
+          requestAnimationFrame(() => {
+            setReadyToRender(true);
+          });
+        });
+      });
+    }
+  }, [virtualMessages.length, readyToRender]);
 
   if (isLoading && messages.length === 0) {
     return (
@@ -105,69 +133,72 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
             </Flex>
           </VStack>
         ) : (
-          <Virtuoso
-            ref={virtuosoRef}
-            style={{ height: "100%", minHeight: 100 }}
-            data={virtualMessages}
-            followOutput="auto"
-            initialTopMostItemIndex={{
-              index: virtualMessages.length - 1,
-              offset: 1000000,
-            }}
-            itemContent={(index, item) => {
-              const isFirst = index === 0;
-              const isLast = index === virtualMessages.length - 1;
+          <Box
+            h="100%"
+            overflow={readyToRender ? "auto" : "hidden"}
+            visibility={readyToRender ? "visible" : "hidden"}
+          >
+            <Virtuoso
+              ref={virtuosoRef}
+              style={{ height: "100%", minHeight: 100 }}
+              data={virtualMessages}
+              followOutput="auto"
+              itemContent={(index, item) => {
+                const isFirst = index === 0;
+                const isLast = index === virtualMessages.length - 1;
 
-              if (item.type === "separator") {
-                return (
-                  <Flex
-                    justify="center"
-                    align="center"
-                    my={3}
-                    mx={4}
-                    mt={isFirst ? 3 : 0}
-                    gap={2}
-                  >
-                    <Divider />
-                    <Box bg={bgColor} px={2} py={1} borderRadius="full">
-                      <Text fontSize="xs" whiteSpace="nowrap">
-                        {item.value}
-                      </Text>
-                    </Box>
-                    <Divider />
-                  </Flex>
-                );
-              }
-
-              if (item.type === "loader") {
-                return (
-                  <Flex px={4} py={4} gap={2} alignItems="flex-end">
-                    <Image boxSize="24px" src="/favicon.ico" alt="Bot Icon" />
-                    <Flex gap={1}>
-                      {[...Array(3)].map((_, i) => (
-                        <SkeletonCircle key={i} size="2" />
-                      ))}
+                if (item.type === "separator") {
+                  return (
+                    <Flex
+                      justify="center"
+                      align="center"
+                      my={3}
+                      mx={4}
+                      mt={isFirst ? 3 : 0}
+                      gap={2}
+                    >
+                      <Divider />
+                      <Box bg={bgColor} px={2} py={1} borderRadius="full">
+                        <Text fontSize="xs" whiteSpace="nowrap">
+                          {item.value}
+                        </Text>
+                      </Box>
+                      <Divider />
                     </Flex>
-                  </Flex>
+                  );
+                }
+
+                if (item.type === "loader") {
+                  return (
+                    <Flex px={4} py={4} gap={2} alignItems="flex-end">
+                      <Image boxSize="24px" src="/favicon.ico" alt="Bot Icon" />
+                      <Flex gap={1}>
+                        {[...Array(3)].map((_, i) => (
+                          <SkeletonCircle key={i} size="2" />
+                        ))}
+                      </Flex>
+                    </Flex>
+                  );
+                }
+
+                const msg = item.value as Message;
+                return (
+                  <Box px={6} pb={isLast ? 2 : 0}>
+                    <MessageItem
+                      message={msg}
+                      user={user}
+                      speakText={speakText}
+                      playingMessage={playingMessage}
+                      setPlayingMessage={setPlayingMessage}
+                      mt={isFirst ? 3 : 0}
+                      mb={isLast ? 3 : 0}
+                    />
+                  </Box>
                 );
-              }
-
-              const msg = item.value as Message;
-              return (
-                <Box px={6} pb={isLast ? 2 : 0}>
-                  <MessageItem
-                    message={msg}
-                    user={user}
-                    speakText={speakText}
-                    playingMessage={playingMessage}
-                    setPlayingMessage={setPlayingMessage}
-                  />
-                </Box>
-              );
-            }}
-          />
+              }}
+            />
+          </Box>
         )}
-
         <Box as="div" ref={messagesEndRef} />
       </Box>
     </Fragment>
