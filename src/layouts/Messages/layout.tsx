@@ -99,9 +99,10 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
             behavior: "auto",
             offset: 1000000,
           });
-          requestAnimationFrame(() => {
+
+          setTimeout(() => {
             setReadyToRender(true);
-          });
+          }, 200);
         });
       });
     }
