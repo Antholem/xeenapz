@@ -9,6 +9,7 @@ import React, {
   RefObject,
   useEffect,
   useState,
+  useCallback,
 } from "react";
 import {
   Box,
@@ -20,6 +21,7 @@ import {
   Spinner,
   Divider,
   useColorModeValue,
+  Progress,
 } from "@chakra-ui/react";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import { User } from "@/lib/firebase";
@@ -48,6 +50,7 @@ interface MessagesLayoutProps {
   messagesEndRef: RefObject<HTMLDivElement | null>;
   isLoading?: boolean;
   emptyStateText?: string;
+  onLoadMore?: () => Promise<void>;
 }
 
 const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
@@ -60,10 +63,12 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
   messagesEndRef,
   isLoading = false,
   emptyStateText = "",
+  onLoadMore,
 }) => {
   const bgColor = useColorModeValue("gray.200", "gray.700");
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [readyToRender, setReadyToRender] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const virtualMessages = useMemo(() => {
     const result: Array<{
@@ -90,6 +95,7 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
     return result;
   }, [messages, isFetchingResponse]);
 
+  // Scroll to bottom on mount
   useEffect(() => {
     if (!readyToRender && virtualMessages.length > 0) {
       requestAnimationFrame(() => {
@@ -102,11 +108,24 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
 
           setTimeout(() => {
             setReadyToRender(true);
-          }, 200);
+          }, 300); // wait until scroll finished
         });
       });
     }
   }, [virtualMessages.length, readyToRender]);
+
+  const handleStartReached = useCallback(async () => {
+    if (onLoadMore && !isLoadingMore) {
+      setIsLoadingMore(true);
+      try {
+        await onLoadMore();
+      } catch (e) {
+        console.error("Error loading older messages:", e);
+      } finally {
+        setIsLoadingMore(false);
+      }
+    }
+  }, [onLoadMore, isLoadingMore]);
 
   if (isLoading && messages.length === 0) {
     return (
@@ -144,6 +163,12 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
               style={{ height: "100%", minHeight: 100 }}
               data={virtualMessages}
               followOutput="auto"
+              increaseViewportBy={200}
+              startReached={handleStartReached}
+              components={{
+                Header: () =>
+                  isLoadingMore && <Progress size="xs" isIndeterminate />,
+              }}
               itemContent={(index, item) => {
                 const isFirst = index === 0;
                 const isLast = index === virtualMessages.length - 1;
