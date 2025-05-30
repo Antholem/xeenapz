@@ -171,7 +171,7 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
 
                 if (item.type === "loader") {
                   return (
-                    <Flex px={4} py={4} gap={2} alignItems="flex-end">
+                    <Flex pl={5} pt={2} pb={5} gap={2} alignItems="flex-end">
                       <Image boxSize="24px" src="/favicon.ico" alt="Bot Icon" />
                       <Flex gap={1}>
                         {[...Array(3)].map((_, i) => (
@@ -184,15 +184,15 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
 
                 const msg = item.value as Message;
                 return (
-                  <Box px={6} pb={isLast ? 2 : 0}>
+                  <Box mx={5}>
                     <MessageItem
                       message={msg}
                       user={user}
                       speakText={speakText}
                       playingMessage={playingMessage}
                       setPlayingMessage={setPlayingMessage}
-                      mt={isFirst ? 3 : 0}
-                      mb={isLast ? 3 : 0}
+                      pt={isFirst ? 3 : 2}
+                      pb={isLast ? 3 : 2}
                     />
                   </Box>
                 );
