@@ -1,11 +1,33 @@
 "use client";
 
-import { FC, Fragment, ReactNode, memo, useMemo } from "react";
-import { Box, Text, Flex, Button } from "@chakra-ui/react";
+import {
+  FC,
+  Fragment,
+  ReactNode,
+  memo,
+  useMemo,
+  useState,
+  useCallback,
+  useEffect,
+} from "react";
+import { Box, Text, Flex, Button, Progress } from "@chakra-ui/react";
 import { useRouter, usePathname } from "next/navigation";
 import { formatNormalTime } from "@/utils/dateFormatter";
 import { Virtuoso } from "react-virtuoso";
 import { ButtonProps } from "@chakra-ui/react";
+import {
+  db,
+  collection,
+  query,
+  orderBy,
+  startAfter,
+  getDocs,
+  limit,
+  DocumentData,
+  QueryDocumentSnapshot,
+  where,
+} from "@/lib/firebase";
+import { useAuth } from "@/app/context";
 
 interface Conversation {
   id: string;
@@ -99,21 +121,89 @@ const ConversationList: FC<ConversationListProps> = ({
   conversations,
   searchTerm,
 }) => {
+  const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const isSearchActive = !!searchTerm;
 
+  const [loadedConvos, setLoadedConvos] = useState<Conversation[]>([]);
+  const [lastDoc, setLastDoc] =
+    useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [isLoadingMoreConvos, setIsLoadingMoreConvos] = useState(false);
+  const [hasMoreConvos, setHasMoreConvos] = useState(true);
+
+  useEffect(() => {
+    if (!isSearchActive && conversations.length > 0) {
+      setLoadedConvos(conversations);
+    }
+  }, [conversations, isSearchActive]);
+
+  const loadMoreConversations = useCallback(async () => {
+    if (isSearchActive || isLoadingMoreConvos || !hasMoreConvos) return;
+
+    setIsLoadingMoreConvos(true);
+
+    try {
+      const convRef = collection(db, "conversations");
+      const convQuery = lastDoc
+        ? query(
+            convRef,
+            where("userId", "==", user?.uid),
+            orderBy("updatedAt", "desc"),
+            startAfter(lastDoc),
+            limit(20)
+          )
+        : query(
+            convRef,
+            where("userId", "==", user?.uid),
+            orderBy("updatedAt", "desc"),
+            limit(20)
+          );
+
+      const snap = await getDocs(convQuery);
+
+      if (!snap.empty) {
+        const newConvos = snap.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Conversation[];
+
+        const newUniqueConvos = newConvos.filter(
+          (c) => !loadedConvos.some((loaded) => loaded.id === c.id)
+        );
+
+        setLoadedConvos((prev) => [...prev, ...newUniqueConvos]);
+        setLastDoc(snap.docs[snap.docs.length - 1]);
+
+        if (newUniqueConvos.length < 20) setHasMoreConvos(false);
+      } else {
+        setHasMoreConvos(false);
+      }
+    } catch (err) {
+      console.error("Failed to load conversations:", err);
+    } finally {
+      setIsLoadingMoreConvos(false);
+    }
+  }, [
+    hasMoreConvos,
+    isLoadingMoreConvos,
+    isSearchActive,
+    lastDoc,
+    loadedConvos,
+    user?.uid,
+  ]);
+
   const { titleResults, messageResults } = useMemo(() => {
     const lower = searchTerm.toLowerCase();
 
-    const titles = conversations
+    const titles = loadedConvos
       .filter((c) => !searchTerm || c.title?.toLowerCase().includes(lower))
       .sort((a, b) => (a.title || "").localeCompare(b.title || ""));
 
     const messages: SearchResultItem[] = [];
 
     if (searchTerm) {
-      conversations.forEach((convo) => {
+      loadedConvos.forEach((convo) => {
         convo.messages?.forEach((msg) => {
           if (msg.text.toLowerCase().includes(lower)) {
             const start = msg.text.toLowerCase().indexOf(lower);
@@ -168,7 +258,7 @@ const ConversationList: FC<ConversationListProps> = ({
     }
 
     return { titleResults: titles, messageResults: messages };
-  }, [searchTerm, conversations]);
+  }, [searchTerm, loadedConvos]);
 
   const hasResults = titleResults.length > 0 || messageResults.length > 0;
 
@@ -203,13 +293,13 @@ const ConversationList: FC<ConversationListProps> = ({
       return items;
     }
 
-    return conversations
+    return loadedConvos
       .filter((convo) => convo.title)
       .map((convo) => ({
         type: "message",
         data: { convo, isMessageMatch: false },
       }));
-  }, [isSearchActive, hasResults, titleResults, messageResults, conversations]);
+  }, [isSearchActive, hasResults, titleResults, messageResults, loadedConvos]);
 
   const handleConversationClick = (conversationId: string) => {
     router.push(`/chat/${conversationId}`);
@@ -228,6 +318,11 @@ const ConversationList: FC<ConversationListProps> = ({
           style={{ height: "100%" }}
           data={allItems}
           initialTopMostItemIndex={0}
+          endReached={loadMoreConversations}
+          components={{
+            Footer: () =>
+              isLoadingMoreConvos && <Progress size="xs" isIndeterminate />,
+          }}
           itemContent={(index, item) => {
             const isFirst = index === 0;
             const isLast = index === allItems.length - 1;
@@ -257,8 +352,8 @@ const ConversationList: FC<ConversationListProps> = ({
                   isMessageMatch={isMessageMatch}
                   highlightedText={highlightedText}
                   isSearchActive={isSearchActive}
-                  mt={isFirst ? 3 : 0}
-                  mb={isLast ? 3 : "1px"}
+                  mt={isFirst ? 3 : 0.4}
+                  mb={isLast ? 3 : 0.4}
                 />
               </Box>
             );
