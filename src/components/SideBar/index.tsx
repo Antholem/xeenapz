@@ -1,21 +1,10 @@
 "use client";
 
-import {
-  FC,
-  Fragment,
-  useEffect,
-  useState,
-  useCallback,
-  ChangeEvent,
-  UIEvent,
-  useRef,
-  memo,
-} from "react";
+import { FC, useEffect, useState, useCallback, ChangeEvent, memo } from "react";
 import {
   Box,
   Flex,
   IconButton,
-  VStack,
   Divider,
   Input,
   InputGroup,
@@ -36,7 +25,6 @@ import {
   MenuItem,
   Icon,
   Spinner,
-  Progress,
 } from "@chakra-ui/react";
 import { IoAdd, IoSettingsSharp, IoSearch } from "react-icons/io5";
 import { FiLogOut, FiUserCheck } from "react-icons/fi";
@@ -58,13 +46,11 @@ import { useAuth } from "@/app/context/Auth";
 import { useRouter } from "next/navigation";
 import ConversationList from "../ConversationList";
 
-type LoadPreference = "fast" | "balanced" | "slow" | number;
 interface SideBarProps {
   type: "temporary" | "persistent";
   isOpen?: boolean;
   placement?: "left" | "right" | "top" | "bottom";
   onClose?: () => void;
-  loadPreference?: LoadPreference;
 }
 
 interface Conversation {
@@ -91,49 +77,31 @@ interface MenuItemsProps {
 
 const NewChatButton = () => {
   const router = useRouter();
-
-  const handleNewChatClick = () => {
-    router.push("/");
-  };
-
   return (
     <Tooltip label="New chat">
       <IconButton
         aria-label="New Chat"
         variant="ghost"
         icon={<IoAdd />}
-        onClick={handleNewChatClick}
+        onClick={() => router.push("/")}
         cursor="pointer"
       />
     </Tooltip>
   );
 };
 
-const SettingsButton = () => {
-  return (
-    <Tooltip label="Settings">
-      <IconButton
-        aria-label="Settings"
-        variant="ghost"
-        icon={<IoSettingsSharp />}
-      />
-    </Tooltip>
-  );
-};
+const SettingsButton = () => (
+  <Tooltip label="Settings">
+    <IconButton
+      aria-label="Settings"
+      variant="ghost"
+      icon={<IoSettingsSharp />}
+    />
+  </Tooltip>
+);
 
-const SearchBar = ({
-  onSearch,
-}: {
-  onSearch: (searchTerm: string) => void;
-}) => {
+const SearchBar = ({ onSearch }: { onSearch: (term: string) => void }) => {
   const [searchTerm, setSearchTerm] = useState("");
-
-  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setSearchTerm(value);
-    onSearch(value);
-  };
-
   return (
     <InputGroup>
       <InputLeftElement>
@@ -144,116 +112,58 @@ const SearchBar = ({
         placeholder="Search titles, messages..."
         variant="filled"
         value={searchTerm}
-        onChange={handleInputChange}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => {
+          setSearchTerm(e.target.value);
+          onSearch(e.target.value);
+        }}
       />
     </InputGroup>
   );
 };
 
-const MenuItems: FC<MenuItemsProps> = ({ user, switchAccount, signOut }) => {
-  return (
-    <Menu>
-      <MenuButton
-        as={Box}
-        display="flex"
-        alignItems="center"
-        gap={2}
-        cursor="pointer"
-      >
-        <Avatar
-          size="sm"
-          src={user?.photoURL ?? "/default-avatar.png"}
-          name={user?.displayName ?? "User"}
-        />
-      </MenuButton>
-      <MenuList>
-        <MenuItem
-          onClick={switchAccount}
-          icon={<Icon as={FiUserCheck} />}
-          fontSize="md"
-        >
-          Switch Account
-        </MenuItem>
-        <MenuItem onClick={signOut} icon={<Icon as={FiLogOut} />} fontSize="md">
-          Log out
-        </MenuItem>
-      </MenuList>
-    </Menu>
-  );
-};
-
-const SkeletonChatList = () => (
-  <Flex
-    flex="1"
-    overflowY="auto"
-    p={4}
-    aria-live="polite"
-    justifyContent="center"
-    alignItems="center"
-  >
-    <Spinner size="xl" />
-  </Flex>
+const MenuItems: FC<MenuItemsProps> = ({ user, switchAccount, signOut }) => (
+  <Menu>
+    <MenuButton
+      as={Box}
+      display="flex"
+      alignItems="center"
+      gap={2}
+      cursor="pointer"
+    >
+      <Avatar
+        size="sm"
+        src={user?.photoURL ?? "/default-avatar.png"}
+        name={user?.displayName ?? "User"}
+      />
+    </MenuButton>
+    <MenuList>
+      <MenuItem onClick={switchAccount} icon={<Icon as={FiUserCheck} />}>
+        Switch Account
+      </MenuItem>
+      <MenuItem onClick={signOut} icon={<Icon as={FiLogOut} />}>
+        Log out
+      </MenuItem>
+    </MenuList>
+  </Menu>
 );
 
-const SideBar = ({
-  type,
-  isOpen,
-  placement,
-  onClose,
-  loadPreference = "balanced",
-}: SideBarProps) => {
-  const isLargeScreen = useBreakpointValue({ base: false, lg: true });
+const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
   const { user, setLoading: setAuthLoading } = useAuth();
   const router = useRouter();
-  const [allConversations, setAllConversations] = useState<Conversation[]>([]);
-  const [displayedConversations, setDisplayedConversations] = useState<
-    Conversation[]
-  >([]);
+  const isLargeScreen = useBreakpointValue({ base: false, lg: true });
+
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMoreConversations, setLoadingMoreConversations] =
-    useState(false);
-  const [hasMoreConversations, setHasMoreConversations] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  const getLoadCounts = useCallback((preference: LoadPreference) => {
-    if (typeof preference === "number") {
-      return {
-        initial: Math.max(20, preference),
-        more: Math.max(10, Math.ceil(preference / 2)),
-      };
-    }
-    switch (preference) {
-      case "fast":
-        return { initial: 40, more: 10 };
-      case "slow":
-        return { initial: 20, more: 10 };
-      case "balanced":
-      default:
-        return { initial: 30, more: 10 };
-    }
-  }, []);
-
-  const {
-    initial: CONVERSATIONS_INITIAL_LOAD_COUNT,
-    more: CONVERSATIONS_LOAD_MORE_COUNT,
-  } = getLoadCounts(loadPreference);
-
-  const fetchConversationMessages = useCallback(
-    async (conversationId: string): Promise<Message[]> => {
-      const messagesCollectionRef = collection(
-        db,
-        "conversations",
-        conversationId,
-        "messages"
-      );
-      const messagesQuery = query(
-        messagesCollectionRef,
+  const fetchMessages = useCallback(
+    async (convoId: string): Promise<Message[]> => {
+      const q = query(
+        collection(db, "conversations", convoId, "messages"),
         orderBy("timestamp", "asc")
       );
-      const messagesSnapshot = await getDocs(messagesQuery);
-      return messagesSnapshot.docs.map(
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(
         (doc) => ({ id: doc.id, ...doc.data() } as Message)
       );
     },
@@ -261,135 +171,39 @@ const SideBar = ({
   );
 
   useEffect(() => {
-    if (user) {
-      setLoading(true);
-      const conversationsCollectionRef = collection(db, "conversations");
-      const conversationsQuery = query(
-        conversationsCollectionRef,
-        where("userId", "==", user.uid),
-        orderBy("updatedAt", "desc")
-      );
+    if (!user) return;
 
-      const unsubscribe = onSnapshot(
-        conversationsQuery,
-        async (snapshot) => {
-          const conversationsList: Conversation[] = await Promise.all(
-            snapshot.docs.map(async (doc) => {
-              const conversation = {
-                id: doc.id,
-                ...doc.data(),
-              } as Conversation;
-              const messages = await fetchConversationMessages(doc.id);
-              return { ...conversation, messages };
-            })
-          );
-          setAllConversations(conversationsList);
-          setDisplayedConversations(
-            conversationsList.slice(0, CONVERSATIONS_INITIAL_LOAD_COUNT)
-          );
-          setHasMoreConversations(
-            conversationsList.length > CONVERSATIONS_INITIAL_LOAD_COUNT
-          );
-          setLoading(false);
-        },
-        (error) => {
-          console.error("Error listening for conversations:", error);
-          setLoading(false);
-        }
+    setLoading(true);
+    const q = query(
+      collection(db, "conversations"),
+      where("userId", "==", user.uid),
+      orderBy("updatedAt", "desc")
+    );
+
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      const convoList = await Promise.all(
+        snapshot.docs.map(async (doc) => {
+          const convo = { id: doc.id, ...doc.data() } as Conversation;
+          const messages = await fetchMessages(doc.id);
+          return { ...convo, messages };
+        })
       );
-      return () => unsubscribe();
-    } else {
-      setAllConversations([]);
-      setDisplayedConversations([]);
+      setConversations(convoList);
       setLoading(false);
-      setHasMoreConversations(false);
-    }
-  }, [user, fetchConversationMessages, CONVERSATIONS_INITIAL_LOAD_COUNT]);
+    });
 
-  useEffect(() => {
-    if (!searchTerm) {
-      setDisplayedConversations(
-        allConversations.slice(0, CONVERSATIONS_INITIAL_LOAD_COUNT)
-      );
-      setHasMoreConversations(
-        allConversations.length > CONVERSATIONS_INITIAL_LOAD_COUNT
-      );
-    } else {
-      const lowercasedSearchTerm = searchTerm.toLowerCase();
-      const results = allConversations.filter((conversation) => {
-        const titleMatch = conversation.title
-          ?.toLowerCase()
-          .includes(lowercasedSearchTerm);
-        const messageMatch = conversation.messages?.some((message) =>
-          message.text.toLowerCase().includes(lowercasedSearchTerm)
-        );
-        return titleMatch || messageMatch;
-      });
-      setDisplayedConversations(results);
-      setHasMoreConversations(false);
-    }
-  }, [searchTerm, allConversations, CONVERSATIONS_INITIAL_LOAD_COUNT]);
+    return () => unsubscribe();
+  }, [user, fetchMessages]);
 
-  const loadMoreConversations = useCallback(() => {
-    if (loadingMoreConversations || !hasMoreConversations) {
-      return;
-    }
-
-    setLoadingMoreConversations(true);
-
-    setTimeout(() => {
-      const currentLoadedCount = displayedConversations.length;
-      const nextBatch = allConversations.slice(
-        currentLoadedCount,
-        currentLoadedCount + CONVERSATIONS_LOAD_MORE_COUNT
-      );
-
-      setDisplayedConversations((prev) => [...prev, ...nextBatch]);
-      setHasMoreConversations(
-        allConversations.length > currentLoadedCount + nextBatch.length
-      );
-      setLoadingMoreConversations(false);
-    }, 500);
-  }, [
-    loadingMoreConversations,
-    hasMoreConversations,
-    displayedConversations,
-    allConversations,
-    CONVERSATIONS_LOAD_MORE_COUNT,
-  ]);
-
-  const handleScroll = (event: UIEvent<HTMLDivElement>) => {
-    if (searchTerm) return;
-
-    const target = event.currentTarget;
-    const atBottomThreshold = 50;
-    if (
-      target.scrollHeight - target.scrollTop - target.clientHeight <
-      atBottomThreshold
-    ) {
-      loadMoreConversations();
-    }
-  };
-
-  const handleSearch = (term: string) => {
-    setSearchTerm(term);
-  };
+  const handleSearch = (term: string) => setSearchTerm(term);
 
   const handleGoogleSignIn = async () => {
     try {
       await signInWithPopup(auth, provider);
       router.push("/");
       setAuthLoading(true);
-    } catch (error: unknown) {
-      let errorMessage = "Google Sign-In Error occurred.";
-      if (error instanceof Error) {
-        errorMessage += ` ${error.message}`;
-      }
-      console.error(errorMessage);
     } finally {
-      setTimeout(() => {
-        setAuthLoading(false);
-      }, 2000);
+      setTimeout(() => setAuthLoading(false), 2000);
     }
   };
 
@@ -399,25 +213,17 @@ const SideBar = ({
       router.push("/");
       setAuthLoading(true);
       if (onClose) onClose();
-    } catch (error: unknown) {
-      let errorMessage = "Sign-Out Error occurred.";
-      if (error instanceof Error) {
-        errorMessage += ` ${error.message}`;
-      }
-      console.error(errorMessage);
     } finally {
-      setTimeout(() => {
-        setAuthLoading(false);
-      }, 2000);
+      setTimeout(() => setAuthLoading(false), 2000);
     }
   };
 
-  const sidebarContent = (
+  const content = (
     <Card
       borderRadius={0}
       variant="unstyled"
-      display={!isLargeScreen || !user ? "none" : "block"}
       h="100vh"
+      display={!isLargeScreen ? "none" : "block"}
     >
       <Flex direction="column" h="100%" w="350px">
         <Flex
@@ -451,51 +257,34 @@ const SideBar = ({
           </Flex>
           <Box>
             <NewChatButton />
-            <Tooltip label="Settings">
-              <IconButton
-                aria-label="Settings"
-                variant="ghost"
-                icon={<IoSettingsSharp />}
-              />
-            </Tooltip>
+            <SettingsButton />
           </Box>
         </Flex>
-        <Flex p={3} align="center" justify="center">
+        <Flex p={3}>
           <SearchBar onSearch={handleSearch} />
         </Flex>
         <Divider />
-        {loadingMoreConversations && searchTerm === "" && (
-          <Progress size="xs" isIndeterminate />
+        {loading ? (
+          <Flex flex="1" justify="center" align="center">
+            <Spinner size="xl" />
+          </Flex>
+        ) : (
+          <Box flex="1" overflow="hidden">
+            <ConversationList
+              conversations={conversations}
+              searchTerm={searchTerm}
+            />
+          </Box>
         )}
-        <VStack
-          flex="1"
-          p={3}
-          align="stretch"
-          overflowY="auto"
-          spacing={0}
-          ref={scrollContainerRef}
-          onScroll={handleScroll}
-        >
-          {loading ? (
-            <SkeletonChatList />
-          ) : (
-            <Flex direction="column" align="center" justify="center" w="100%">
-              <ConversationList
-                conversations={displayedConversations}
-                searchTerm={searchTerm}
-              />
-            </Flex>
-          )}
-        </VStack>
       </Flex>
     </Card>
   );
 
   return type === "persistent" ? (
-    <Fragment>
-      {sidebarContent}
+    <>
+      {content}
       <Divider orientation="vertical" />
-    </Fragment>
+    </>
   ) : (
     <Drawer
       isOpen={!!isOpen}
@@ -511,7 +300,6 @@ const SideBar = ({
             py={2}
             pb={3}
             display="flex"
-            alignItems="center"
             justifyContent="space-between"
           >
             <Flex align="center" justify="start" gap={3}>
@@ -521,7 +309,6 @@ const SideBar = ({
                 signOut={handleSignOut}
               />
               <Box
-                textAlign="left"
                 lineHeight="1.2"
                 maxW="170px"
                 overflow="hidden"
@@ -544,22 +331,19 @@ const SideBar = ({
           <Flex px={3} pb={3}>
             <SearchBar onSearch={handleSearch} />
           </Flex>
-          {loadingMoreConversations && searchTerm === "" && (
-            <Progress size="xs" isIndeterminate />
-          )}
           {loading ? (
-            <SkeletonChatList />
+            <Flex flex="1" justify="center" align="center">
+              <Spinner size="xl" />
+            </Flex>
           ) : (
             <DrawerBody
-              flex="1"
-              p={3}
+              p={0}
+              overflow="hidden"
+              display="flex"
               borderTopWidth="1px"
-              overflowY="auto"
-              ref={scrollContainerRef}
-              onScroll={handleScroll}
             >
               <ConversationList
-                conversations={displayedConversations}
+                conversations={conversations}
                 searchTerm={searchTerm}
               />
             </DrawerBody>
