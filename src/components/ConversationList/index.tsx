@@ -306,7 +306,7 @@ const ConversationList: FC<ConversationListProps> = ({
   };
 
   return (
-    <Box as="span" w="100%" h="100%">
+    <Box as="span" w="100%" h="100%" position="relative">
       {isSearchActive && !hasResults ? (
         <Flex justify="center" align="center" h="100%" px={4}>
           <Text fontSize="sm" textAlign="center" color="gray.500">
@@ -314,51 +314,54 @@ const ConversationList: FC<ConversationListProps> = ({
           </Text>
         </Flex>
       ) : (
-        <Virtuoso
-          style={{ height: "100%" }}
-          data={allItems}
-          initialTopMostItemIndex={0}
-          endReached={loadMoreConversations}
-          components={{
-            Footer: () =>
-              isLoadingMoreConvos && <Progress size="xs" isIndeterminate />,
-          }}
-          itemContent={(index, item) => {
-            const isFirst = index === 0;
-            const isLast = index === allItems.length - 1;
+        <Fragment>
+          {isLoadingMoreConvos && (
+            <Box position="absolute" top={0} left={0} right={0} zIndex={99999}>
+              <Progress size="xs" isIndeterminate />
+            </Box>
+          )}
+          <Virtuoso
+            style={{ height: "100%" }}
+            data={allItems}
+            initialTopMostItemIndex={0}
+            endReached={loadMoreConversations}
+            itemContent={(index, item) => {
+              const isFirst = index === 0;
+              const isLast = index === allItems.length - 1;
 
-            if (item.type === "title") {
+              if (item.type === "title") {
+                return (
+                  <Box pt={item.data === "Titles" ? 3 : 5} pr={2} pl={7}>
+                    <Text
+                      fontSize="sm"
+                      textAlign="left"
+                      color="gray.500"
+                      fontWeight="bold"
+                    >
+                      {item.data}
+                    </Text>
+                  </Box>
+                );
+              }
+
+              const { convo, isMessageMatch, highlightedText } = item.data;
               return (
-                <Box pt={item.data === "Titles" ? 3 : 5} pr={2} pl={7}>
-                  <Text
-                    fontSize="sm"
-                    textAlign="left"
-                    color="gray.500"
-                    fontWeight="bold"
-                  >
-                    {item.data}
-                  </Text>
+                <Box mx={3}>
+                  <ConversationItem
+                    convo={convo}
+                    isActive={pathname === `/chat/${convo.id}`}
+                    onConversationClick={handleConversationClick}
+                    isMessageMatch={isMessageMatch}
+                    highlightedText={highlightedText}
+                    isSearchActive={isSearchActive}
+                    mt={isFirst ? 3 : 0.4}
+                    mb={isLast ? 3 : 0.4}
+                  />
                 </Box>
               );
-            }
-
-            const { convo, isMessageMatch, highlightedText } = item.data;
-            return (
-              <Box mx={3}>
-                <ConversationItem
-                  convo={convo}
-                  isActive={pathname === `/chat/${convo.id}`}
-                  onConversationClick={handleConversationClick}
-                  isMessageMatch={isMessageMatch}
-                  highlightedText={highlightedText}
-                  isSearchActive={isSearchActive}
-                  mt={isFirst ? 3 : 0.4}
-                  mb={isLast ? 3 : 0.4}
-                />
-              </Box>
-            );
-          }}
-        />
+            }}
+          />
+        </Fragment>
       )}
     </Box>
   );

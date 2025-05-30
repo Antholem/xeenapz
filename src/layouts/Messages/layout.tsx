@@ -95,7 +95,6 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
     return result;
   }, [messages, isFetchingResponse]);
 
-  // Scroll to bottom on mount
   useEffect(() => {
     if (!readyToRender && virtualMessages.length > 0) {
       requestAnimationFrame(() => {
@@ -108,7 +107,7 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
 
           setTimeout(() => {
             setReadyToRender(true);
-          }, 300); // wait until scroll finished
+          }, 300);
         });
       });
     }
