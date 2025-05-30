@@ -14,6 +14,10 @@ import {
   onSnapshot,
   getDocs,
   DocumentReference,
+  DocumentData,
+  endBefore,
+  QueryDocumentSnapshot,
+  limit,
 } from "@/lib/firebase";
 import { useAuth } from "@/app/context/Auth";
 import ConversationLayout from "@/layouts/Conversation/layout";
@@ -21,14 +25,6 @@ import MessagesLayout from "@/layouts/Messages/layout";
 import MessageInput from "@/components/MessageInput";
 import { useSpeechRecognition } from "react-speech-recognition";
 import { speakText } from "@/lib/textToSpeech";
-import {
-  DocumentData,
-  endBefore,
-  QueryDocumentSnapshot,
-  startAt,
-  startAfter,
-  limit,
-} from "firebase/firestore";
 
 interface ConversationParams {
   [key: string]: string | undefined;
@@ -270,6 +266,7 @@ const Conversation: FC = () => {
         messagesEndRef={messagesEndRef}
         emptyStateText="Hello, what can I help with?"
         onLoadMore={handleLoadMessages}
+        isLoading={loading}
       />
       <MessageInput
         input={input}
