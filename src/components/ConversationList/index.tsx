@@ -9,11 +9,12 @@ import {
   useState,
   useCallback,
   useEffect,
+  useRef,
 } from "react";
 import { Box, Text, Flex, Button, Progress } from "@chakra-ui/react";
 import { useRouter, usePathname } from "next/navigation";
 import { formatNormalTime } from "@/utils/dateFormatter";
-import { Virtuoso } from "react-virtuoso";
+import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import { ButtonProps } from "@chakra-ui/react";
 import {
   db,
@@ -125,18 +126,54 @@ const ConversationList: FC<ConversationListProps> = ({
   const router = useRouter();
   const pathname = usePathname();
   const isSearchActive = !!searchTerm;
-
+  const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [loadedConvos, setLoadedConvos] = useState<Conversation[]>([]);
   const [lastDoc, setLastDoc] =
     useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [isLoadingMoreConvos, setIsLoadingMoreConvos] = useState(false);
   const [hasMoreConvos, setHasMoreConvos] = useState(true);
+  const [readyToRender, setReadyToRender] = useState(false);
+  const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
 
   useEffect(() => {
     if (!isSearchActive && conversations.length > 0) {
       setLoadedConvos(conversations);
     }
   }, [conversations, isSearchActive]);
+
+  useEffect(() => {
+    if (
+      hasScrolledOnce ||
+      isSearchActive ||
+      !pathname ||
+      loadedConvos.length === 0
+    ) {
+      return;
+    }
+
+    const activeId = pathname.split("/").pop();
+    const index = loadedConvos.findIndex((c) => c.id === activeId);
+
+    if (index >= 0 && virtuosoRef.current) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          virtuosoRef.current?.scrollToIndex({
+            index,
+            align: "center",
+            behavior: "auto",
+          });
+
+          setTimeout(() => {
+            setReadyToRender(true);
+            setHasScrolledOnce(true);
+          }, 100);
+        });
+      });
+    } else {
+      setReadyToRender(true);
+      setHasScrolledOnce(true);
+    }
+  }, [pathname, loadedConvos, isSearchActive, hasScrolledOnce]);
 
   const loadMoreConversations = useCallback(async () => {
     if (isSearchActive || isLoadingMoreConvos || !hasMoreConvos) return;
@@ -315,52 +352,63 @@ const ConversationList: FC<ConversationListProps> = ({
         </Flex>
       ) : (
         <Fragment>
-          {isLoadingMoreConvos && (
-            <Box position="absolute" top={0} left={0} right={0} zIndex={99999}>
+          {isLoadingMoreConvos && hasScrolledOnce && (
+            <Box position="absolute" top={0} left={0} right={0} zIndex={1}>
               <Progress size="xs" isIndeterminate />
             </Box>
           )}
-          <Virtuoso
-            style={{ height: "100%" }}
-            data={allItems}
-            initialTopMostItemIndex={0}
-            endReached={loadMoreConversations}
-            itemContent={(index, item) => {
-              const isFirst = index === 0;
-              const isLast = index === allItems.length - 1;
+          <Box
+            h="100%"
+            overflow={readyToRender ? "auto" : "hidden"}
+            visibility={readyToRender ? "visible" : "hidden"}
+          >
+            <Virtuoso
+              ref={virtuosoRef}
+              style={{ height: "100%" }}
+              data={allItems}
+              initialTopMostItemIndex={0}
+              endReached={() => {
+                if (hasScrolledOnce) {
+                  loadMoreConversations();
+                }
+              }}
+              itemContent={(index, item) => {
+                const isFirst = index === 0;
+                const isLast = index === allItems.length - 1;
 
-              if (item.type === "title") {
+                if (item.type === "title") {
+                  return (
+                    <Box pt={item.data === "Titles" ? 3 : 5} pr={2} pl={7}>
+                      <Text
+                        fontSize="sm"
+                        textAlign="left"
+                        color="gray.500"
+                        fontWeight="bold"
+                      >
+                        {item.data}
+                      </Text>
+                    </Box>
+                  );
+                }
+
+                const { convo, isMessageMatch, highlightedText } = item.data;
                 return (
-                  <Box pt={item.data === "Titles" ? 3 : 5} pr={2} pl={7}>
-                    <Text
-                      fontSize="sm"
-                      textAlign="left"
-                      color="gray.500"
-                      fontWeight="bold"
-                    >
-                      {item.data}
-                    </Text>
+                  <Box mx={3}>
+                    <ConversationItem
+                      convo={convo}
+                      isActive={pathname === `/chat/${convo.id}`}
+                      onConversationClick={handleConversationClick}
+                      isMessageMatch={isMessageMatch}
+                      highlightedText={highlightedText}
+                      isSearchActive={isSearchActive}
+                      mt={isFirst ? 3 : 0.4}
+                      mb={isLast ? 3 : 0.4}
+                    />
                   </Box>
                 );
-              }
-
-              const { convo, isMessageMatch, highlightedText } = item.data;
-              return (
-                <Box mx={3}>
-                  <ConversationItem
-                    convo={convo}
-                    isActive={pathname === `/chat/${convo.id}`}
-                    onConversationClick={handleConversationClick}
-                    isMessageMatch={isMessageMatch}
-                    highlightedText={highlightedText}
-                    isSearchActive={isSearchActive}
-                    mt={isFirst ? 3 : 0.4}
-                    mb={isLast ? 3 : 0.4}
-                  />
-                </Box>
-              );
-            }}
-          />
+              }}
+            />
+          </Box>
         </Fragment>
       )}
     </Box>
