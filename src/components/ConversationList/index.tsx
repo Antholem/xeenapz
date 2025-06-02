@@ -352,7 +352,7 @@ const ConversationList: FC<ConversationListProps> = ({
         </Flex>
       ) : (
         <Fragment>
-          {isLoadingMoreConvos && hasScrolledOnce && (
+          {isLoadingMoreConvos && hasScrolledOnce && readyToRender && (
             <Box position="absolute" top={0} left={0} right={0} zIndex={1}>
               <Progress size="xs" isIndeterminate />
             </Box>
