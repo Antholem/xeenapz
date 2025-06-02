@@ -69,6 +69,7 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [readyToRender, setReadyToRender] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
 
   const virtualMessages = useMemo(() => {
     const result: Array<{
@@ -114,6 +115,11 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
   }, [virtualMessages.length, readyToRender]);
 
   const handleStartReached = useCallback(async () => {
+    if (!hasScrolledOnce) {
+      setHasScrolledOnce(true);
+      return;
+    }
+
     if (onLoadMore && !isLoadingMore) {
       setIsLoadingMore(true);
       try {
@@ -124,7 +130,7 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
         setIsLoadingMore(false);
       }
     }
-  }, [onLoadMore, isLoadingMore]);
+  }, [hasScrolledOnce, onLoadMore, isLoadingMore]);
 
   if (isLoading && messages.length === 0) {
     return (
@@ -166,7 +172,8 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
               startReached={handleStartReached}
               components={{
                 Header: () =>
-                  isLoadingMore && <Progress size="xs" isIndeterminate />,
+                  isLoadingMore &&
+                  !hasScrolledOnce && <Progress size="xs" isIndeterminate />,
               }}
               itemContent={(index, item) => {
                 const isFirst = index === 0;
