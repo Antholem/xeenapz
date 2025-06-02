@@ -12,7 +12,12 @@ import {
   serverTimestamp,
   updateDoc,
   onSnapshot,
+  getDocs,
   DocumentReference,
+  DocumentData,
+  endBefore,
+  QueryDocumentSnapshot,
+  limit,
 } from "@/lib/firebase";
 import { useAuth } from "@/app/context/Auth";
 import ConversationLayout from "@/layouts/Conversation/layout";
@@ -47,12 +52,18 @@ const Conversation: FC = () => {
   const [isListening, setIsListening] = useState(false);
   const prevTranscriptRef = useRef("");
 
+  const [oldestDoc, setOldestDoc] =
+    useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+
   useEffect(() => {
     if (!conversationId) return;
 
     setLoading(true);
     setErrorMessage(null);
     setMessages([]);
+    setOldestDoc(null);
+    setHasMore(true);
 
     const conversationDocRef: DocumentReference = doc(
       db,
@@ -81,16 +92,18 @@ const Conversation: FC = () => {
       "messages"
     );
     const messagesQuery = query(messagesCollectionRef, orderBy("createdAt"));
+
     const unsubscribeMessages = onSnapshot(
       messagesQuery,
       (snapshot) => {
         const messagesList: Message[] = snapshot.docs.map(
-          (doc) =>
-            ({
-              ...doc.data(),
-            } as Message)
+          (doc) => ({ ...doc.data() } as Message)
         );
+
         setMessages(messagesList);
+        if (snapshot.docs.length > 0) {
+          setOldestDoc(snapshot.docs[0]);
+        }
       },
       (error) => {
         console.error("Error listening for messages:", error);
@@ -115,6 +128,45 @@ const Conversation: FC = () => {
   useEffect(() => {
     setIsListening(listening);
   }, [listening]);
+
+  const fetchOlderMessages = async (): Promise<Message[]> => {
+    if (!conversationId || !hasMore) return [];
+
+    try {
+      const messagesRef = collection(
+        db,
+        "conversations",
+        conversationId,
+        "messages"
+      );
+
+      const baseQuery = query(
+        messagesRef,
+        orderBy("createdAt", "asc"),
+        endBefore(oldestDoc),
+        limit(20)
+      );
+
+      const snapshot = await getDocs(baseQuery);
+
+      if (snapshot.empty) {
+        setHasMore(false);
+        return [];
+      }
+
+      const olderMessages: Message[] = snapshot.docs.map(
+        (doc) => doc.data() as Message
+      );
+
+      // Update the pagination cursor
+      setOldestDoc(snapshot.docs[0]);
+
+      return olderMessages;
+    } catch (err) {
+      console.error("Error fetching older messages:", err);
+      return [];
+    }
+  };
 
   const fetchBotResponse = async (userMessage: Message, convoId: string) => {
     setIsFetchingResponse(true);
@@ -197,6 +249,11 @@ const Conversation: FC = () => {
     }
   };
 
+  const handleLoadMessages = async () => {
+    const moreMessages = await fetchOlderMessages();
+    setMessages((prev) => [...moreMessages, ...prev]);
+  };
+
   return (
     <ConversationLayout>
       <MessagesLayout
@@ -207,6 +264,8 @@ const Conversation: FC = () => {
         playingMessage={playingMessage}
         setPlayingMessage={setPlayingMessage}
         messagesEndRef={messagesEndRef}
+        emptyStateText="Hello, what can I help with?"
+        onLoadMore={handleLoadMessages}
         isLoading={loading}
       />
       <MessageInput
