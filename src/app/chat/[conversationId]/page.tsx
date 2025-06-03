@@ -14,11 +14,13 @@ import {
   onSnapshot,
   getDocs,
   DocumentReference,
+} from "@/lib/firebase";
+import {
   DocumentData,
   endBefore,
-  QueryDocumentSnapshot,
   limit,
-} from "@/lib/firebase";
+  QueryDocumentSnapshot,
+} from "firebase/firestore";
 import ConversationLayout from "@/layouts/Conversation/layout";
 import MessagesLayout from "@/layouts/Messages/layout";
 import MessageInput from "@/components/MessageInput";
@@ -158,7 +160,6 @@ const Conversation: FC = () => {
         (doc) => doc.data() as Message
       );
 
-      // Update the pagination cursor
       setOldestDoc(snapshot.docs[0]);
 
       return olderMessages;

@@ -3,9 +3,8 @@
 import { ReactNode } from "react";
 import { Box, Flex } from "@chakra-ui/react";
 import Providers from "./providers";
-import { NavigationBar, SideBar } from "@/components";
+import { NavigationBar, SideBar, AuthInitializer } from "@/components";
 import "./globals.css";
-import AuthInitializer from "@/components/AuthInitializer";
 
 const RootLayout = ({ children }: { children: ReactNode }) => {
   return (

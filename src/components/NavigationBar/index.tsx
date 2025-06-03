@@ -86,7 +86,7 @@ const NavigationBar: FC = () => {
 
   const handleGoogleSignIn = async () => {
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithPopup(auth!, provider);
     } catch (error) {
       console.error("Google Sign-In Error:", error);
     }
