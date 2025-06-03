@@ -23,6 +23,11 @@ import {
   orderBy,
   serverTimestamp,
   onSnapshot,
+  DocumentData,
+  startAfter,
+  endBefore,
+  QueryDocumentSnapshot,
+  limit,
 } from "firebase/firestore";
 
 // Firebase configuration from your Firebase Console
@@ -63,7 +68,12 @@ export {
   orderBy,
   onSnapshot,
   serverTimestamp,
+  startAfter,
+  endBefore,
+  limit,
+  QueryDocumentSnapshot,
   DocumentReference,
+  type DocumentData,
   type User,
   type Unsubscribe,
 };

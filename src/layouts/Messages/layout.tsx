@@ -1,14 +1,16 @@
+"use client";
+
 import React, {
+  FC,
   Fragment,
-  RefObject,
-  UIEvent,
-  useEffect,
+  useMemo,
   useRef,
+  memo,
+  RefObject,
+  useEffect,
   useState,
   useCallback,
-  memo,
 } from "react";
-import { FC } from "react";
 import {
   Box,
   VStack,
@@ -18,11 +20,12 @@ import {
   SkeletonCircle,
   Spinner,
   Divider,
+  useColorModeValue,
   Progress,
-  useColorMode,
 } from "@chakra-ui/react";
+import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import { User } from "@/lib/firebase";
-import MessageItem from "../../components/MessageItem";
+import { MessageItem } from "@/components";
 import { formatDateGrouping } from "@/utils/dateFormatter";
 
 interface Message {
@@ -32,8 +35,6 @@ interface Message {
   timestamp: number;
   createdAt?: string;
 }
-
-type LoadPreference = "fast" | "balanced" | "slow" | number;
 
 interface MessagesLayoutProps {
   messages: Message[];
@@ -49,7 +50,7 @@ interface MessagesLayoutProps {
   messagesEndRef: RefObject<HTMLDivElement | null>;
   isLoading?: boolean;
   emptyStateText?: string;
-  loadPreference?: LoadPreference;
+  onLoadMore?: () => Promise<void>;
 }
 
 const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
@@ -60,247 +61,95 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
   playingMessage,
   setPlayingMessage,
   messagesEndRef,
-  isLoading: parentIsLoading = false,
+  isLoading = false,
   emptyStateText = "",
-  loadPreference = "balanced",
+  onLoadMore,
 }) => {
-  const [loadedMessages, setLoadedMessages] = useState<Message[]>([]);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(false);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const isInitialRenderOrNewMessagesRef = useRef(true);
-  const userInteractedWithScrollRef = useRef(false);
-  const prevMessagesRef = useRef<Message[]>(messages);
-  const { colorMode } = useColorMode();
+  const bgColor = useColorModeValue("gray.200", "gray.700");
+  const virtuosoRef = useRef<VirtuosoHandle>(null);
+  const [readyToRender, setReadyToRender] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
 
-  const getLoadCounts = useCallback((preference: LoadPreference) => {
-    if (typeof preference === "number") {
-      return {
-        initial: Math.max(20, preference),
-        more: Math.max(10, Math.ceil(preference / 2)),
-      };
-    }
-    switch (preference) {
-      case "fast":
-        return { initial: 75, more: 50 };
-      case "slow":
-        return { initial: 25, more: 15 };
-      case "balanced":
-      default:
-        return { initial: 50, more: 30 };
-    }
-  }, []);
+  const virtualMessages = useMemo(() => {
+    const result: Array<{
+      type: "separator" | "message" | "loader";
+      value?: any;
+    }> = [];
 
-  const { initial: initialDisplayCount, more: loadMoreCount } =
-    getLoadCounts(loadPreference);
+    let lastDate: string | null = null;
+
+    messages.forEach((msg) => {
+      const date = msg.createdAt ?? new Date(msg.timestamp).toISOString();
+      const formatted = formatDateGrouping(date);
+      if (formatted !== lastDate) {
+        result.push({ type: "separator", value: formatted });
+        lastDate = formatted;
+      }
+      result.push({ type: "message", value: msg });
+    });
+
+    if (isFetchingResponse) {
+      result.push({ type: "loader" });
+    }
+
+    return result;
+  }, [messages, isFetchingResponse]);
 
   useEffect(() => {
-    if (parentIsLoading) {
-      setLoadedMessages([]);
-      setHasMore(false);
-      isInitialRenderOrNewMessagesRef.current = true;
-      return;
-    }
-
-    const messagesChanged = messages !== prevMessagesRef.current;
-    const initialLoadWithMessages =
-      loadedMessages.length === 0 && messages.length > 0;
-    const newMessagesAdded = messages.length > prevMessagesRef.current.length;
-
-    if (messagesChanged || initialLoadWithMessages) {
-      const totalMessagesCount = messages.length;
-      if (totalMessagesCount > 0) {
-        const initialToShow = messages.slice(-initialDisplayCount);
-        setLoadedMessages(initialToShow);
-        setHasMore(totalMessagesCount > initialDisplayCount);
-        isInitialRenderOrNewMessagesRef.current = true;
-        userInteractedWithScrollRef.current = false;
-      } else {
-        setLoadedMessages([]);
-        setHasMore(false);
-      }
-      prevMessagesRef.current = messages;
-    } else if (newMessagesAdded && !userInteractedWithScrollRef.current) {
-      const newMessagesCount = messages.length - prevMessagesRef.current.length;
-      const newMessages = messages.slice(-newMessagesCount);
-      setLoadedMessages((prevLoaded) => {
-        const combined = [...prevLoaded, ...newMessages];
-        return combined.slice(-(initialDisplayCount + loadMoreCount));
-      });
-      isInitialRenderOrNewMessagesRef.current = true;
-      prevMessagesRef.current = messages;
-    }
-  }, [
-    messages,
-    parentIsLoading,
-    initialDisplayCount,
-    loadMoreCount,
-    loadedMessages.length,
-  ]);
-
-  useEffect(() => {
-    const scrollContainer = scrollContainerRef.current;
-    if (
-      scrollContainer &&
-      messagesEndRef.current &&
-      loadedMessages.length > 0
-    ) {
-      if (isInitialRenderOrNewMessagesRef.current) {
-        messagesEndRef.current.scrollIntoView();
-        isInitialRenderOrNewMessagesRef.current = false;
-      }
-    }
-  }, [loadedMessages, messagesEndRef]);
-
-  const loadMoreMessages = useCallback(() => {
-    if (loadingMore || !hasMore) {
-      return;
-    }
-
-    setLoadingMore(true);
-
-    setTimeout(() => {
-      const currentTotalLoadedCount = loadedMessages.length;
-      const olderMessagesInPropCount =
-        messages.length - currentTotalLoadedCount;
-
-      const numberToLoad = Math.min(loadMoreCount, olderMessagesInPropCount);
-
-      if (numberToLoad > 0) {
-        const nextChunkToPrepend = messages.slice(
-          olderMessagesInPropCount - numberToLoad,
-          olderMessagesInPropCount
-        );
-
-        const scrollContainer = scrollContainerRef.current;
-        const previousScrollHeight = scrollContainer?.scrollHeight || 0;
-        const previousScrollTop = scrollContainer?.scrollTop || 0;
-
-        setLoadedMessages((prev) => [...nextChunkToPrepend, ...prev]);
-        setHasMore(olderMessagesInPropCount - numberToLoad > 0);
-
+    if (!readyToRender && virtualMessages.length > 0) {
+      requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          if (scrollContainer) {
-            scrollContainer.scrollTop =
-              previousScrollTop +
-              (scrollContainer.scrollHeight - previousScrollHeight);
-          }
+          virtuosoRef.current?.scrollToIndex({
+            index: virtualMessages.length - 1,
+            behavior: "auto",
+            offset: 1000000,
+          });
+
+          setTimeout(() => {
+            setReadyToRender(true);
+          }, 300);
         });
-      } else {
-        setHasMore(false);
+      });
+    }
+  }, [virtualMessages.length, readyToRender]);
+
+  const handleStartReached = useCallback(async () => {
+    if (!hasScrolledOnce) {
+      setHasScrolledOnce(true);
+      return;
+    }
+
+    if (onLoadMore && !isLoadingMore) {
+      setIsLoadingMore(true);
+      try {
+        await onLoadMore();
+      } catch (e) {
+        console.error("Error loading older messages:", e);
+      } finally {
+        setIsLoadingMore(false);
       }
-      setLoadingMore(false);
-    }, 500);
-  }, [loadingMore, hasMore, loadedMessages, messages, loadMoreCount]);
-
-  const handleScroll = (event: UIEvent<HTMLDivElement>) => {
-    const target = event.currentTarget;
-    const atTopThreshold = 10;
-    const atBottomThresholdStick = 50;
-
-    if (target.scrollTop <= atTopThreshold && hasMore && !loadingMore) {
-      userInteractedWithScrollRef.current = true;
-      loadMoreMessages();
     }
+  }, [hasScrolledOnce, onLoadMore, isLoadingMore]);
 
-    if (
-      target.scrollHeight - target.scrollTop - target.clientHeight >
-      atBottomThresholdStick
-    ) {
-      userInteractedWithScrollRef.current = true;
-    } else {
-      userInteractedWithScrollRef.current = false;
-    }
-  };
-
-  return parentIsLoading && loadedMessages.length === 0 ? (
-    <Flex
-      flex="1"
-      overflowY="auto"
-      p={4}
-      aria-live="polite"
-      justifyContent="center"
-      alignItems="center"
-    >
-      <Spinner size="xl" />
-    </Flex>
-  ) : (
-    <Fragment>
-      {loadingMore && <Progress size="xs" isIndeterminate />}
-      <Box
+  if (isLoading && messages.length === 0) {
+    return (
+      <Flex
         flex="1"
         overflowY="auto"
         p={4}
-        aria-live="polite"
-        ref={scrollContainerRef}
-        onScroll={handleScroll}
+        justifyContent="center"
+        alignItems="center"
       >
-        {loadedMessages.length > 0 &&
-          loadedMessages.map((currentMessage, index, array) => {
-            const msgDateForGrouping =
-              currentMessage.createdAt ||
-              (currentMessage.timestamp
-                ? new Date(currentMessage.timestamp).toISOString()
-                : undefined);
-            const currentDate = formatDateGrouping(msgDateForGrouping);
+        <Spinner size="xl" />
+      </Flex>
+    );
+  }
 
-            const prevMsg = array[index - 1];
-            const prevMsgDateForGrouping =
-              prevMsg?.createdAt ||
-              (prevMsg?.timestamp
-                ? new Date(prevMsg.timestamp).toISOString()
-                : undefined);
-            const previousDate = prevMsg
-              ? formatDateGrouping(prevMsgDateForGrouping)
-              : null;
-
-            const shouldShowDateSeparator =
-              index === 0 || (currentDate && currentDate !== previousDate);
-
-            const messageKey =
-              currentMessage.id ||
-              `${currentMessage.timestamp}-${currentMessage.sender}-${index}`;
-
-            return (
-              <Fragment key={messageKey}>
-                {shouldShowDateSeparator && currentDate && (
-                  <Flex
-                    key={`date-separator-${currentDate}-${messageKey}`}
-                    direction="row"
-                    justifyContent="center"
-                    alignItems="center"
-                    gap={2}
-                    my={3}
-                  >
-                    <Divider orientation="horizontal" />
-                    <Box>
-                      <Text
-                        whiteSpace="nowrap"
-                        fontSize="xs"
-                        bgColor={
-                          colorMode === "light" ? "gray.200" : "gray.700"
-                        }
-                        px={2}
-                        py={1}
-                        borderRadius="full"
-                      >
-                        {currentDate}
-                      </Text>
-                    </Box>
-                    <Divider orientation="horizontal" />
-                  </Flex>
-                )}
-                <MessageItem
-                  message={currentMessage}
-                  user={user}
-                  speakText={speakText}
-                  playingMessage={playingMessage}
-                  setPlayingMessage={setPlayingMessage}
-                />
-              </Fragment>
-            );
-          })}
-        {loadedMessages.length === 0 && !parentIsLoading && (
+  return (
+    <Fragment>
+      <Box flex="1" overflow="hidden">
+        {messages.length === 0 ? (
           <VStack height="100%">
             <Flex justify="center" align="center" flex="1">
               <Text fontSize={{ base: "lg", md: "3xl" }} textAlign="center">
@@ -308,16 +157,79 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
               </Text>
             </Flex>
           </VStack>
-        )}
-        {isFetchingResponse && (
-          <Flex justify="flex-start" align="end" gap={4}>
-            <Image boxSize="24px" src="/favicon.ico" alt="Xeenapz" />
-            <Flex direction="row" gap={1}>
-              {[...Array(3)].map((_, index) => (
-                <SkeletonCircle key={index} size="2" />
-              ))}
-            </Flex>
-          </Flex>
+        ) : (
+          <Box
+            h="100%"
+            overflow={readyToRender ? "auto" : "hidden"}
+            visibility={readyToRender ? "visible" : "hidden"}
+          >
+            <Virtuoso
+              ref={virtuosoRef}
+              style={{ height: "100%", minHeight: 100 }}
+              data={virtualMessages}
+              followOutput="auto"
+              increaseViewportBy={200}
+              startReached={handleStartReached}
+              components={{
+                Header: () =>
+                  isLoadingMore &&
+                  !hasScrolledOnce && <Progress size="xs" isIndeterminate />,
+              }}
+              itemContent={(index, item) => {
+                const isFirst = index === 0;
+                const isLast = index === virtualMessages.length - 1;
+
+                if (item.type === "separator") {
+                  return (
+                    <Flex
+                      justify="center"
+                      align="center"
+                      my={3}
+                      mx={4}
+                      mt={isFirst ? 3 : 0}
+                      gap={2}
+                    >
+                      <Divider />
+                      <Box bg={bgColor} px={2} py={1} borderRadius="full">
+                        <Text fontSize="xs" whiteSpace="nowrap">
+                          {item.value}
+                        </Text>
+                      </Box>
+                      <Divider />
+                    </Flex>
+                  );
+                }
+
+                if (item.type === "loader") {
+                  return (
+                    <Flex pl={5} pt={2} pb={5} gap={2} alignItems="flex-end">
+                      <Image boxSize="24px" src="/favicon.ico" alt="Bot Icon" />
+                      <Flex gap={1}>
+                        {[...Array(3)].map((_, i) => (
+                          <SkeletonCircle key={i} size="2" />
+                        ))}
+                      </Flex>
+                    </Flex>
+                  );
+                }
+
+                const msg = item.value as Message;
+                return (
+                  <Box mx={5}>
+                    <MessageItem
+                      message={msg}
+                      user={user}
+                      speakText={speakText}
+                      playingMessage={playingMessage}
+                      setPlayingMessage={setPlayingMessage}
+                      pt={isFirst ? 3 : 2}
+                      pb={isLast ? 3 : 2}
+                    />
+                  </Box>
+                );
+              }}
+            />
+          </Box>
         )}
         <Box as="div" ref={messagesEndRef} />
       </Box>
@@ -325,7 +237,4 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
   );
 };
 
-const MessagesLayout = memo(MessagesLayoutComponent);
-MessagesLayout.displayName = "MessagesLayout";
-
-export default MessagesLayout;
+export default memo(MessagesLayoutComponent);

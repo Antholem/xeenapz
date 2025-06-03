@@ -1,4 +1,6 @@
-import React, { memo } from "react";
+"use client";
+
+import { FC, memo } from "react";
 import {
   Box,
   Flex,
@@ -7,6 +9,8 @@ import {
   Avatar,
   Tooltip,
   IconButton,
+  useColorModeValue,
+  BoxProps,
 } from "@chakra-ui/react";
 import { User } from "@/lib/firebase";
 import { format } from "date-fns";
@@ -14,7 +18,6 @@ import ReactMarkdown from "react-markdown";
 import { IoStop } from "react-icons/io5";
 import { IoIosMic } from "react-icons/io";
 import { enUS } from "date-fns/locale";
-import { useColorModeValue } from "@chakra-ui/react";
 
 interface Message {
   text: string;
@@ -22,7 +25,7 @@ interface Message {
   timestamp: number;
 }
 
-interface MessageItemProps {
+interface MessageItemProps extends BoxProps {
   message: Message;
   user: User | null;
   speakText: (
@@ -34,13 +37,14 @@ interface MessageItemProps {
   playingMessage: string | null;
 }
 
-const MessageItemComponent = ({
+const MessageItemComponent: FC<MessageItemProps> = ({
   message,
   user,
   speakText,
   playingMessage,
   setPlayingMessage,
-}: MessageItemProps) => {
+  ...props
+}) => {
   const isUser = message.sender === "user";
   const formattedTime = format(new Date(message.timestamp), "hh:mm a", {
     locale: enUS,
@@ -54,9 +58,8 @@ const MessageItemComponent = ({
       direction="column"
       align={isUser ? "flex-end" : "flex-start"}
       overflowX="hidden"
-      my={2}
       py={1}
-      mx={4}
+      {...props}
     >
       <Flex align="start" gap={4} maxW="70%">
         {!isUser && <Image boxSize="24px" src="/favicon.ico" alt="Bot Icon" />}

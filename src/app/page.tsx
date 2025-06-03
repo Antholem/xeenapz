@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, FC } from "react";
 import { useSpeechRecognition } from "react-speech-recognition";
 import { speakText } from "@/lib/textToSpeech";
-import { useAuth } from "@/app/context/Auth";
 import {
   db,
   collection,
@@ -16,7 +15,8 @@ import { v4 as uuidv4 } from "uuid";
 import { MessageInput, MessagesLayout } from "@/components/";
 import { ConversationLayout } from "@/layouts";
 import { usePathname } from "next/navigation";
-import { useTemporaryChat } from "./context/TemporaryChat";
+import useTempChat from "@/stores/useTempChat";
+import useAuth from "@/stores/useAuth";
 
 interface Message {
   text: string;
@@ -36,7 +36,7 @@ const Home: FC = () => {
   const [isListening, setIsListening] = useState(false);
   const prevTranscriptRef = useRef("");
   const { user } = useAuth();
-  const { isMessageTemporary } = useTemporaryChat();
+  const { isMessageTemporary } = useTempChat();
   const pathname = usePathname();
   const hasMounted = useRef(false);
 
