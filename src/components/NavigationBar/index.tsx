@@ -9,9 +9,7 @@ import {
   IconButton,
   Divider,
   useDisclosure,
-  useBreakpointValue,
   Card,
-  Skeleton,
 } from "@chakra-ui/react";
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
 import { HiPencilAlt } from "react-icons/hi";
@@ -38,7 +36,6 @@ interface Conversation {
 const NavigationBar: FC = () => {
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const isLargeScreen = useBreakpointValue({ base: false, lg: true });
   const { user, loading: authLoading } = useAuth();
   const { isMessageTemporary, setIsMessageTemporary } = useTemporaryChat();
   const pathname = usePathname();
@@ -99,6 +96,8 @@ const NavigationBar: FC = () => {
     setIsMessageTemporary(!isMessageTemporary);
   };
 
+  if (authLoading) return null;
+
   return (
     <Fragment>
       <Card
@@ -109,85 +108,51 @@ const NavigationBar: FC = () => {
         variant="unstyled"
       >
         <Flex py="3" px="6" align="center" justify="space-between" gap={2}>
-          {authLoading ? (
-            <Skeleton height="40px" width="100%" borderRadius="md" />
-          ) : isLargeScreen ? (
-            <Fragment>
-              <Flex align="center" gap={3}>
-                <Text
-                  fontSize="lg"
-                  fontWeight="bold"
-                  textAlign="center"
-                  noOfLines={1}
-                >
-                  {pathname === "/"
-                    ? "Xeenapz"
-                    : currentConvoTitle || "Xeenapz"}
-                </Text>
-              </Flex>
-              <Flex align="center" gap={4}>
-                {user && pathname === "/" && (
-                  <IconButton
-                    aria-label="Temporary Chat"
-                    icon={
-                      isMessageTemporary ? (
-                        <RiChatHistoryLine />
-                      ) : (
-                        <RiChat3Line />
-                      )
-                    }
-                    variant="ghost"
-                    onClick={toggleTemporaryChat}
-                  />
-                )}
-                <IconButton
-                  aria-label="Toggle Dark Mode"
-                  icon={colorMode === "light" ? <MoonIcon /> : <SunIcon />}
-                  onClick={toggleColorMode}
-                  variant="ghost"
-                />
-                {!user && <Button onClick={handleGoogleSignIn}>Login</Button>}
-              </Flex>
-            </Fragment>
-          ) : (
-            <Fragment>
-              {user ? (
-                <IconButton
-                  aria-label="Toggle Sidebar"
-                  icon={<IoMdMenu />}
-                  variant="ghost"
-                  onClick={onOpen}
-                />
-              ) : (
-                <IconButton
-                  aria-label="New Chat"
-                  icon={<HiPencilAlt />}
-                  variant="ghost"
-                />
-              )}
-              <Text
-                fontSize="lg"
-                fontWeight="bold"
-                textAlign="center"
-                noOfLines={1}
-              >
-                {pathname === "/" ? "Xeenapz" : currentConvoTitle || "Xeenapz"}
-              </Text>
-              <Flex align="center" gap={2}>
-                <IconButton
-                  aria-label="Toggle Dark Mode"
-                  icon={colorMode === "light" ? <MoonIcon /> : <SunIcon />}
-                  onClick={toggleColorMode}
-                  variant="ghost"
-                />
-                {!user && (
-                  <Button size="sm" onClick={handleGoogleSignIn}>
-                    Login
-                  </Button>
-                )}
-              </Flex>
-            </Fragment>
-          )}
+          <Flex align="center" gap={3} display={{ base: "block", lg: "none" }}>
+            {user ? (
+              <IconButton
+                aria-label="Toggle Sidebar"
+                icon={<IoMdMenu />}
+                variant="ghost"
+                onClick={onOpen}
+              />
+            ) : (
+              <IconButton
+                aria-label="New Chat"
+                icon={<HiPencilAlt />}
+                variant="ghost"
+              />
+            )}
+          </Flex>
+          <Flex align="center" gap={3}>
+            <Text
+              fontSize="lg"
+              fontWeight="bold"
+              textAlign="center"
+              noOfLines={1}
+            >
+              {pathname === "/" ? "Xeenapz" : currentConvoTitle || "Xeenapz"}
+            </Text>
+          </Flex>
+          <Flex align="center" gap={4}>
+            {user && pathname === "/" && (
+              <IconButton
+                aria-label="Temporary Chat"
+                icon={
+                  isMessageTemporary ? <RiChatHistoryLine /> : <RiChat3Line />
+                }
+                variant="ghost"
+                onClick={toggleTemporaryChat}
+              />
+            )}
+            <IconButton
+              aria-label="Toggle Dark Mode"
+              icon={colorMode === "light" ? <MoonIcon /> : <SunIcon />}
+              onClick={toggleColorMode}
+              variant="ghost"
+            />
+            {!user && <Button onClick={handleGoogleSignIn}>Login</Button>}
+          </Flex>
         </Flex>
       </Card>
 

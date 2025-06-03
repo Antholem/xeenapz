@@ -136,7 +136,7 @@ const MenuItems: FC<MenuItemsProps> = ({ user, switchAccount, signOut }) => (
         name={user?.displayName ?? "User"}
       />
     </MenuButton>
-    <MenuList>
+    <MenuList fontSize="md">
       <MenuItem onClick={switchAccount} icon={<Icon as={FiUserCheck} />}>
         Switch Account
       </MenuItem>
@@ -148,7 +148,7 @@ const MenuItems: FC<MenuItemsProps> = ({ user, switchAccount, signOut }) => (
 );
 
 const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
-  const { user, setLoading: setAuthLoading } = useAuth();
+  const { user, setLoading: setAuthLoading, loading: authLoading } = useAuth();
   const router = useRouter();
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
 
@@ -279,6 +279,8 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
       </Flex>
     </Card>
   );
+
+  if (authLoading || !user) return null;
 
   return type === "persistent" ? (
     <>
