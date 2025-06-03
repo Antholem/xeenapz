@@ -27,7 +27,7 @@ import SideBar from "@/components/SideBar";
 import { useAuth } from "@/app/context/Auth";
 import { usePathname } from "next/navigation";
 import { RiChat3Line, RiChatHistoryLine } from "react-icons/ri";
-import { useTemporaryChat } from "@/app/context/TemporaryChat";
+import useTempChat from "@/stores/useTempChat";
 
 interface Conversation {
   title?: string;
@@ -37,7 +37,7 @@ const NavigationBar: FC = () => {
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { user, loading: authLoading } = useAuth();
-  const { isMessageTemporary, setIsMessageTemporary } = useTemporaryChat();
+  const { isMessageTemporary, setIsMessageTemporary } = useTempChat();
   const pathname = usePathname();
   const [currentConvoTitle, setCurrentConvoTitle] = useState<string | null>(
     null

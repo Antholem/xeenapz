@@ -16,7 +16,7 @@ import { v4 as uuidv4 } from "uuid";
 import { MessageInput, MessagesLayout } from "@/components/";
 import { ConversationLayout } from "@/layouts";
 import { usePathname } from "next/navigation";
-import { useTemporaryChat } from "./context/TemporaryChat";
+import useTempChat from "@/stores/useTempChat";
 
 interface Message {
   text: string;
@@ -36,7 +36,7 @@ const Home: FC = () => {
   const [isListening, setIsListening] = useState(false);
   const prevTranscriptRef = useRef("");
   const { user } = useAuth();
-  const { isMessageTemporary } = useTemporaryChat();
+  const { isMessageTemporary } = useTempChat();
   const pathname = usePathname();
   const hasMounted = useRef(false);
 
