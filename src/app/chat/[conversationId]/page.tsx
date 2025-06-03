@@ -19,12 +19,12 @@ import {
   QueryDocumentSnapshot,
   limit,
 } from "@/lib/firebase";
-import { useAuth } from "@/app/context/Auth";
 import ConversationLayout from "@/layouts/Conversation/layout";
 import MessagesLayout from "@/layouts/Messages/layout";
 import MessageInput from "@/components/MessageInput";
 import { useSpeechRecognition } from "react-speech-recognition";
 import { speakText } from "@/lib/textToSpeech";
+import useAuth from "@/stores/useAuth";
 
 interface ConversationParams {
   [key: string]: string | undefined;

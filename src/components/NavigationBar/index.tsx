@@ -26,10 +26,10 @@ import {
 } from "@/lib/firebase";
 import { IoMdMenu } from "react-icons/io";
 import SideBar from "@/components/SideBar";
-import { useAuth } from "@/app/context/Auth";
 import { usePathname } from "next/navigation";
 import { RiChat3Line, RiChatHistoryLine } from "react-icons/ri";
 import useTemporaryChat from "@/stores/useTemporaryChat";
+import useAuth from "@/stores/useAuth";
 
 interface Conversation {
   title?: string;
