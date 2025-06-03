@@ -28,7 +28,7 @@ import {
   QueryDocumentSnapshot,
   where,
 } from "@/lib/firebase";
-import { useAuth } from "@/app/context";
+import useAuth from "@/stores/useAuth";
 
 interface Conversation {
   id: string;

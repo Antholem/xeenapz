@@ -42,9 +42,9 @@ import {
   User,
   getDocs,
 } from "@/lib/firebase";
-import { useAuth } from "@/app/context/Auth";
 import { useRouter } from "next/navigation";
 import ConversationList from "../ConversationList";
+import useAuth from "@/stores/useAuth";
 
 interface SideBarProps {
   type: "temporary" | "persistent";
