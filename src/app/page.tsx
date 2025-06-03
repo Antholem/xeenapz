@@ -16,7 +16,7 @@ import { v4 as uuidv4 } from "uuid";
 import { MessageInput, MessagesLayout } from "@/components/";
 import { ConversationLayout } from "@/layouts";
 import { usePathname } from "next/navigation";
-import { useTemporaryChat } from "./context/TemporaryChat";
+import useTemporaryChat from "@/stores/useTemporaryChat";
 
 interface Message {
   text: string;

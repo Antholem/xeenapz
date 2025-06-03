@@ -5,7 +5,7 @@ import { Box, Flex } from "@chakra-ui/react";
 import Providers from "./providers";
 import { NavigationBar, SideBar } from "@/components";
 import "./globals.css";
-import { AuthProvider, TemporaryChatProvider } from "@/app/context";
+import { AuthProvider } from "@/app/context";
 
 const RootLayout = ({ children }: { children: ReactNode }) => {
   return (
@@ -21,17 +21,15 @@ const RootLayout = ({ children }: { children: ReactNode }) => {
       <body>
         <Providers>
           <AuthProvider>
-            <TemporaryChatProvider>
-              <Flex h="100vh" overflow="hidden">
-                <SideBar type="persistent" />
-                <Flex direction="column" flex="1">
-                  <NavigationBar />
-                  <Box as="main" flex="1" overflow="auto">
-                    {children}
-                  </Box>
-                </Flex>
+            <Flex h="100vh" overflow="hidden">
+              <SideBar type="persistent" />
+              <Flex direction="column" flex="1">
+                <NavigationBar />
+                <Box as="main" flex="1" overflow="auto">
+                  {children}
+                </Box>
               </Flex>
-            </TemporaryChatProvider>
+            </Flex>
           </AuthProvider>
         </Providers>
       </body>

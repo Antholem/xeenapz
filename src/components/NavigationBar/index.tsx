@@ -29,7 +29,7 @@ import SideBar from "@/components/SideBar";
 import { useAuth } from "@/app/context/Auth";
 import { usePathname } from "next/navigation";
 import { RiChat3Line, RiChatHistoryLine } from "react-icons/ri";
-import { useTemporaryChat } from "@/app/context/TemporaryChat";
+import useTemporaryChat from "@/stores/useTemporaryChat";
 
 interface Conversation {
   title?: string;
