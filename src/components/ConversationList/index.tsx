@@ -16,19 +16,14 @@ import { useRouter, usePathname } from "next/navigation";
 import { formatNormalTime } from "@/utils/dateFormatter";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import { ButtonProps } from "@chakra-ui/react";
-import {
-  db,
-  collection,
-  query,
-  orderBy,
-  startAfter,
-  getDocs,
-  limit,
-  DocumentData,
-  QueryDocumentSnapshot,
-  where,
-} from "@/lib/firebase";
 import useAuth from "@/stores/useAuth";
+import { db, collection, query, orderBy, getDocs, where } from "@/lib/firebase";
+import {
+  DocumentData,
+  limit,
+  QueryDocumentSnapshot,
+  startAfter,
+} from "firebase/firestore";
 
 interface Conversation {
   id: string;

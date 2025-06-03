@@ -1,12 +1,12 @@
 import { create } from "zustand";
-import { auth, onAuthStateChanged, User } from "@/lib/firebase";
+import { auth, onAuthStateChanged, type User } from "@/lib/firebase";
 
 interface AuthState {
   user: User | null;
   loading: boolean;
   setUser: (user: User | null) => void;
   setLoading: (loading: boolean) => void;
-  initializeAuth: () => () => void; // NOTE: return type is a function (cleanup)
+  initializeAuth: () => () => void;
 }
 
 const useAuth = create<AuthState>((set) => ({
@@ -15,10 +15,13 @@ const useAuth = create<AuthState>((set) => ({
   setUser: (user) => set({ user }),
   setLoading: (loading) => set({ loading }),
   initializeAuth: () => {
+    if (!auth) return () => {};
+
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       set({ user: firebaseUser, loading: false });
     });
-    return unsubscribe; // return unsubscribe function
+
+    return unsubscribe;
   },
 }));
 

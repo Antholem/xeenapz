@@ -1,15 +1,13 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import {
   GoogleAuthProvider,
-  User,
   getAuth,
+  type User,
   onAuthStateChanged,
   signInWithPopup,
   signOut,
 } from "firebase/auth";
 import {
-  DocumentReference,
-  Unsubscribe,
   getFirestore,
   collection,
   doc,
@@ -23,14 +21,11 @@ import {
   orderBy,
   serverTimestamp,
   onSnapshot,
-  DocumentData,
-  startAfter,
-  endBefore,
-  QueryDocumentSnapshot,
-  limit,
+  type DocumentReference,
+  type Unsubscribe,
 } from "firebase/firestore";
 
-// Firebase configuration from your Firebase Console
+// Firebase config
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -40,18 +35,18 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase app
-const app = initializeApp(firebaseConfig);
-
-// Initialize Firebase services
-const auth = getAuth(app);
+// Only initialize on the client
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
+// `auth` must only be used in the browser
+const auth = typeof window !== "undefined" ? getAuth(app) : null;
+
 export {
   app,
-  auth,
   db,
+  auth,
   provider,
   onAuthStateChanged,
   signInWithPopup,
@@ -68,12 +63,7 @@ export {
   orderBy,
   onSnapshot,
   serverTimestamp,
-  startAfter,
-  endBefore,
-  limit,
-  QueryDocumentSnapshot,
-  DocumentReference,
-  type DocumentData,
   type User,
   type Unsubscribe,
+  type DocumentReference,
 };

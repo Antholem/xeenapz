@@ -8,8 +8,8 @@ const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
   const { loading, initializeAuth } = useAuth();
 
   useEffect(() => {
-    const unsubscribe = initializeAuth(); // now unsubscribe is a function
-    return () => unsubscribe(); // correct usage
+    const unsubscribe = initializeAuth();
+    return () => unsubscribe();
   }, [initializeAuth]);
 
   return loading ? <Progress size="xs" isIndeterminate /> : <>{children}</>;

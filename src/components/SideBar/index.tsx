@@ -199,7 +199,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
 
   const handleGoogleSignIn = async () => {
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithPopup(auth!, provider);
       router.push("/");
       setAuthLoading(true);
     } finally {
@@ -209,7 +209,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
 
   const handleSignOut = async () => {
     try {
-      await signOut(auth);
+      await signOut(auth!);
       router.push("/");
       setAuthLoading(true);
       if (onClose) onClose();
