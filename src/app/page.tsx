@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, FC } from "react";
 import { useSpeechRecognition } from "react-speech-recognition";
 import { speakText } from "@/lib/textToSpeech";
-import { useAuth } from "@/app/context/Auth";
 import {
   db,
   collection,
@@ -17,6 +16,7 @@ import { MessageInput, MessagesLayout } from "@/components/";
 import { ConversationLayout } from "@/layouts";
 import { usePathname } from "next/navigation";
 import useTempChat from "@/stores/useTempChat";
+import useAuth from "@/stores/useAuth";
 
 interface Message {
   text: string;
