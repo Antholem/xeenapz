@@ -97,7 +97,11 @@ const NavigationBar: FC = () => {
   };
 
   const toggleTemporaryChat = () => {
-    pathname === "/" ? router.push("/chat/temp") : router.push("/");
+    if (pathname === "/") {
+      router.push("/chat/temp");
+    } else {
+      router.push("/");
+    }
   };
 
   if (authLoading) return null;
