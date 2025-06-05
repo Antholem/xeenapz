@@ -24,9 +24,8 @@ import {
 } from "@/lib/firebase";
 import { IoMdMenu } from "react-icons/io";
 import SideBar from "@/components/SideBar";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { RiChat3Line, RiChatHistoryLine } from "react-icons/ri";
-import useTempChat from "@/stores/useTempChat";
 import useAuth from "@/stores/useAuth";
 
 interface Conversation {
@@ -37,41 +36,46 @@ const NavigationBar: FC = () => {
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { user, loading: authLoading } = useAuth();
-  const { isMessageTemporary, setIsMessageTemporary } = useTempChat();
   const pathname = usePathname();
   const [currentConvoTitle, setCurrentConvoTitle] = useState<string | null>(
     null
   );
   const unsubscribeRef = useRef<Unsubscribe | undefined>(undefined);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchConvoTitle = async () => {
-      if (pathname?.startsWith("/chat/") && user) {
-        const convoId = pathname.split("/")[2];
-        const docRef = doc(db, "conversations", convoId);
-
-        unsubscribeRef.current = onSnapshot(
-          docRef,
-          (docSnap) => {
-            if (docSnap.exists()) {
-              const data = docSnap.data() as Conversation;
-              setCurrentConvoTitle(data.title || null);
-            } else {
-              setCurrentConvoTitle(null);
-            }
-          },
-          (error) => {
-            console.error("Error listening for conversation updates:", error);
-            setCurrentConvoTitle(null);
-          }
-        );
-      } else {
+      if (
+        !user ||
+        pathname === "/chat/temp" ||
+        !pathname?.startsWith("/chat/")
+      ) {
         setCurrentConvoTitle(null);
         if (unsubscribeRef.current) {
           unsubscribeRef.current();
           unsubscribeRef.current = undefined;
         }
+        return;
       }
+
+      const convoId = pathname.split("/")[2];
+      const docRef = doc(db, "conversations", convoId);
+
+      unsubscribeRef.current = onSnapshot(
+        docRef,
+        (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data() as Conversation;
+            setCurrentConvoTitle(data.title || null);
+          } else {
+            setCurrentConvoTitle(null);
+          }
+        },
+        (error) => {
+          console.error("Error listening for conversation updates:", error);
+          setCurrentConvoTitle(null);
+        }
+      );
     };
 
     fetchConvoTitle();
@@ -93,7 +97,11 @@ const NavigationBar: FC = () => {
   };
 
   const toggleTemporaryChat = () => {
-    setIsMessageTemporary(!isMessageTemporary);
+    if (pathname === "/") {
+      router.push("/chat/temp");
+    } else {
+      router.push("/");
+    }
   };
 
   if (authLoading) return null;
@@ -135,11 +143,11 @@ const NavigationBar: FC = () => {
             </Text>
           </Flex>
           <Flex align="center" gap={4}>
-            {user && pathname === "/" && (
+            {user && (pathname === "/" || pathname === "/chat/temp") && (
               <IconButton
                 aria-label="Temporary Chat"
                 icon={
-                  isMessageTemporary ? <RiChatHistoryLine /> : <RiChat3Line />
+                  pathname === "/" ? <RiChat3Line /> : <RiChatHistoryLine />
                 }
                 variant="ghost"
                 onClick={toggleTemporaryChat}

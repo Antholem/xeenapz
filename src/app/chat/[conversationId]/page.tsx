@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef, FC } from "react";
 import {
   db,
@@ -42,10 +42,11 @@ interface Message {
 
 const Conversation: FC = () => {
   const { conversationId } = useParams<ConversationParams>();
+  const router = useRouter();
+  const { user, loading } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { user } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [input, setInput] = useState<string>("");
   const [isFetchingResponse, setIsFetchingResponse] = useState<boolean>(false);
@@ -59,9 +60,15 @@ const Conversation: FC = () => {
   const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
-    if (!conversationId) return;
+    if (!loading && !user) {
+      router.replace("/");
+    }
+  }, [user, loading, router]);
 
-    setLoading(true);
+  useEffect(() => {
+    if (!conversationId || !user) return;
+
+    setLoadingMessages(true);
     setErrorMessage(null);
     setMessages([]);
     setOldestDoc(null);
@@ -78,12 +85,12 @@ const Conversation: FC = () => {
         if (!docSnap.exists()) {
           setErrorMessage("Conversation not found!");
         }
-        setLoading(false);
+        setLoadingMessages(false);
       },
       (error) => {
         console.error("Error fetching conversation:", error);
         setErrorMessage("Failed to fetch conversation.");
-        setLoading(false);
+        setLoadingMessages(false);
       }
     );
 
@@ -117,7 +124,7 @@ const Conversation: FC = () => {
       unsubscribeConversation();
       unsubscribeMessages();
     };
-  }, [conversationId]);
+  }, [conversationId, user]);
 
   useEffect(() => {
     if (transcript && transcript !== prevTranscriptRef.current) {
@@ -132,7 +139,7 @@ const Conversation: FC = () => {
   }, [listening]);
 
   const fetchOlderMessages = async (): Promise<Message[]> => {
-    if (!conversationId || !hasMore) return [];
+    if (!conversationId || !hasMore || !oldestDoc) return [];
 
     try {
       const messagesRef = collection(
@@ -216,7 +223,12 @@ const Conversation: FC = () => {
     if (!input.trim() || !user || !conversationId) return;
 
     const timestamp = Date.now();
-    const userMessage: Message = { text: input, sender: "user", timestamp };
+    const userMessage: Message = {
+      text: input,
+      sender: "user",
+      timestamp,
+      createdAt: new Date().toISOString(),
+    };
 
     setInput("");
 
@@ -224,26 +236,23 @@ const Conversation: FC = () => {
       const messagesRef = collection(
         db,
         "conversations",
-        conversationId as string,
+        conversationId,
         "messages"
       );
       await addDoc(messagesRef, {
         ...userMessage,
-        createdAt: new Date().toISOString(),
-        sender: "user",
       });
 
-      const conversationDocRef = doc(db, "conversations", conversationId);
-      await updateDoc(conversationDocRef, {
+      await updateDoc(doc(db, "conversations", conversationId), {
         updatedAt: serverTimestamp(),
         lastMessage: {
           text: userMessage.text,
           sender: userMessage.sender,
-          createdAt: new Date().toISOString(),
+          createdAt: userMessage.createdAt,
         },
       });
 
-      fetchBotResponse(userMessage, conversationId as string);
+      fetchBotResponse(userMessage, conversationId);
     } catch (error) {
       console.error("Error sending message:", error);
       console.log(errorMessage);
@@ -255,11 +264,13 @@ const Conversation: FC = () => {
     setMessages((prev) => [...moreMessages, ...prev]);
   };
 
+  if (loading) return null;
+
   return (
     <ConversationLayout>
       <MessagesLayout
-        messages={messages}
-        isFetchingResponse={isFetchingResponse}
+        messages={user ? messages : []}
+        isFetchingResponse={user ? isFetchingResponse : false}
         user={user}
         speakText={speakText}
         playingMessage={playingMessage}
@@ -267,12 +278,12 @@ const Conversation: FC = () => {
         messagesEndRef={messagesEndRef}
         emptyStateText="Hello, what can I help with?"
         onLoadMore={handleLoadMessages}
-        isLoading={loading}
+        isLoading={loadingMessages}
       />
       <MessageInput
-        input={input}
+        input={user ? input : ""}
         setInput={setInput}
-        isListening={isListening}
+        isListening={user ? isListening : false}
         resetTranscript={resetTranscript}
         isFetchingResponse={isFetchingResponse}
         sendMessage={sendMessage}
