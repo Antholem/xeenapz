@@ -6,7 +6,6 @@ import {
   Flex,
   Text,
   Image,
-  Avatar,
   Tooltip,
   IconButton,
   useColorModeValue,
@@ -100,8 +99,8 @@ const MessageItemComponent: FC<MessageItemProps> = ({
           </Box>
 
           <Flex align="center" justify="center" gap={1}>
-            <Text fontSize="xs">{formattedTime}</Text>
-            {!isUser && (
+            {user && <Text fontSize="xs">{formattedTime}</Text>}
+            {!isUser && user && (
               <Tooltip
                 label={playingMessage === message.text ? "Stop" : "Read aloud"}
               >
@@ -120,13 +119,6 @@ const MessageItemComponent: FC<MessageItemProps> = ({
             )}
           </Flex>
         </Box>
-        {isUser && (
-          <Avatar
-            size="sm"
-            src={user?.photoURL ?? "default-avatar.png"}
-            name={user?.displayName ?? ""}
-          />
-        )}
       </Flex>
     </Flex>
   );

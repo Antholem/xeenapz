@@ -333,23 +333,23 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
           <Flex px={3} pb={3}>
             <SearchBar onSearch={handleSearch} />
           </Flex>
-          {loading ? (
-            <Flex flex="1" justify="center" align="center">
-              <Spinner size="xl" />
-            </Flex>
-          ) : (
-            <DrawerBody
-              p={0}
-              overflow="hidden"
-              display="flex"
-              borderTopWidth="1px"
-            >
+          <DrawerBody
+            p={0}
+            overflow="hidden"
+            display="flex"
+            borderTopWidth="1px"
+          >
+            {loading ? (
+              <Flex flex="1" justify="center" align="center">
+                <Spinner size="xl" />
+              </Flex>
+            ) : (
               <ConversationList
                 conversations={conversations}
                 searchTerm={searchTerm}
               />
-            </DrawerBody>
-          )}
+            )}
+          </DrawerBody>
         </Card>
       </DrawerContent>
     </Drawer>
