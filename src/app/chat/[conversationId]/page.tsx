@@ -44,10 +44,6 @@ const Conversation: FC = () => {
   const { conversationId } = useParams<ConversationParams>();
   const router = useRouter();
   const { user, loading } = useAuth();
-  const [conversationExists, setConversationExists] = useState<boolean | null>(
-    null
-  );
-
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -267,10 +263,6 @@ const Conversation: FC = () => {
     const moreMessages = await fetchOlderMessages();
     setMessages((prev) => [...moreMessages, ...prev]);
   };
-
-  if (!loading && conversationExists === false) {
-    notFound();
-  }
 
   if (loading) return null;
 

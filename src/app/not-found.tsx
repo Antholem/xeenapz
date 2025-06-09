@@ -27,7 +27,7 @@ const NotFound = () => {
             Page Not Found
           </Text>
           <Text fontSize="md" align="center">
-            Sorry, the page you're looking for doesn't exist.
+            Sorry, the page you&apos;re looking for doesn&apos;t exist.
           </Text>
         </Flex>
         <Button onClick={() => router.push("/")} leftIcon={<IoAdd />}>
