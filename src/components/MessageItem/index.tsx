@@ -36,7 +36,7 @@ interface MessageItemProps extends BoxProps {
   playingMessage: string | null;
 }
 
-const MessageItemComponent: FC<MessageItemProps> = ({
+const MessageItem: FC<MessageItemProps> = ({
   message,
   user,
   speakText,
@@ -45,9 +45,11 @@ const MessageItemComponent: FC<MessageItemProps> = ({
   ...props
 }) => {
   const isUser = message.sender === "user";
-  const formattedTime = format(new Date(message.timestamp), "hh:mm a", {
-    locale: enUS,
-  });
+  const formattedTime =
+    user &&
+    format(new Date(message.timestamp), "hh:mm a", {
+      locale: enUS,
+    });
 
   const userBg = useColorModeValue("blue.400", "blue.500");
   const botBg = useColorModeValue("gray.200", "gray.700");
@@ -100,7 +102,7 @@ const MessageItemComponent: FC<MessageItemProps> = ({
 
           <Flex align="center" justify="center" gap={1}>
             {user && <Text fontSize="xs">{formattedTime}</Text>}
-            {!isUser && user && (
+            {!isUser && (
               <Tooltip
                 label={playingMessage === message.text ? "Stop" : "Read aloud"}
               >
@@ -124,4 +126,4 @@ const MessageItemComponent: FC<MessageItemProps> = ({
   );
 };
 
-export default memo(MessageItemComponent);
+export default memo(MessageItem);

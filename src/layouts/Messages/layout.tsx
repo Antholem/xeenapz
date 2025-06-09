@@ -27,6 +27,7 @@ import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import { User } from "@/lib/firebase";
 import { MessageItem } from "@/components";
 import { formatDateGrouping } from "@/utils/dateFormatter";
+import useAuth from "@/stores/useAuth";
 
 interface Message {
   id?: string;
@@ -53,7 +54,7 @@ interface MessagesLayoutProps {
   onLoadMore?: () => Promise<void>;
 }
 
-const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
+const MessagesLayout: FC<MessagesLayoutProps> = ({
   messages,
   isFetchingResponse,
   user,
@@ -65,6 +66,7 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
   emptyStateText = "",
   onLoadMore,
 }) => {
+  const { user: authUser } = useAuth();
   const bgColor = useColorModeValue("gray.200", "gray.700");
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [readyToRender, setReadyToRender] = useState(false);
@@ -82,10 +84,12 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
     messages.forEach((msg) => {
       const date = msg.createdAt ?? new Date(msg.timestamp).toISOString();
       const formatted = formatDateGrouping(date);
-      if (formatted !== lastDate) {
+
+      if (authUser && formatted !== lastDate) {
         result.push({ type: "separator", value: formatted });
         lastDate = formatted;
       }
+
       result.push({ type: "message", value: msg });
     });
 
@@ -94,7 +98,7 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
     }
 
     return result;
-  }, [messages, isFetchingResponse]);
+  }, [messages, isFetchingResponse, authUser]);
 
   useEffect(() => {
     if (!readyToRender && virtualMessages.length > 0) {
@@ -179,7 +183,7 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
                 const isFirst = index === 0;
                 const isLast = index === virtualMessages.length - 1;
 
-                if (item.type === "separator") {
+                if (item.type === "separator" && authUser) {
                   return (
                     <Flex
                       justify="center"
@@ -222,6 +226,7 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
                       speakText={speakText}
                       playingMessage={playingMessage}
                       setPlayingMessage={setPlayingMessage}
+                      mt={isFirst && !authUser ? 3 : 0}
                       pt={isFirst ? 3 : 2}
                       pb={isLast ? 3 : 2}
                     />
@@ -237,4 +242,4 @@ const MessagesLayoutComponent: FC<MessagesLayoutProps> = ({
   );
 };
 
-export default memo(MessagesLayoutComponent);
+export default memo(MessagesLayout);
