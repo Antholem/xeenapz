@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter, notFound } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef, FC } from "react";
 import {
   db,
@@ -276,7 +276,6 @@ const Conversation: FC = () => {
         playingMessage={playingMessage}
         setPlayingMessage={setPlayingMessage}
         messagesEndRef={messagesEndRef}
-        emptyStateText="Hello, what can I help with?"
         onLoadMore={handleLoadMessages}
         isLoading={loadingMessages}
       />
