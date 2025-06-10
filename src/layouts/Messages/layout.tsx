@@ -28,6 +28,7 @@ import { User } from "@/lib/firebase";
 import { MessageItem } from "@/components";
 import { formatDateGrouping } from "@/utils/dateFormatter";
 import useAuth from "@/stores/useAuth";
+import { notFound, usePathname } from "next/navigation";
 
 interface Message {
   id?: string;
@@ -63,10 +64,11 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
   setPlayingMessage,
   messagesEndRef,
   isLoading = false,
-  emptyStateText = "",
+  emptyStateText = "Hello, what can I help with?",
   onLoadMore,
 }) => {
   const { user: authUser } = useAuth();
+  const pathname = usePathname();
   const bgColor = useColorModeValue("gray.200", "gray.700");
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [readyToRender, setReadyToRender] = useState(false);
@@ -149,6 +151,9 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
       </Flex>
     );
   }
+
+  if (messages.length === 0 && pathname !== "/" && pathname !== "/chat/temp")
+    return notFound();
 
   return (
     <Fragment>

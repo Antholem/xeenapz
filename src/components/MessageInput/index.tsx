@@ -17,6 +17,7 @@ interface MessageInputProps {
   isListening: boolean;
   resetTranscript: () => void;
   isFetchingResponse: boolean;
+  isDisabled?: boolean;
   sendMessage: () => void;
 }
 
@@ -26,6 +27,7 @@ const MessageInput: FC<MessageInputProps> = ({
   isListening,
   resetTranscript,
   isFetchingResponse,
+  isDisabled,
   sendMessage,
 }) => {
   const toggleSpeechRecognition = () => {
@@ -49,6 +51,7 @@ const MessageInput: FC<MessageInputProps> = ({
             placeholder="Write a message..."
             flex="1"
             variant="filled"
+            isDisabled={isDisabled}
           />
           <Tooltip label={isListening ? "Stop" : "Type by voice"}>
             <IconButton
@@ -56,6 +59,7 @@ const MessageInput: FC<MessageInputProps> = ({
               variant="ghost"
               icon={isListening ? <IoStop /> : <IoIosMic />}
               onClick={toggleSpeechRecognition}
+              isDisabled={isDisabled}
             />
           </Tooltip>
           <Tooltip label="Send message">

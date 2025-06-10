@@ -276,7 +276,6 @@ const Conversation: FC = () => {
         playingMessage={playingMessage}
         setPlayingMessage={setPlayingMessage}
         messagesEndRef={messagesEndRef}
-        emptyStateText="Hello, what can I help with?"
         onLoadMore={handleLoadMessages}
         isLoading={loadingMessages}
       />
