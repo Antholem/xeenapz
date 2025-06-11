@@ -1,26 +1,23 @@
 "use client";
 
-import { ChakraProvider, ColorModeScript } from "@chakra-ui/react";
 import { ReactNode, useEffect, useState } from "react";
+import { ChakraProvider, ColorModeScript } from "@chakra-ui/react";
 import theme from "@/lib/theme";
+import { ThemeColorProvider } from "@/lib/ColorSchemeContext";
 
-interface ProvidersProps {
-  children: ReactNode;
-}
-
-const Providers = ({ children }: ProvidersProps) => {
-  const [isMounted, setIsMounted] = useState(false);
+const Providers = ({ children }: { children: ReactNode }) => {
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
+    setMounted(true);
   }, []);
 
-  if (!isMounted) return null;
+  if (!mounted) return null;
 
   return (
     <ChakraProvider theme={theme}>
       <ColorModeScript initialColorMode={theme.config.initialColorMode} />
-      {children}
+      <ThemeColorProvider>{children}</ThemeColorProvider>
     </ChakraProvider>
   );
 };
