@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef, FC } from "react";
+import { useSpeechRecognition } from "react-speech-recognition";
 import {
   db,
   doc,
@@ -21,10 +22,8 @@ import {
   limit,
   QueryDocumentSnapshot,
 } from "firebase/firestore";
-import ConversationLayout from "@/layouts/Conversation/layout";
-import MessagesLayout from "@/layouts/Messages/layout";
-import MessageInput from "@/components/MessageInput";
-import { useSpeechRecognition } from "react-speech-recognition";
+import { MessagesLayout, ConversationLayout } from "@/layouts";
+import { MessageInput } from "@/components";
 import { speakText } from "@/lib/textToSpeech";
 import useAuth from "@/stores/useAuth";
 

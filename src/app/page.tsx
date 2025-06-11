@@ -12,8 +12,8 @@ import {
   serverTimestamp,
 } from "@/lib/firebase";
 import { v4 as uuidv4 } from "uuid";
-import { MessageInput, MessagesLayout } from "@/components/";
-import { ConversationLayout } from "@/layouts";
+import { MessageInput } from "@/components/";
+import { ConversationLayout, MessagesLayout } from "@/layouts";
 import { usePathname } from "next/navigation";
 import useTempChat from "@/stores/useTempChat";
 import useAuth from "@/stores/useAuth";

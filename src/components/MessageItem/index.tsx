@@ -1,6 +1,11 @@
 "use client";
 
 import { FC, memo } from "react";
+import ReactMarkdown from "react-markdown";
+import { format } from "date-fns";
+import { enUS } from "date-fns/locale";
+import { IoStop } from "react-icons/io5";
+import { IoIosMic } from "react-icons/io";
 import {
   Box,
   Flex,
@@ -12,11 +17,6 @@ import {
   BoxProps,
 } from "@chakra-ui/react";
 import { User } from "@/lib/firebase";
-import { format } from "date-fns";
-import ReactMarkdown from "react-markdown";
-import { IoStop } from "react-icons/io5";
-import { IoIosMic } from "react-icons/io";
-import { enUS } from "date-fns/locale";
 
 interface Message {
   text: string;

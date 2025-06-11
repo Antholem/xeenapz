@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef, FC } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useSpeechRecognition } from "react-speech-recognition";
 import { speakText } from "@/lib/textToSpeech";
-import { MessageInput, MessagesLayout } from "@/components/";
-import { ConversationLayout } from "@/layouts";
-import { usePathname, useRouter } from "next/navigation";
+import { MessageInput } from "@/components";
+import { ConversationLayout, MessagesLayout } from "@/layouts";
 import useAuth from "@/stores/useAuth";
 
 interface Message {

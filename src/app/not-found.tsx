@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
-import { MessageInput } from "@/components";
-import { ConversationLayout } from "@/layouts";
 import { Button, Flex, Text } from "@chakra-ui/react";
 import { IoAdd } from "react-icons/io5";
 import { useRouter } from "next/navigation";
+import { MessageInput } from "@/components";
+import { ConversationLayout } from "@/layouts";
 
 const NotFound = () => {
   const router = useRouter();

@@ -11,6 +11,8 @@ import React, {
   useState,
   useCallback,
 } from "react";
+import { notFound, usePathname } from "next/navigation";
+import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import {
   Box,
   VStack,
@@ -23,12 +25,10 @@ import {
   useColorModeValue,
   Progress,
 } from "@chakra-ui/react";
-import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import { User } from "@/lib/firebase";
 import { MessageItem } from "@/components";
 import { formatDateGrouping } from "@/utils/dateFormatter";
 import useAuth from "@/stores/useAuth";
-import { notFound, usePathname } from "next/navigation";
 
 interface Message {
   id?: string;
