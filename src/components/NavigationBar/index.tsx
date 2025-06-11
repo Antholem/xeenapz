@@ -1,6 +1,11 @@
 "use client";
 
 import { FC, Fragment, memo, useEffect, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { HiPencilAlt } from "react-icons/hi";
+import { IoMdMenu } from "react-icons/io";
+import { RiChat3Line, RiChatHistoryLine } from "react-icons/ri";
+import { MoonIcon, SunIcon } from "@chakra-ui/icons";
 import {
   Flex,
   Text,
@@ -11,8 +16,6 @@ import {
   useDisclosure,
   Card,
 } from "@chakra-ui/react";
-import { MoonIcon, SunIcon } from "@chakra-ui/icons";
-import { HiPencilAlt } from "react-icons/hi";
 import {
   auth,
   provider,
@@ -22,11 +25,8 @@ import {
   Unsubscribe,
   signInWithPopup,
 } from "@/lib/firebase";
-import { IoMdMenu } from "react-icons/io";
-import SideBar from "@/components/SideBar";
-import { usePathname, useRouter } from "next/navigation";
-import { RiChat3Line, RiChatHistoryLine } from "react-icons/ri";
 import useAuth from "@/stores/useAuth";
+import { SideBar } from "@/components";
 
 interface Conversation {
   title?: string;

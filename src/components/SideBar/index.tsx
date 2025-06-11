@@ -9,6 +9,9 @@ import {
   memo,
   MouseEvent as ReactMouseEvent,
 } from "react";
+import { useRouter } from "next/navigation";
+import { IoAdd, IoSettingsSharp, IoSearch } from "react-icons/io5";
+import { FiLogOut, FiUserCheck } from "react-icons/fi";
 import {
   Box,
   Flex,
@@ -34,8 +37,6 @@ import {
   Icon,
   Spinner,
 } from "@chakra-ui/react";
-import { IoAdd, IoSettingsSharp, IoSearch } from "react-icons/io5";
-import { FiLogOut, FiUserCheck } from "react-icons/fi";
 import {
   auth,
   provider,
@@ -50,8 +51,7 @@ import {
   User,
   getDocs,
 } from "@/lib/firebase";
-import { useRouter } from "next/navigation";
-import ConversationList from "../ConversationList";
+import { ConversationList } from "@/components";
 import useAuth from "@/stores/useAuth";
 
 interface SideBarProps {

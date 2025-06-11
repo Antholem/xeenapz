@@ -1,10 +1,11 @@
 "use client";
 
+import "./globals.css";
+
 import { ReactNode } from "react";
 import { Box, Flex } from "@chakra-ui/react";
 import Providers from "./providers";
 import { NavigationBar, SideBar, AuthInitializer } from "@/components";
-import "./globals.css";
 
 const RootLayout = ({ children }: { children: ReactNode }) => {
   return (

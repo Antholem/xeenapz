@@ -11,11 +11,17 @@ import {
   useEffect,
   useRef,
 } from "react";
-import { Box, Text, Flex, Button, Progress } from "@chakra-ui/react";
 import { useRouter, usePathname } from "next/navigation";
-import { formatNormalTime } from "@/utils/dateFormatter";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
-import { ButtonProps } from "@chakra-ui/react";
+import {
+  Box,
+  Text,
+  Flex,
+  Button,
+  Progress,
+  ButtonProps,
+} from "@chakra-ui/react";
+import { formatNormalTime } from "@/utils/dateFormatter";
 import useAuth from "@/stores/useAuth";
 import { db, collection, query, orderBy, getDocs, where } from "@/lib/firebase";
 import {
