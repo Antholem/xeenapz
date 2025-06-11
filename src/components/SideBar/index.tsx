@@ -1,6 +1,14 @@
 "use client";
 
-import { FC, useEffect, useState, useCallback, ChangeEvent, memo } from "react";
+import {
+  FC,
+  useEffect,
+  useState,
+  useCallback,
+  ChangeEvent,
+  memo,
+  MouseEvent as ReactMouseEvent,
+} from "react";
 import {
   Box,
   Flex,
@@ -156,6 +164,40 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
+  const [sidebarWidth, setSidebarWidth] = useState(350);
+  const [isResizing, setIsResizing] = useState(false);
+
+  const startResizing = (e: ReactMouseEvent) => {
+    setIsResizing(true);
+    e.preventDefault();
+  };
+
+  const stopResizing = () => setIsResizing(false);
+
+  const handleResizing = useCallback(
+    (e: MouseEvent) => {
+      if (isResizing) {
+        const newWidth = Math.max(250, Math.min(500, e.clientX));
+        setSidebarWidth(newWidth);
+      }
+    },
+    [isResizing]
+  );
+
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener("mousemove", handleResizing);
+      document.addEventListener("mouseup", stopResizing);
+    } else {
+      document.removeEventListener("mousemove", handleResizing);
+      document.removeEventListener("mouseup", stopResizing);
+    }
+    return () => {
+      document.removeEventListener("mousemove", handleResizing);
+      document.removeEventListener("mouseup", stopResizing);
+    };
+  }, [isResizing, handleResizing]);
+
   const fetchMessages = useCallback(
     async (convoId: string): Promise<Message[]> => {
       const q = query(
@@ -219,65 +261,79 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
   };
 
   const content = (
-    <Card
-      borderRadius={0}
-      variant="unstyled"
-      h="100vh"
-      display={!isLargeScreen ? "none" : "block"}
-    >
-      <Flex direction="column" h="100%" w="350px">
-        <Flex
-          px={3}
-          pt={2}
-          align="center"
-          justify="space-between"
-          fontSize="xl"
-          fontWeight="semibold"
-        >
-          <Flex align="center" justify="start" gap={3}>
-            <MenuItems
-              user={user}
-              switchAccount={handleGoogleSignIn}
-              signOut={handleSignOut}
-            />
-            <Box
-              lineHeight="1.2"
-              maxW="200px"
-              overflow="hidden"
-              whiteSpace="nowrap"
-              textOverflow="ellipsis"
-            >
-              <Text fontWeight="bold" fontSize="sm" isTruncated>
-                {user?.displayName}
-              </Text>
-              <Text fontSize="xs" color="gray.400" isTruncated>
-                {user?.email}
-              </Text>
+    <Box display={!isLargeScreen ? "none" : "flex"} height="100vh">
+      <Card
+        borderRadius={0}
+        variant="unstyled"
+        h="100vh"
+        w={`${sidebarWidth}px`}
+      >
+        <Flex direction="column" h="100%">
+          <Flex
+            px={3}
+            pt={2}
+            align="center"
+            justify="space-between"
+            fontSize="xl"
+            fontWeight="semibold"
+            gap={2}
+            minW={0}
+          >
+            <Flex align="center" justify="start" flex="1" gap={3} minW={0}>
+              <MenuItems
+                user={user}
+                switchAccount={handleGoogleSignIn}
+                signOut={handleSignOut}
+              />
+              <Box
+                lineHeight="1.2"
+                overflow="hidden"
+                whiteSpace="nowrap"
+                textOverflow="ellipsis"
+                minW={0}
+              >
+                <Text fontWeight="bold" fontSize="sm" isTruncated maxW="100%">
+                  {user?.displayName}
+                </Text>
+                <Text fontSize="xs" color="gray.400" isTruncated maxW="100%">
+                  {user?.email}
+                </Text>
+              </Box>
+            </Flex>
+
+            <Flex flexShrink={0}>
+              <NewChatButton />
+              <SettingsButton />
+            </Flex>
+          </Flex>
+
+          <Flex p={3}>
+            <SearchBar onSearch={handleSearch} />
+          </Flex>
+          <Divider />
+          {loading ? (
+            <Flex flex="1" justify="center" align="center">
+              <Spinner size="xl" />
+            </Flex>
+          ) : (
+            <Box flex="1" overflow="hidden">
+              <ConversationList
+                conversations={conversations}
+                searchTerm={searchTerm}
+              />
             </Box>
-          </Flex>
-          <Box>
-            <NewChatButton />
-            <SettingsButton />
-          </Box>
+          )}
         </Flex>
-        <Flex p={3}>
-          <SearchBar onSearch={handleSearch} />
-        </Flex>
-        <Divider />
-        {loading ? (
-          <Flex flex="1" justify="center" align="center">
-            <Spinner size="xl" />
-          </Flex>
-        ) : (
-          <Box flex="1" overflow="hidden">
-            <ConversationList
-              conversations={conversations}
-              searchTerm={searchTerm}
-            />
-          </Box>
-        )}
-      </Flex>
-    </Card>
+      </Card>
+
+      <Card
+        w="3px"
+        cursor="col-resize"
+        onMouseDown={startResizing}
+        _hover={{ bg: "#ababab" }}
+        variant="unstyled"
+      />
+    </Box>
   );
 
   if (authLoading || !user) return null;
