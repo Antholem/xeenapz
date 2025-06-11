@@ -7,15 +7,32 @@ import {
 const config: ThemeConfig = {
   initialColorMode: "system",
   useSystemColorMode: true,
+  cssVarPrefix: "ck",
 };
 
 const theme = extendTheme({
   config,
+  semanticTokens: {
+    colors: {
+      background: {
+        default: "gray.50",
+        _dark: "gray.900",
+      },
+      text: {
+        default: "black",
+        _dark: "whiteAlpha.900",
+      },
+      cardBg: {
+        default: "white",
+        _dark: "gray.800",
+      },
+    },
+  },
   styles: {
     global: (props: StyleFunctionProps) => ({
       body: {
-        bg: props.colorMode === "dark" ? "gray.900" : "gray.50",
-        color: props.colorMode === "dark" ? "white" : "black",
+        bg: "background",
+        color: "text",
       },
     }),
   },
