@@ -1,9 +1,9 @@
-import NavigationBar from "./NavigationBar";
-import SideBar from "./SideBar";
-import MessageInput from "./MessageInput";
-import MessageItem from "./MessageItem";
-import ConversationList from "./ConversationList";
-import AuthInitializer from "./AuthInitializer";
+import NavigationBar from "@/components/NavigationBar";
+import SideBar from "@/components/SideBar";
+import MessageInput from "@/components/MessageInput";
+import MessageItem from "@/components/MessageItem";
+import ConversationList from "@/components/ConversationList";
+import AuthInitializer from "@/components/AuthInitializer";
 
 export {
   NavigationBar,

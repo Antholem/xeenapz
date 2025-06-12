@@ -177,7 +177,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
   const handleResizing = useCallback(
     (e: MouseEvent) => {
       if (isResizing) {
-        const newWidth = Math.max(250, Math.min(500, e.clientX));
+        const newWidth = Math.max(200, Math.min(500, e.clientX));
         setSidebarWidth(newWidth);
       }
     },
