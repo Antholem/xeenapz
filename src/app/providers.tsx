@@ -2,7 +2,7 @@
 
 import { ReactNode, useEffect, useState } from "react";
 import { ChakraProvider, ColorModeScript } from "@chakra-ui/react";
-import theme from "@/lib/theme";
+import theme from "@/theme";
 
 const Providers = ({ children }: { children: ReactNode }) => {
   const [mounted, setMounted] = useState(false);
