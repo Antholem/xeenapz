@@ -1,4 +1,4 @@
-import { extendTheme, type ThemeConfig, type StyleFunctionProps } from "@chakra-ui/react";
+import { extendTheme, type ThemeConfig } from "@chakra-ui/react";
 import { COLOR_PALETTES } from "@/theme/color-tokens";
 
 const config: ThemeConfig = {
@@ -18,7 +18,7 @@ const theme = extendTheme({
         },
     },
     styles: {
-        global: (props: StyleFunctionProps) => ({
+        global: () => ({
             body: {
                 bg: "background",
                 color: "text",
