@@ -1,8 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-
-type ColorScheme = "blue" | "gray";
+import { ColorScheme } from "@/constants/colorSchemes";
 
 interface ThemeColorState {
   colorScheme: ColorScheme;

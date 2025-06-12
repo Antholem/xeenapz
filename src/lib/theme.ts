@@ -1,5 +1,32 @@
 import { extendTheme, type ThemeConfig } from "@chakra-ui/react";
 
+export const colorSchemes = {
+  blue: {
+    50: "#ebf8ff",
+    100: "#bee3f8",
+    200: "#90cdf4",
+    300: "#63b3ed",
+    400: "#4299e1",
+    500: "#3182ce",
+    600: "#2b6cb0",
+    700: "#2c5282",
+    800: "#2a4365",
+    900: "#1a365d",
+  },
+  gray: {
+    50: "#f7fafc",
+    100: "#edf2f7",
+    200: "#e2e8f0",
+    300: "#cbd5e0",
+    400: "#a0aec0",
+    500: "#718096",
+    600: "#4a5568",
+    700: "#2d3748",
+    800: "#1a202c",
+    900: "#171923",
+  },
+};
+
 const config: ThemeConfig = {
   initialColorMode: "system",
   useSystemColorMode: true,
@@ -8,6 +35,7 @@ const config: ThemeConfig = {
 
 const theme = extendTheme({
   config,
+  colors: colorSchemes,
   semanticTokens: {
     colors: {
       background: { default: "gray.50", _dark: "gray.900" },
@@ -15,40 +43,6 @@ const theme = extendTheme({
       cardBg: {
         default: "white",
         _dark: "gray.800",
-      },
-    },
-  },
-  colors: {
-    blue: {
-      50: "#ebf8ff",
-      100: "#bee3f8",
-      200: "#90cdf4",
-      300: "#63b3ed",
-      400: "#4299e1",
-      500: "#3182ce",
-      600: "#2b6cb0",
-      700: "#2c5282",
-      800: "#2a4365",
-      900: "#1a365d",
-    },
-    gray: {
-      50: "#f7fafc",
-      100: "#edf2f7",
-      200: "#e2e8f0",
-      300: "#cbd5e0",
-      400: "#a0aec0",
-      500: "#718096",
-      600: "#4a5568",
-      700: "#2d3748",
-      800: "#1a202c",
-      900: "#171923",
-    },
-  },
-  styles: {
-    global: {
-      body: {
-        bg: "background",
-        color: "text",
       },
     },
   },
