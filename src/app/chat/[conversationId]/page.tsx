@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState, useRef, FC } from "react";
+import { useEffect, useRef, useState, FC } from "react";
 import { useSpeechRecognition } from "react-speech-recognition";
 import {
   db,
@@ -12,9 +12,9 @@ import {
   addDoc,
   serverTimestamp,
   updateDoc,
-  onSnapshot,
   getDocs,
   DocumentReference,
+  onSnapshot,
 } from "@/lib/firebase";
 import {
   DocumentData,
@@ -26,30 +26,29 @@ import { MessagesLayout, ConversationLayout } from "@/layouts";
 import { MessageInput } from "@/components";
 import { speakText } from "@/lib/textToSpeech";
 import useAuth from "@/stores/useAuth";
+import useMessagePersistent, { Message } from "@/stores/useMessagePersistent";
 
 interface ConversationParams {
   [key: string]: string | undefined;
   conversationId?: string;
 }
 
-interface Message {
-  text: string;
-  sender: "user" | "bot";
-  timestamp: number;
-  createdAt?: string;
-}
-
 const Conversation: FC = () => {
   const { conversationId } = useParams<ConversationParams>();
   const router = useRouter();
   const { user, loading } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  const { messagesByConversation, setMessages, addMessagesToTop } =
+    useMessagePersistent();
+  const storedMessages = messagesByConversation[conversationId || ""] || [];
+
   const [loadingMessages, setLoadingMessages] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [input, setInput] = useState<string>("");
   const [isFetchingResponse, setIsFetchingResponse] = useState<boolean>(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
+
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
   const [isListening, setIsListening] = useState(false);
   const prevTranscriptRef = useRef("");
@@ -59,25 +58,26 @@ const Conversation: FC = () => {
   const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/");
-    }
+    if (!loading && !user) router.replace("/");
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (!conversationId || !user) return;
+    if (!conversationId || !user || storedMessages.length > 0) {
+      setLoadingMessages(false);
+      return;
+    }
 
     setLoadingMessages(true);
     setErrorMessage(null);
-    setMessages([]);
     setOldestDoc(null);
     setHasMore(true);
 
     const conversationDocRef: DocumentReference = doc(
       db,
       "conversations",
-      conversationId as string
+      conversationId
     );
+
     const unsubscribeConversation = onSnapshot(
       conversationDocRef,
       (docSnap) => {
@@ -96,9 +96,10 @@ const Conversation: FC = () => {
     const messagesCollectionRef = collection(
       db,
       "conversations",
-      conversationId as string,
+      conversationId,
       "messages"
     );
+
     const messagesQuery = query(messagesCollectionRef, orderBy("createdAt"));
 
     const unsubscribeMessages = onSnapshot(
@@ -108,7 +109,8 @@ const Conversation: FC = () => {
           (doc) => ({ ...doc.data() } as Message)
         );
 
-        setMessages(messagesList);
+        setMessages(conversationId, messagesList);
+
         if (snapshot.docs.length > 0) {
           setOldestDoc(snapshot.docs[0]);
         }
@@ -167,12 +169,16 @@ const Conversation: FC = () => {
       );
 
       setOldestDoc(snapshot.docs[0]);
-
       return olderMessages;
     } catch (err) {
       console.error("Error fetching older messages:", err);
       return [];
     }
+  };
+
+  const handleLoadMessages = async () => {
+    const olderMessages = await fetchOlderMessages();
+    addMessagesToTop(conversationId!, olderMessages);
   };
 
   const fetchBotResponse = async (userMessage: Message, convoId: string) => {
@@ -258,17 +264,12 @@ const Conversation: FC = () => {
     }
   };
 
-  const handleLoadMessages = async () => {
-    const moreMessages = await fetchOlderMessages();
-    setMessages((prev) => [...moreMessages, ...prev]);
-  };
-
   if (loading) return null;
 
   return (
     <ConversationLayout>
       <MessagesLayout
-        messages={user ? messages : []}
+        messages={user ? storedMessages : []}
         isFetchingResponse={user ? isFetchingResponse : false}
         user={user}
         speakText={speakText}
