@@ -12,11 +12,12 @@ import {
   serverTimestamp,
 } from "@/lib/firebase";
 import { v4 as uuidv4 } from "uuid";
-import { MessageInput } from "@/components/";
+import { MessageInput } from "@/components";
 import { ConversationLayout, MessagesLayout } from "@/layouts";
 import { usePathname } from "next/navigation";
 import useTempChat from "@/stores/useTempChat";
 import useAuth from "@/stores/useAuth";
+import useMessagePersistent from "@/stores/useMessagePersistent";
 
 interface Message {
   text: string;
@@ -39,6 +40,9 @@ const Home: FC = () => {
   const { isMessageTemporary } = useTempChat();
   const pathname = usePathname();
   const hasMounted = useRef(false);
+
+  const { setMessages: setGlobalMessages, addMessageToBottom } =
+    useMessagePersistent();
 
   useEffect(() => {
     if (!user || isMessageTemporary) return;
@@ -82,27 +86,28 @@ const Home: FC = () => {
   ) => {
     setIsFetchingResponse(true);
 
-    const res = await fetch("/api/gemini", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: userMessage.text }),
-    });
+    try {
+      const res = await fetch("/api/gemini", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userMessage.text }),
+      });
 
-    const data = await res.json();
-    const botResponse =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+      const data = await res.json();
+      const botResponse =
+        data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
 
-    const botMessage: Message = {
-      text: botResponse,
-      sender: "bot",
-      timestamp: Date.now(),
-      createdAt: new Date().toISOString(),
-    };
+      const botMessage: Message = {
+        text: botResponse,
+        sender: "bot",
+        timestamp: Date.now(),
+        createdAt: new Date().toISOString(),
+      };
 
-    if (user && convoId && !isMessageTemporary) {
-      try {
-        setMessages((prev) => [...prev, botMessage]);
-        setIsFetchingResponse(false);
+      setMessages((prev) => [...prev, botMessage]);
+
+      if (user && convoId && !isMessageTemporary) {
+        addMessageToBottom(convoId, botMessage);
 
         const messagesRef = collection(
           db,
@@ -112,7 +117,6 @@ const Home: FC = () => {
         );
         await addDoc(messagesRef, {
           ...botMessage,
-          createdAt: new Date().toISOString(),
           isGenerated: true,
         });
 
@@ -128,68 +132,43 @@ const Home: FC = () => {
           },
           { merge: true }
         );
-
-        if (!conversationId && convoId && pathname === "/") {
-          window.history.pushState({}, "", `/chat/${convoId}`);
-          setConversationId(convoId);
-        }
-      } catch (error) {
-        console.error("Error fetching response:", error);
-        setMessages((prev) => [
-          ...prev,
-          {
-            text: "Error fetching response",
-            sender: "bot",
-            timestamp: Date.now(),
-          },
-        ]);
-      } finally {
-        setIsFetchingResponse(false);
       }
-    } else {
-      try {
-        setMessages((prev) => [...prev, botMessage]);
-      } catch (error) {
-        console.error("Error fetching response:", error);
-
-        setMessages((prev) => [
-          ...prev,
-          {
-            text: "Error fetching response",
-            sender: "bot",
-            timestamp: Date.now(),
-          },
-        ]);
-      } finally {
-        setIsFetchingResponse(false);
-      }
+    } catch (error) {
+      console.error("Error fetching bot response:", error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: "Error fetching response",
+          sender: "bot",
+          timestamp: Date.now(),
+        },
+      ]);
+    } finally {
+      setIsFetchingResponse(false);
     }
   };
 
   const fetchBotSetTitle = async (userMessageText: string, convoId: string) => {
     try {
       const titlePrompt = `Generate a short, descriptive title/subject/topic (only the title, no extra words) for the following chat message: "${userMessageText}"`;
-      const titleResponse = await fetch("/api/gemini", {
+      const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: titlePrompt }),
       });
 
-      const titleData = await titleResponse.json();
-      const newTitle =
-        titleData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      const data = await res.json();
+      const newTitle = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
 
       if (newTitle) {
         await setDoc(
           doc(db, "conversations", convoId),
-          {
-            title: newTitle,
-          },
+          { title: newTitle },
           { merge: true }
         );
       }
     } catch (error) {
-      console.error("Error fetching and setting title:", error);
+      console.error("Error setting title:", error);
     }
   };
 
@@ -198,6 +177,7 @@ const Home: FC = () => {
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
+
     const userMessage: Message = {
       text: input,
       sender: "user",
@@ -230,6 +210,10 @@ const Home: FC = () => {
           });
 
           fetchBotSetTitle(userMessage.text, convoId);
+
+          window.history.pushState({}, "", `/chat/${convoId}`);
+
+          setGlobalMessages(convoId, [userMessage]);
         } else {
           await setDoc(
             doc(db, "conversations", convoId),
@@ -243,6 +227,8 @@ const Home: FC = () => {
             },
             { merge: true }
           );
+
+          addMessageToBottom(convoId, userMessage);
         }
 
         const messagesRef = collection(
@@ -251,6 +237,7 @@ const Home: FC = () => {
           convoId,
           "messages"
         );
+
         await addDoc(messagesRef, {
           ...userMessage,
           createdAt: now,
