@@ -39,16 +39,20 @@ const Conversation: FC = () => {
   const { user, loading } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  const { messagesByConversation, setMessages, addMessagesToTop } =
-    useMessagePersistent();
+  const {
+    messagesByConversation,
+    setMessages,
+    addMessagesToTop,
+    addMessageToBottom,
+  } = useMessagePersistent();
+
   const storedMessages = messagesByConversation[conversationId || ""] || [];
 
   const [loadingMessages, setLoadingMessages] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [input, setInput] = useState<string>("");
-  const [isFetchingResponse, setIsFetchingResponse] = useState<boolean>(false);
+  const [isFetchingResponse, setIsFetchingResponse] = useState(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
-
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
   const [isListening, setIsListening] = useState(false);
   const prevTranscriptRef = useRef("");
@@ -110,7 +114,6 @@ const Conversation: FC = () => {
         );
 
         setMessages(conversationId, messagesList);
-
         if (snapshot.docs.length > 0) {
           setOldestDoc(snapshot.docs[0]);
         }
@@ -202,10 +205,11 @@ const Conversation: FC = () => {
         createdAt: new Date().toISOString(),
       };
 
+      addMessageToBottom(convoId, botMessage);
+
       const messagesRef = collection(db, "conversations", convoId, "messages");
       await addDoc(messagesRef, {
         ...botMessage,
-        createdAt: new Date().toISOString(),
         isGenerated: true,
       });
 
@@ -214,7 +218,7 @@ const Conversation: FC = () => {
         lastMessage: {
           text: botMessage.text,
           sender: botMessage.sender,
-          createdAt: new Date().toISOString(),
+          createdAt: botMessage.createdAt,
         },
       });
     } catch (error) {
@@ -237,6 +241,8 @@ const Conversation: FC = () => {
 
     setInput("");
 
+    addMessageToBottom(conversationId, userMessage);
+
     try {
       const messagesRef = collection(
         db,
@@ -244,10 +250,7 @@ const Conversation: FC = () => {
         conversationId,
         "messages"
       );
-      await addDoc(messagesRef, {
-        ...userMessage,
-      });
-
+      await addDoc(messagesRef, userMessage);
       await updateDoc(doc(db, "conversations", conversationId), {
         updatedAt: serverTimestamp(),
         lastMessage: {

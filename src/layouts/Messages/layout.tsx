@@ -193,7 +193,6 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
                     <Flex
                       justify="center"
                       align="center"
-                      my={3}
                       mx={4}
                       mt={isFirst ? 3 : 0}
                       gap={2}

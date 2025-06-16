@@ -1,5 +1,3 @@
-"use client";
-
 import { create } from "zustand";
 
 export interface Message {
@@ -9,17 +7,16 @@ export interface Message {
   createdAt?: string;
 }
 
-interface MessageStore {
-  messagesByConversation: {
-    [conversationId: string]: Message[];
-  };
+interface MessageStoreState {
+  messagesByConversation: Record<string, Message[]>;
   setMessages: (conversationId: string, messages: Message[]) => void;
-  addMessagesToTop: (conversationId: string, messages: Message[]) => void;
-  clearMessages: (conversationId: string) => void;
+  addMessagesToTop: (conversationId: string, newMessages: Message[]) => void;
+  addMessageToBottom: (conversationId: string, message: Message) => void;
 }
 
-const useMessagePersistent = create<MessageStore>((set) => ({
+const useMessagePersistent = create<MessageStoreState>((set) => ({
   messagesByConversation: {},
+
   setMessages: (conversationId, messages) =>
     set((state) => ({
       messagesByConversation: {
@@ -27,27 +24,38 @@ const useMessagePersistent = create<MessageStore>((set) => ({
         [conversationId]: messages,
       },
     })),
+
   addMessagesToTop: (conversationId, newMessages) =>
     set((state) => {
       const existing = state.messagesByConversation[conversationId] || [];
-      const merged = [
-        ...newMessages.filter(
-          (m) => !existing.some((e) => e.timestamp === m.timestamp)
-        ),
-        ...existing,
-      ];
+      const updated = [...newMessages, ...existing];
       return {
         messagesByConversation: {
           ...state.messagesByConversation,
-          [conversationId]: merged,
+          [conversationId]: updated,
         },
       };
     }),
-  clearMessages: (conversationId) =>
+
+  addMessageToBottom: (conversationId, message) =>
     set((state) => {
-      const newState = { ...state.messagesByConversation };
-      delete newState[conversationId];
-      return { messagesByConversation: newState };
+      const existing = state.messagesByConversation[conversationId] || [];
+
+      const isDuplicate = existing.some(
+        (msg) =>
+          msg.timestamp === message.timestamp &&
+          msg.sender === message.sender &&
+          msg.text === message.text
+      );
+
+      if (isDuplicate) return state;
+
+      return {
+        messagesByConversation: {
+          ...state.messagesByConversation,
+          [conversationId]: [...existing, message],
+        },
+      };
     }),
 }));
 
