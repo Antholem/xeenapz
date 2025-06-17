@@ -7,6 +7,7 @@ import { speakText } from "@/lib/textToSpeech";
 import { MessageInput } from "@/components";
 import { ConversationLayout, MessagesLayout } from "@/layouts";
 import useAuth from "@/stores/useAuth";
+import useMessageInputPersistent from "@/stores/useMessageInputPersistent";
 
 interface Message {
   text: string;
@@ -17,7 +18,8 @@ interface Message {
 
 const TempChat: FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState<string>("");
+  const { getInput, setInput } = useMessageInputPersistent();
+  const input = getInput("home");
   const [isFetchingResponse, setIsFetchingResponse] = useState<boolean>(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -51,7 +53,9 @@ const TempChat: FC = () => {
   useEffect(() => {
     if (transcript && transcript !== prevTranscriptRef.current) {
       const newText = transcript.replace(prevTranscriptRef.current, "").trim();
-      setInput((prev) => (prev ? `${prev} ${newText}`.trim() : newText));
+      setInput("home", (prev) =>
+        prev ? `${prev} ${newText}`.trim() : newText
+      );
       prevTranscriptRef.current = transcript;
     }
   }, [transcript]);
@@ -118,7 +122,7 @@ const TempChat: FC = () => {
       createdAt: now,
     };
 
-    setInput("");
+    setInput("home", "");
     setMessages((prev) => [...prev, userMessage]);
     fetchBotResponse(userMessage);
   };
@@ -139,7 +143,7 @@ const TempChat: FC = () => {
       />
       <MessageInput
         input={isBlocked ? "" : input}
-        setInput={setInput}
+        setInput={(val) => setInput("home", val)}
         isListening={isBlocked ? false : isListening}
         resetTranscript={resetTranscript}
         isFetchingResponse={isFetchingResponse}
