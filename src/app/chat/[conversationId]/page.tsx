@@ -27,6 +27,7 @@ import { MessageInput } from "@/components";
 import { speakText } from "@/lib/textToSpeech";
 import useAuth from "@/stores/useAuth";
 import useMessagePersistent, { Message } from "@/stores/useMessagePersistent";
+import useMessageInputPersistent from "@/stores/useMessageInputPersistent";
 
 interface ConversationParams {
   [key: string]: string | undefined;
@@ -50,7 +51,8 @@ const Conversation: FC = () => {
 
   const [loadingMessages, setLoadingMessages] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [input, setInput] = useState<string>("");
+  const { getInput, setInput } = useMessageInputPersistent();
+  const input = getInput(conversationId || "home");
   const [isFetchingResponse, setIsFetchingResponse] = useState(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
@@ -133,10 +135,12 @@ const Conversation: FC = () => {
   useEffect(() => {
     if (transcript && transcript !== prevTranscriptRef.current) {
       const newText = transcript.replace(prevTranscriptRef.current, "").trim();
-      setInput((prev) => (prev ? `${prev} ${newText}`.trim() : newText));
+      setInput(conversationId || "home", (prev) =>
+        prev ? `${prev} ${newText}`.trim() : newText
+      );
       prevTranscriptRef.current = transcript;
     }
-  }, [transcript]);
+  }, [transcript, conversationId]);
 
   useEffect(() => {
     setIsListening(listening);
@@ -239,8 +243,7 @@ const Conversation: FC = () => {
       createdAt: new Date().toISOString(),
     };
 
-    setInput("");
-
+    setInput(conversationId, "");
     addMessageToBottom(conversationId, userMessage);
 
     try {
@@ -284,7 +287,7 @@ const Conversation: FC = () => {
       />
       <MessageInput
         input={user ? input : ""}
-        setInput={setInput}
+        setInput={(val) => setInput(conversationId || "home", val)}
         isListening={user ? isListening : false}
         resetTranscript={resetTranscript}
         isFetchingResponse={isFetchingResponse}
