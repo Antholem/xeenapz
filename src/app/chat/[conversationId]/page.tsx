@@ -130,7 +130,7 @@ const Conversation: FC = () => {
       unsubscribeConversation();
       unsubscribeMessages();
     };
-  }, [conversationId, user]);
+  }, [conversationId, user, storedMessages.length, setMessages]);
 
   useEffect(() => {
     if (transcript && transcript !== prevTranscriptRef.current) {
@@ -140,7 +140,7 @@ const Conversation: FC = () => {
       );
       prevTranscriptRef.current = transcript;
     }
-  }, [transcript, conversationId]);
+  }, [transcript, conversationId, setInput]);
 
   useEffect(() => {
     setIsListening(listening);

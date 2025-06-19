@@ -15,7 +15,6 @@ import {
   IconButton,
   useColorModeValue,
   BoxProps,
-  useColorMode,
 } from "@chakra-ui/react";
 import { User } from "@/lib/firebase";
 import useTheme from "@/stores/useTheme";

@@ -309,7 +309,7 @@ const ConversationList: FC<ConversationListProps> = ({
     }
 
     return { titleResults: titles, messageResults: messages };
-  }, [searchTerm, loadedConvos]);
+  }, [searchTerm, loadedConvos, colorScheme]);
 
   const hasResults = titleResults.length > 0 || messageResults.length > 0;
 

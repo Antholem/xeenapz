@@ -58,7 +58,7 @@ const TempChat: FC = () => {
       );
       prevTranscriptRef.current = transcript;
     }
-  }, [transcript]);
+  }, [transcript, setInput]);
 
   useEffect(() => {
     setIsListening(listening);
