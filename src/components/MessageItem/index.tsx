@@ -54,9 +54,6 @@ const MessageItem: FC<MessageItemProps> = ({
     });
 
   const { colorScheme } = useTheme();
-  const { colorMode } = useColorMode();
-
-  const userBg = useColorModeValue("blue.400", "blue.500");
   const botBg = useColorModeValue("gray.200", "gray.800");
 
   return (
