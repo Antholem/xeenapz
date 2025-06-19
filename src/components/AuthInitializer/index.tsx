@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { Progress } from "@chakra-ui/react";
+import { Progress } from "@themed-components";
 import useAuth from "@/stores/useAuth";
 
 const AuthInitializer = ({ children }: { children: React.ReactNode }) => {

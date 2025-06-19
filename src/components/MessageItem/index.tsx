@@ -15,8 +15,10 @@ import {
   IconButton,
   useColorModeValue,
   BoxProps,
+  useColorMode,
 } from "@chakra-ui/react";
 import { User } from "@/lib/firebase";
+import useTheme from "@/stores/useTheme";
 
 interface Message {
   text: string;
@@ -51,8 +53,11 @@ const MessageItem: FC<MessageItemProps> = ({
       locale: enUS,
     });
 
+  const { colorScheme } = useTheme();
+  const { colorMode } = useColorMode();
+
   const userBg = useColorModeValue("blue.400", "blue.500");
-  const botBg = useColorModeValue("gray.200", "gray.700");
+  const botBg = useColorModeValue("gray.200", "gray.800");
 
   return (
     <Flex
@@ -74,7 +79,7 @@ const MessageItem: FC<MessageItemProps> = ({
             p={3}
             borderRadius="lg"
             color={isUser ? "white" : ""}
-            bg={isUser ? userBg : botBg}
+            bg={isUser ? `${colorScheme}.400` : botBg}
             maxW="max-content"
             whiteSpace="pre-wrap"
             wordBreak="break-word"

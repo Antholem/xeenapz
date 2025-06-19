@@ -1,30 +1,92 @@
-import { extendTheme, type ThemeConfig } from "@chakra-ui/react";
+import { cardAnatomy } from "@chakra-ui/anatomy";
+import {
+  extendTheme,
+  type ThemeConfig,
+  type ComponentStyleConfig,
+} from "@chakra-ui/react";
 import { COLOR_PALETTES } from "@/theme/color-tokens";
 
 const config: ThemeConfig = {
-    initialColorMode: "system",
-    useSystemColorMode: true,
-    cssVarPrefix: "ck",
+  initialColorMode: "system",
+  useSystemColorMode: true,
+  cssVarPrefix: "ck",
+};
+
+const Card: ComponentStyleConfig = {
+  parts: cardAnatomy.keys,
+  baseStyle: {
+    container: {
+      bg: "surface",
+      borderColor: "border",
+      borderRadius: "md",
+      boxShadow: "none",
+    },
+  },
+};
+
+const Divider = {
+  baseStyle: {
+    borderColor: "border",
+  },
 };
 
 const theme = extendTheme({
-    config,
-    colors: COLOR_PALETTES,
-    semanticTokens: {
-        colors: {
-            background: { default: "gray.50", _dark: "gray.900" },
-            text: { default: "black", _dark: "whiteAlpha.900" },
-            cardBg: { default: "white", _dark: "gray.800" },
-        },
+  config,
+  colors: COLOR_PALETTES,
+  semanticTokens: {
+    colors: {
+      background: {
+        default: "#F9FAFB",
+        _dark: "#0A0A0A",
+      },
+      surface: {
+        default: "#FFFFFF",
+        _dark: "#121212",
+      },
+      primaryText: {
+        default: "#1F2937",
+        _dark: "#E5E5E5",
+      },
+      secondaryText: {
+        default: "#6B7280",
+        _dark: "#A3A3A3",
+      },
+      border: {
+        default: "#cacaca",
+        _dark: "#565656",
+      },
+      scrollbarThumb: {
+        default: "#A0A0A0",
+        _dark: "#4C4C4C",
+      },
+      scrollbarThumbHover: {
+        default: "#888888",
+        _dark: "#666666",
+      },
     },
-    styles: {
-        global: () => ({
-            body: {
-                bg: "background",
-                color: "text",
-            },
-        }),
-    },
+  },
+  styles: {
+    global: () => ({
+      body: {
+        bg: "background",
+        color: "primaryText",
+      },
+      "::-webkit-scrollbar": {
+        width: "10px",
+      },
+      "::-webkit-scrollbar-thumb": {
+        backgroundColor: "scrollbarThumb",
+        borderRadius: "6px",
+      },
+      "::-webkit-scrollbar-thumb:hover": {
+        backgroundColor: "scrollbarThumbHover",
+      },
+    }),
+  },
+  components: {
+    Card,
+    Divider,
+  },
 });
 
 export default theme;

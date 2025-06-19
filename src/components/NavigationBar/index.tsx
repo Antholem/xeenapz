@@ -4,7 +4,7 @@ import { FC, Fragment, memo, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { HiPencilAlt } from "react-icons/hi";
 import { IoMdMenu } from "react-icons/io";
-import { RiChat3Line, RiChatHistoryLine } from "react-icons/ri";
+import { RiChat3Line, RiChatHistoryFill } from "react-icons/ri";
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
 import {
   Flex,
@@ -108,13 +108,7 @@ const NavigationBar: FC = () => {
 
   return (
     <Fragment>
-      <Card
-        as="nav"
-        width="100%"
-        zIndex="50"
-        borderRadius={0}
-        variant="unstyled"
-      >
+      <Card as="nav" width="100%" zIndex="50" borderRadius={0}>
         <Flex py="3" px="6" align="center" justify="space-between" gap={2}>
           <Flex align="center" gap={3} display={{ base: "block", lg: "none" }}>
             {user ? (
@@ -147,7 +141,7 @@ const NavigationBar: FC = () => {
               <IconButton
                 aria-label="Temporary Chat"
                 icon={
-                  pathname === "/" ? <RiChat3Line /> : <RiChatHistoryLine />
+                  pathname === "/" ? <RiChat3Line /> : <RiChatHistoryFill />
                 }
                 variant="ghost"
                 onClick={toggleTemporaryChat}

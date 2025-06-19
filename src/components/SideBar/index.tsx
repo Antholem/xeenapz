@@ -17,7 +17,6 @@ import {
   Flex,
   IconButton,
   Divider,
-  Input,
   InputGroup,
   InputLeftElement,
   Card,
@@ -35,7 +34,7 @@ import {
   MenuList,
   MenuItem,
   Icon,
-  Spinner,
+  useColorMode,
 } from "@chakra-ui/react";
 import {
   auth,
@@ -53,6 +52,7 @@ import {
 } from "@/lib/firebase";
 import { ConversationList } from "@/components";
 import useAuth from "@/stores/useAuth";
+import { Input, Spinner } from "@themed-components";
 
 interface SideBarProps {
   type: "temporary" | "persistent";
@@ -116,6 +116,7 @@ const SearchBar = ({ onSearch }: { onSearch: (term: string) => void }) => {
         <IoSearch />
       </InputLeftElement>
       <Input
+        leftElement
         type="search"
         placeholder="Search titles, messages..."
         variant="filled"
@@ -156,6 +157,7 @@ const MenuItems: FC<MenuItemsProps> = ({ user, switchAccount, signOut }) => (
 );
 
 const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
+  const { colorMode } = useColorMode();
   const { user, setLoading: setAuthLoading, loading: authLoading } = useAuth();
   const router = useRouter();
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
@@ -262,12 +264,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
 
   const content = (
     <Box display={!isLargeScreen ? "none" : "flex"} height="100vh">
-      <Card
-        borderRadius={0}
-        variant="unstyled"
-        h="100vh"
-        w={`${sidebarWidth}px`}
-      >
+      <Card borderRadius={0} h="100vh" w={`${sidebarWidth}px`}>
         <Flex direction="column" h="100%">
           <Flex
             px={3}
@@ -295,7 +292,12 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
                 <Text fontWeight="bold" fontSize="sm" isTruncated maxW="100%">
                   {user?.displayName}
                 </Text>
-                <Text fontSize="xs" color="gray.400" isTruncated maxW="100%">
+                <Text
+                  fontSize="xs"
+                  color="secondaryText"
+                  isTruncated
+                  maxW="100%"
+                >
                   {user?.email}
                 </Text>
               </Box>
@@ -330,8 +332,9 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
         w="3px"
         cursor="col-resize"
         onMouseDown={startResizing}
-        _hover={{ bg: "#ababab" }}
-        variant="unstyled"
+        _hover={{
+          bg: colorMode === "dark" ? `gray.300` : `gray.400`,
+        }}
       />
     </Box>
   );
@@ -352,7 +355,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
     >
       <DrawerOverlay />
       <DrawerContent>
-        <Card borderRadius={0} variant="unstyled" h="100vh">
+        <Card borderRadius={0} h="100vh">
           <DrawerHeader
             px={3}
             py={2}

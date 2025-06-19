@@ -1,15 +1,9 @@
 import { FC, Fragment } from "react";
-import {
-  Flex,
-  Input,
-  IconButton,
-  Card,
-  Tooltip,
-  Divider,
-} from "@chakra-ui/react";
+import { Flex, IconButton, Card, Tooltip, Divider } from "@chakra-ui/react";
 import { IoStop } from "react-icons/io5";
 import { IoIosMic, IoMdSend } from "react-icons/io";
 import { SpeechRecognize } from "@/lib/speechRecognition";
+import { Input } from "@themed-components";
 
 interface MessageInputProps {
   input: string;
@@ -37,7 +31,7 @@ const MessageInput: FC<MessageInputProps> = ({
   return (
     <Fragment>
       <Divider orientation="horizontal" />
-      <Card p={3} borderRadius={0} variant="unstyled">
+      <Card p={3} borderRadius={0} variant="surface">
         <Flex gap={2} justify="center" align="center">
           <Input
             value={input}
