@@ -20,15 +20,13 @@ import {
   Flex,
   Image,
   SkeletonCircle,
-  Spinner,
   Divider,
-  useColorModeValue,
-  Progress,
 } from "@chakra-ui/react";
 import { User } from "@/lib/firebase";
 import { MessageItem } from "@/components";
 import { formatDateGrouping } from "@/utils/dateFormatter";
 import useAuth from "@/stores/useAuth";
+import { Progress, Spinner } from "@themed-components";
 
 interface Message {
   id?: string;
@@ -69,7 +67,6 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
 }) => {
   const { user: authUser } = useAuth();
   const pathname = usePathname();
-  const bgColor = useColorModeValue("gray.200", "gray.700");
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [readyToRender, setReadyToRender] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -194,11 +191,17 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
                       justify="center"
                       align="center"
                       mx={4}
-                      mt={isFirst ? 3 : 0}
+                      mt={isFirst ? 3 : 2}
+                      mb={2}
                       gap={2}
                     >
                       <Divider />
-                      <Box bg={bgColor} px={2} py={1} borderRadius="full">
+                      <Box
+                        bgColor="mutedSurface"
+                        px={2}
+                        py={1}
+                        borderRadius="full"
+                      >
                         <Text fontSize="xs" whiteSpace="nowrap">
                           {item.value}
                         </Text>

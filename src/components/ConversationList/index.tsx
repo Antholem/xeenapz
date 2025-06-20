@@ -13,14 +13,7 @@ import {
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
-import {
-  Box,
-  Text,
-  Flex,
-  Button,
-  Progress,
-  ButtonProps,
-} from "@chakra-ui/react";
+import { Box, Text, Flex, ButtonProps, useColorMode } from "@chakra-ui/react";
 import { formatNormalTime } from "@/utils/dateFormatter";
 import useAuth from "@/stores/useAuth";
 import { db, collection, query, orderBy, getDocs, where } from "@/lib/firebase";
@@ -30,6 +23,9 @@ import {
   QueryDocumentSnapshot,
   startAfter,
 } from "firebase/firestore";
+import useTheme from "@/stores/useTheme";
+import { Progress } from "@themed-components";
+import { Button } from "@themed-components";
 
 interface Conversation {
   id: string;
@@ -63,6 +59,9 @@ const ConversationItem: FC<ConversationItemProps> = ({
   isSearchActive,
   ...props
 }) => {
+  const { colorScheme } = useTheme();
+  const { colorMode } = useColorMode();
+
   return (
     <Button
       variant={isSearchActive ? "ghost" : isActive ? "solid" : "ghost"}
@@ -72,6 +71,14 @@ const ConversationItem: FC<ConversationItemProps> = ({
       cursor="pointer"
       textAlign="left"
       py={isMessageMatch ? 6 : 0}
+      color={
+        !isSearchActive && isActive
+          ? colorMode === "dark"
+            ? `${colorScheme}.300`
+            : `${colorScheme}.500`
+          : "inherit"
+      }
+      colorScheme="gray"
       {...props}
     >
       <Box
@@ -135,6 +142,7 @@ const ConversationList: FC<ConversationListProps> = ({
   const [hasMoreConvos, setHasMoreConvos] = useState(true);
   const [readyToRender, setReadyToRender] = useState(false);
   const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
+  const { colorScheme } = useTheme();
 
   useEffect(() => {
     if (!isSearchActive && conversations.length > 0) {
@@ -260,7 +268,7 @@ const ConversationList: FC<ConversationListProps> = ({
                 <Box
                   as="span"
                   fontSize="xs"
-                  color="gray.500"
+                  color="secondaryText"
                   w="100%"
                   overflow="hidden"
                   textOverflow="ellipsis"
@@ -269,13 +277,13 @@ const ConversationList: FC<ConversationListProps> = ({
                   textAlign="left"
                 >
                   {msg.text.substring(0, start)}
-                  <Box as="span" bgColor="blue.400" color="white">
+                  <Box as="span" bgColor={`${colorScheme}.400`} color="gray.50">
                     {msg.text.substring(start, end)}
                   </Box>
                   {msg.text.substring(end)}
                 </Box>
                 {formatted && (
-                  <Box as="span" fontSize="xs" color="gray.500">
+                  <Box as="span" fontSize="xs" color="secondaryText">
                     {formatted}
                   </Box>
                 )}
@@ -296,7 +304,7 @@ const ConversationList: FC<ConversationListProps> = ({
     }
 
     return { titleResults: titles, messageResults: messages };
-  }, [searchTerm, loadedConvos]);
+  }, [searchTerm, loadedConvos, colorScheme]);
 
   const hasResults = titleResults.length > 0 || messageResults.length > 0;
 
@@ -347,7 +355,7 @@ const ConversationList: FC<ConversationListProps> = ({
     <Box as="span" w="100%" h="100%" position="relative">
       {isSearchActive && !hasResults ? (
         <Flex justify="center" align="center" h="100%" px={4}>
-          <Text fontSize="sm" textAlign="center" color="gray.500">
+          <Text fontSize="sm" textAlign="center" color="secondaryText">
             No results found.
           </Text>
         </Flex>
@@ -383,7 +391,7 @@ const ConversationList: FC<ConversationListProps> = ({
                       <Text
                         fontSize="sm"
                         textAlign="left"
-                        color="gray.500"
+                        color="secondaryText"
                         fontWeight="bold"
                       >
                         {item.data}

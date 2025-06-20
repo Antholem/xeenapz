@@ -12,12 +12,12 @@ interface ThemeColorState {
 const useTheme = create<ThemeColorState>()(
   persist(
     (set) => ({
-      colorScheme: "default",
+      colorScheme: "blue",
       setColorScheme: (scheme) => set({ colorScheme: scheme }),
     }),
     {
-      name: "theme", 
-      storage: createJSONStorage(() => localStorage), 
+      name: "theme",
+      storage: createJSONStorage(() => localStorage),
     }
   )
 );
