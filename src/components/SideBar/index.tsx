@@ -34,7 +34,6 @@ import {
   MenuList,
   MenuItem,
   Icon,
-  useColorMode,
 } from "@chakra-ui/react";
 import {
   auth,
@@ -157,7 +156,6 @@ const MenuItems: FC<MenuItemsProps> = ({ user, switchAccount, signOut }) => (
 );
 
 const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
-  const { colorMode } = useColorMode();
   const { user, setLoading: setAuthLoading, loading: authLoading } = useAuth();
   const router = useRouter();
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
@@ -332,9 +330,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
         w="3px"
         cursor="col-resize"
         onMouseDown={startResizing}
-        _hover={{
-          bg: colorMode === "dark" ? `gray.300` : `gray.400`,
-        }}
+        _hover={{ bg: "tertiaryText" }}
       />
     </Box>
   );

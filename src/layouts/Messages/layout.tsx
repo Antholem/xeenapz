@@ -21,7 +21,6 @@ import {
   Image,
   SkeletonCircle,
   Divider,
-  useColorModeValue,
 } from "@chakra-ui/react";
 import { User } from "@/lib/firebase";
 import { MessageItem } from "@/components";
@@ -68,7 +67,6 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
 }) => {
   const { user: authUser } = useAuth();
   const pathname = usePathname();
-  const bgColor = useColorModeValue("gray.200", "gray.800");
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [readyToRender, setReadyToRender] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -198,7 +196,12 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
                       gap={2}
                     >
                       <Divider />
-                      <Box bgColor={bgColor} px={2} py={1} borderRadius="full">
+                      <Box
+                        bgColor="mutedSurface"
+                        px={2}
+                        py={1}
+                        borderRadius="full"
+                      >
                         <Text fontSize="xs" whiteSpace="nowrap">
                           {item.value}
                         </Text>

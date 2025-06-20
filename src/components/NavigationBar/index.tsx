@@ -9,7 +9,6 @@ import { MoonIcon, SunIcon } from "@chakra-ui/icons";
 import {
   Flex,
   Text,
-  Button,
   useColorMode,
   IconButton,
   Divider,
@@ -27,6 +26,7 @@ import {
 } from "@/lib/firebase";
 import useAuth from "@/stores/useAuth";
 import { SideBar } from "@/components";
+import { Button } from "@themed-components";
 
 interface Conversation {
   title?: string;

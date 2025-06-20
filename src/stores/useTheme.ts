@@ -12,7 +12,7 @@ interface ThemeColorState {
 const useTheme = create<ThemeColorState>()(
   persist(
     (set) => ({
-      colorScheme: "telegram",
+      colorScheme: "blue",
       setColorScheme: (scheme) => set({ colorScheme: scheme }),
     }),
     {

@@ -1,15 +1,18 @@
 "use client";
 
 import React from "react";
-import { Button, Flex, Text } from "@chakra-ui/react";
+import { Flex, Text } from "@chakra-ui/react";
 import { IoAdd } from "react-icons/io5";
 import { useRouter } from "next/navigation";
 import { MessageInput } from "@/components";
 import { ConversationLayout } from "@/layouts";
+import useTheme from "@/stores/useTheme";
+import { Button } from "@themed-components";
 
 const NotFound = () => {
   const router = useRouter();
   const noop = () => {};
+  const { colorScheme } = useTheme();
 
   return (
     <ConversationLayout>

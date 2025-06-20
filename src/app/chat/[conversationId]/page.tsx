@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { notFound, useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, FC } from "react";
 import { useSpeechRecognition } from "react-speech-recognition";
 import {
@@ -50,7 +50,6 @@ const Conversation: FC = () => {
   const storedMessages = messagesByConversation[conversationId || ""] || [];
 
   const [loadingMessages, setLoadingMessages] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { getInput, setInput } = useMessageInputPersistent();
   const input = getInput(conversationId || "home");
   const [isFetchingResponse, setIsFetchingResponse] = useState(false);
@@ -74,7 +73,6 @@ const Conversation: FC = () => {
     }
 
     setLoadingMessages(true);
-    setErrorMessage(null);
     setOldestDoc(null);
     setHasMore(true);
 
@@ -88,13 +86,12 @@ const Conversation: FC = () => {
       conversationDocRef,
       (docSnap) => {
         if (!docSnap.exists()) {
-          setErrorMessage("Conversation not found!");
+          notFound();
         }
         setLoadingMessages(false);
       },
       (error) => {
         console.error("Error fetching conversation:", error);
-        setErrorMessage("Failed to fetch conversation.");
         setLoadingMessages(false);
       }
     );
@@ -122,7 +119,6 @@ const Conversation: FC = () => {
       },
       (error) => {
         console.error("Error listening for messages:", error);
-        setErrorMessage("Failed to fetch messages.");
       }
     );
 
@@ -266,7 +262,6 @@ const Conversation: FC = () => {
       fetchBotResponse(userMessage, conversationId);
     } catch (error) {
       console.error("Error sending message:", error);
-      console.log(errorMessage);
     }
   };
 

@@ -13,14 +13,7 @@ import {
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
-import {
-  Box,
-  Text,
-  Flex,
-  Button,
-  ButtonProps,
-  useColorMode,
-} from "@chakra-ui/react";
+import { Box, Text, Flex, ButtonProps, useColorMode } from "@chakra-ui/react";
 import { formatNormalTime } from "@/utils/dateFormatter";
 import useAuth from "@/stores/useAuth";
 import { db, collection, query, orderBy, getDocs, where } from "@/lib/firebase";
@@ -32,6 +25,7 @@ import {
 } from "firebase/firestore";
 import useTheme from "@/stores/useTheme";
 import { Progress } from "@themed-components";
+import { Button } from "@themed-components";
 
 interface Conversation {
   id: string;
@@ -84,6 +78,7 @@ const ConversationItem: FC<ConversationItemProps> = ({
             : `${colorScheme}.500`
           : "inherit"
       }
+      colorScheme="gray"
       {...props}
     >
       <Box

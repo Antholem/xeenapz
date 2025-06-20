@@ -43,6 +43,10 @@ const theme = extendTheme({
         default: "#FFFFFF",
         _dark: "#121212",
       },
+      mutedSurface: {
+        default: "#E5E5E5",
+        _dark: "#262626",
+      },
       primaryText: {
         default: "#1F2937",
         _dark: "#E5E5E5",
@@ -50,6 +54,10 @@ const theme = extendTheme({
       secondaryText: {
         default: "#6B7280",
         _dark: "#A3A3A3",
+      },
+      tertiaryText: {
+        default: "#A3A3A3",
+        _dark: "#D4D4D4",
       },
       border: {
         default: "#cacaca",
@@ -76,7 +84,7 @@ const theme = extendTheme({
       },
       "::-webkit-scrollbar-thumb": {
         backgroundColor: "scrollbarThumb",
-        borderRadius: "6px",
+        borderRadius: "5px",
       },
       "::-webkit-scrollbar-thumb:hover": {
         backgroundColor: "scrollbarThumbHover",

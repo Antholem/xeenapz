@@ -53,7 +53,6 @@ const MessageItem: FC<MessageItemProps> = ({
     });
 
   const { colorScheme } = useTheme();
-  const botBg = useColorModeValue("gray.200", "gray.800");
 
   return (
     <Flex
@@ -75,7 +74,7 @@ const MessageItem: FC<MessageItemProps> = ({
             p={3}
             borderRadius="lg"
             color={isUser ? "white" : ""}
-            bg={isUser ? `${colorScheme}.400` : botBg}
+            bg={isUser ? `${colorScheme}.400` : "mutedSurface"}
             maxW="max-content"
             whiteSpace="pre-wrap"
             wordBreak="break-word"
