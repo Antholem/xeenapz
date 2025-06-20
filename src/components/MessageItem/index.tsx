@@ -13,7 +13,6 @@ import {
   Image,
   Tooltip,
   IconButton,
-  useColorModeValue,
   BoxProps,
 } from "@chakra-ui/react";
 import { User } from "@/lib/firebase";
