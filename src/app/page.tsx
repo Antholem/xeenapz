@@ -12,12 +12,7 @@ import {
   addDoc,
   serverTimestamp,
 } from "@/lib/firebase";
-import {
-  useAuth,
-  useMessageInputPersistent,
-  useMessagePersistent,
-  useTempChat,
-} from "@/stores";
+import { useAuth, useChatInput, useChatMessages, useTempChat } from "@/stores";
 import { MessageInput } from "@/components";
 import { ConversationLayout, MessagesLayout } from "@/layouts";
 import { usePathname } from "next/navigation";
@@ -32,7 +27,7 @@ interface Message {
 const Home: FC = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const { getInput, setInput } = useMessageInputPersistent();
+  const { getInput, setInput } = useChatInput();
   const input = getInput("home");
   const [isFetchingResponse, setIsFetchingResponse] = useState<boolean>(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
@@ -46,7 +41,7 @@ const Home: FC = () => {
   const hasMounted = useRef(false);
 
   const { setMessages: setGlobalMessages, addMessageToBottom } =
-    useMessagePersistent();
+    useChatMessages();
 
   useEffect(() => {
     if (!user || isMessageTemporary) return;

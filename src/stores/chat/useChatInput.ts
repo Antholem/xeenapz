@@ -10,7 +10,7 @@ interface InputStore {
   clearInputs: () => void;
 }
 
-const useMessageInputPersistent = create<InputStore>((set, get) => ({
+const useChatInput = create<InputStore>((set, get) => ({
   inputsByConversation: {},
   setInput: (conversationId, input) => {
     set((state) => ({
@@ -28,4 +28,4 @@ const useMessageInputPersistent = create<InputStore>((set, get) => ({
   clearInputs: () => set({ inputsByConversation: {} }),
 }));
 
-export default useMessageInputPersistent;
+export default useChatInput;

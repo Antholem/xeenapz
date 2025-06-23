@@ -14,7 +14,7 @@ interface MessageStoreState {
   addMessageToBottom: (conversationId: string, message: Message) => void;
 }
 
-const useMessagePersistent = create<MessageStoreState>((set) => ({
+const useChatMessages = create<MessageStoreState>((set) => ({
   messagesByConversation: {},
 
   setMessages: (conversationId, messages) =>
@@ -59,4 +59,4 @@ const useMessagePersistent = create<MessageStoreState>((set) => ({
     }),
 }));
 
-export default useMessagePersistent;
+export default useChatMessages;

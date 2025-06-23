@@ -3,12 +3,7 @@
 import { notFound, useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, FC } from "react";
 import { useSpeechRecognition } from "react-speech-recognition";
-import {
-  useAuth,
-  useMessageInputPersistent,
-  useMessagePersistent,
-  Message,
-} from "@/stores";
+import { useAuth, useChatInput, useChatMessages, Message } from "@/stores";
 import {
   db,
   doc,
@@ -48,12 +43,12 @@ const Conversation: FC = () => {
     setMessages,
     addMessagesToTop,
     addMessageToBottom,
-  } = useMessagePersistent();
+  } = useChatMessages();
 
   const storedMessages = messagesByConversation[conversationId || ""] || [];
 
   const [loadingMessages, setLoadingMessages] = useState(true);
-  const { getInput, setInput } = useMessageInputPersistent();
+  const { getInput, setInput } = useChatInput();
   const input = getInput(conversationId || "home");
   const [isFetchingResponse, setIsFetchingResponse] = useState(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);

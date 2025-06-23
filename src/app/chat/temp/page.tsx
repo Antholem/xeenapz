@@ -6,7 +6,7 @@ import { useSpeechRecognition } from "react-speech-recognition";
 import { speakText } from "@/lib/textToSpeech";
 import { MessageInput } from "@/components";
 import { ConversationLayout, MessagesLayout } from "@/layouts";
-import { useAuth, useMessageInputPersistent } from "@/stores";
+import { useAuth, useChatInput } from "@/stores";
 
 interface Message {
   text: string;
@@ -17,7 +17,7 @@ interface Message {
 
 const TempChat: FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const { getInput, setInput } = useMessageInputPersistent();
+  const { getInput, setInput } = useChatInput();
   const input = getInput("home");
   const [isFetchingResponse, setIsFetchingResponse] = useState<boolean>(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
