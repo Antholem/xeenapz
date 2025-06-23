@@ -15,7 +15,6 @@ import { useRouter, usePathname } from "next/navigation";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import { Box, Text, Flex, ButtonProps, useColorMode } from "@chakra-ui/react";
 import { formatNormalTime } from "@/utils/dateFormatter";
-import useAuth from "@/stores/useAuth";
 import { db, collection, query, orderBy, getDocs, where } from "@/lib/firebase";
 import {
   DocumentData,
@@ -23,9 +22,9 @@ import {
   QueryDocumentSnapshot,
   startAfter,
 } from "firebase/firestore";
-import useTheme from "@/stores/useTheme";
 import { Progress } from "@themed-components";
 import { Button } from "@themed-components";
+import { useAuth, useTheme } from "@/stores";
 
 interface Conversation {
   id: string;
