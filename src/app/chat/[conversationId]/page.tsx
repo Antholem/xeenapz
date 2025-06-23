@@ -26,8 +26,11 @@ import { MessagesLayout, ConversationLayout } from "@/layouts";
 import { MessageInput } from "@/components";
 import { speakText } from "@/lib/textToSpeech";
 import useAuth from "@/stores/useAuth";
-import useMessagePersistent, { Message } from "@/stores/useMessagePersistent";
-import useMessageInputPersistent from "@/stores/useMessageInputPersistent";
+import {
+  useMessageInputPersistent,
+  useMessagePersistent,
+  Message,
+} from "@/stores";
 
 interface ConversationParams {
   [key: string]: string | undefined;
