@@ -6,7 +6,7 @@ import {
   useColorMode,
 } from "@chakra-ui/react";
 import { ReactNode } from "react";
-import useTheme from "@/stores/useTheme";
+import { useTheme } from "@/stores";
 
 interface CustomInputProps extends InputProps {
   leftElement?: ReactNode;

@@ -4,6 +4,12 @@ import { notFound, useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, FC } from "react";
 import { useSpeechRecognition } from "react-speech-recognition";
 import {
+  useAuth,
+  useMessageInputPersistent,
+  useMessagePersistent,
+  Message,
+} from "@/stores";
+import {
   db,
   doc,
   collection,
@@ -25,9 +31,6 @@ import {
 import { MessagesLayout, ConversationLayout } from "@/layouts";
 import { MessageInput } from "@/components";
 import { speakText } from "@/lib/textToSpeech";
-import useAuth from "@/stores/useAuth";
-import useMessagePersistent, { Message } from "@/stores/useMessagePersistent";
-import useMessageInputPersistent from "@/stores/useMessageInputPersistent";
 
 interface ConversationParams {
   [key: string]: string | undefined;

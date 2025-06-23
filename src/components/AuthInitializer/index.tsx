@@ -2,7 +2,7 @@
 
 import { ReactNode, useEffect } from "react";
 import { Progress } from "@themed-components";
-import useAuth from "@/stores/useAuth";
+import { useAuth } from "@/stores";
 
 const AuthInitializer = ({ children }: { children: ReactNode }) => {
   const { loading, initializeAuth } = useAuth();

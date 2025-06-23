@@ -50,7 +50,7 @@ import {
   getDocs,
 } from "@/lib/firebase";
 import { ConversationList } from "@/components";
-import useAuth from "@/stores/useAuth";
+import { useAuth } from "@/stores";
 import { Input, Spinner } from "@themed-components";
 
 interface SideBarProps {

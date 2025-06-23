@@ -24,7 +24,7 @@ import {
   Unsubscribe,
   signInWithPopup,
 } from "@/lib/firebase";
-import useAuth from "@/stores/useAuth";
+import { useAuth } from "@/stores";
 import { SideBar } from "@/components";
 import { Button } from "@themed-components";
 

@@ -16,7 +16,7 @@ import {
   BoxProps,
 } from "@chakra-ui/react";
 import { User } from "@/lib/firebase";
-import useTheme from "@/stores/useTheme";
+import { useTheme } from "@/stores";
 
 interface Message {
   text: string;

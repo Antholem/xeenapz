@@ -6,8 +6,7 @@ import { useSpeechRecognition } from "react-speech-recognition";
 import { speakText } from "@/lib/textToSpeech";
 import { MessageInput } from "@/components";
 import { ConversationLayout, MessagesLayout } from "@/layouts";
-import useAuth from "@/stores/useAuth";
-import useMessageInputPersistent from "@/stores/useMessageInputPersistent";
+import { useAuth, useMessageInputPersistent } from "@/stores";
 
 interface Message {
   text: string;
