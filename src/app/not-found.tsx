@@ -6,7 +6,7 @@ import { IoAdd } from "react-icons/io5";
 import { useRouter } from "next/navigation";
 import { MessageInput } from "@/components";
 import { ConversationLayout } from "@/layouts";
-import { Button } from "@/components/UI";
+import { Button } from "@themed-components";
 
 const NotFound = () => {
   const router = useRouter();

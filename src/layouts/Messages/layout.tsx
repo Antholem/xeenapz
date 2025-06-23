@@ -26,7 +26,7 @@ import { User } from "@/lib/firebase";
 import { MessageItem } from "@/components";
 import { formatDateGrouping } from "@/utils/dateFormatter";
 import useAuth from "@/stores/useAuth";
-import { Progress, Spinner } from "@/components/UI";
+import { Progress, Spinner } from "@themed-components";
 
 interface Message {
   id?: string;
