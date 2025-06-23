@@ -26,7 +26,7 @@ import {
 } from "@/lib/firebase";
 import useAuth from "@/stores/useAuth";
 import { SideBar } from "@/components";
-import { Button } from "@themed-components";
+import { Button } from "@/components/UI";
 
 interface Conversation {
   title?: string;

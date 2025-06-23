@@ -51,7 +51,7 @@ import {
 } from "@/lib/firebase";
 import { ConversationList } from "@/components";
 import useAuth from "@/stores/useAuth";
-import { Input, Spinner } from "@themed-components";
+import { Input, Spinner } from "@/components/UI";
 
 interface SideBarProps {
   type: "temporary" | "persistent";

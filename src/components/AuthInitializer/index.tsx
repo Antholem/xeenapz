@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode, useEffect } from "react";
-import { Progress } from "@themed-components";
+import { Progress } from "@/components/UI";
 import useAuth from "@/stores/useAuth";
 
 const AuthInitializer = ({ children }: { children: ReactNode }) => {

@@ -24,8 +24,8 @@ import {
   startAfter,
 } from "firebase/firestore";
 import useTheme from "@/stores/useTheme";
-import { Progress } from "@themed-components";
-import { Button } from "@themed-components";
+import { Progress } from "@/components/UI";
+import { Button } from "@/components/UI";
 
 interface Conversation {
   id: string;
