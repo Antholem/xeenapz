@@ -1,14 +1,14 @@
 import { create } from "zustand";
 
-interface TemporaryChatState {
+interface TemporaryThreadState {
   isMessageTemporary: boolean;
   setIsMessageTemporary: (isTemporary: boolean) => void;
 }
 
-const useTempChat = create<TemporaryChatState>((set) => ({
+const useTempThread = create<TemporaryThreadState>((set) => ({
   isMessageTemporary: false,
   setIsMessageTemporary: (isTemporary) =>
     set({ isMessageTemporary: isTemporary }),
 }));
 
-export default useTempChat;
+export default useTempThread;

@@ -12,9 +12,14 @@ import {
   addDoc,
   serverTimestamp,
 } from "@/lib/firebase";
-import { useAuth, useChatInput, useChatMessages, useTempChat } from "@/stores";
+import {
+  useAuth,
+  useThreadInput,
+  useThreadMessages,
+  useTempThread,
+} from "@/stores";
 import { MessageInput } from "@/components";
-import { ConversationLayout, MessagesLayout } from "@/layouts";
+import { ThreadLayout, MessagesLayout } from "@/layouts";
 import { usePathname } from "next/navigation";
 
 interface Message {
@@ -25,9 +30,9 @@ interface Message {
 }
 
 const Home: FC = () => {
-  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [threadId, setThreadId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const { getInput, setInput } = useChatInput();
+  const { getInput, setInput } = useThreadInput();
   const input = getInput("home");
   const [isFetchingResponse, setIsFetchingResponse] = useState<boolean>(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
@@ -36,12 +41,12 @@ const Home: FC = () => {
   const [isListening, setIsListening] = useState(false);
   const prevTranscriptRef = useRef("");
   const { user } = useAuth();
-  const { isMessageTemporary } = useTempChat();
+  const { isMessageTemporary } = useTempThread();
   const pathname = usePathname();
   const hasMounted = useRef(false);
 
   const { setMessages: setGlobalMessages, addMessageToBottom } =
-    useChatMessages();
+    useThreadMessages();
 
   useEffect(() => {
     if (!user || isMessageTemporary) return;
@@ -50,11 +55,11 @@ const Home: FC = () => {
       hasMounted.current = true;
       if (pathname === "/") {
         setMessages([]);
-        setConversationId(null);
+        setThreadId(null);
       }
     } else if (pathname === "/") {
       setMessages([]);
-      setConversationId(null);
+      setThreadId(null);
     }
   }, [pathname, user, isMessageTemporary]);
 
@@ -83,7 +88,7 @@ const Home: FC = () => {
 
   const fetchBotResponse = async (
     userMessage: Message,
-    convoId?: string | null
+    threadId?: string | null
   ) => {
     setIsFetchingResponse(true);
 
@@ -107,13 +112,13 @@ const Home: FC = () => {
 
       setMessages((prev) => [...prev, botMessage]);
 
-      if (user && convoId && !isMessageTemporary) {
-        addMessageToBottom(convoId, botMessage);
+      if (user && threadId && !isMessageTemporary) {
+        addMessageToBottom(threadId, botMessage);
 
         const messagesRef = collection(
           db,
           "conversations",
-          convoId,
+          threadId,
           "messages"
         );
         await addDoc(messagesRef, {
@@ -122,7 +127,7 @@ const Home: FC = () => {
         });
 
         await setDoc(
-          doc(db, "conversations", convoId),
+          doc(db, "conversations", threadId),
           {
             updatedAt: serverTimestamp(),
             lastMessage: {
@@ -149,9 +154,12 @@ const Home: FC = () => {
     }
   };
 
-  const fetchBotSetTitle = async (userMessageText: string, convoId: string) => {
+  const fetchBotSetTitle = async (
+    userMessageText: string,
+    threadId: string
+  ) => {
     try {
-      const titlePrompt = `Generate a short, descriptive title/subject/topic (only the title, no extra words) for the following chat message: "${userMessageText}"`;
+      const titlePrompt = `Generate a short, descriptive title/subject/topic (only the title, no extra words) for the following thread message: "${userMessageText}"`;
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -163,7 +171,7 @@ const Home: FC = () => {
 
       if (newTitle) {
         await setDoc(
-          doc(db, "conversations", convoId),
+          doc(db, "conversations", threadId),
           { title: newTitle },
           { merge: true }
         );
@@ -191,13 +199,13 @@ const Home: FC = () => {
 
     if (user && !isMessageTemporary) {
       try {
-        let convoId = conversationId;
+        let id = threadId;
 
-        if (!convoId) {
-          convoId = uuidv4();
-          setConversationId(convoId);
+        if (!id) {
+          id = uuidv4();
+          setThreadId(id);
 
-          await setDoc(doc(db, "conversations", convoId), {
+          await setDoc(doc(db, "conversations", id), {
             userId: user.uid,
             title: "",
             createdAt: serverTimestamp(),
@@ -210,14 +218,13 @@ const Home: FC = () => {
             },
           });
 
-          fetchBotSetTitle(userMessage.text, convoId);
+          fetchBotSetTitle(userMessage.text, id);
 
-          window.history.pushState({}, "", `/chat/${convoId}`);
-
-          setGlobalMessages(convoId, [userMessage]);
+          window.history.pushState({}, "", `/chat/${id}`);
+          setGlobalMessages(id, [userMessage]);
         } else {
           await setDoc(
-            doc(db, "conversations", convoId),
+            doc(db, "conversations", id),
             {
               updatedAt: serverTimestamp(),
               lastMessage: {
@@ -229,22 +236,17 @@ const Home: FC = () => {
             { merge: true }
           );
 
-          addMessageToBottom(convoId, userMessage);
+          addMessageToBottom(id, userMessage);
         }
 
-        const messagesRef = collection(
-          db,
-          "conversations",
-          convoId,
-          "messages"
-        );
+        const messagesRef = collection(db, "conversations", id, "messages");
 
         await addDoc(messagesRef, {
           ...userMessage,
           createdAt: now,
         });
 
-        fetchBotResponse(userMessage, convoId);
+        fetchBotResponse(userMessage, id);
       } catch (error) {
         console.error("Error sending message:", error);
       }
@@ -254,7 +256,7 @@ const Home: FC = () => {
   };
 
   return (
-    <ConversationLayout>
+    <ThreadLayout>
       <MessagesLayout
         messages={messages}
         isFetchingResponse={isFetchingResponse}
@@ -272,7 +274,7 @@ const Home: FC = () => {
         isFetchingResponse={isFetchingResponse}
         sendMessage={sendMessage}
       />
-    </ConversationLayout>
+    </ThreadLayout>
   );
 };
 

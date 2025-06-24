@@ -3,7 +3,7 @@
 import { notFound, useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, FC } from "react";
 import { useSpeechRecognition } from "react-speech-recognition";
-import { useAuth, useChatInput, useChatMessages, Message } from "@/stores";
+import { useAuth, useThreadInput, useThreadMessages, Message } from "@/stores";
 import {
   db,
   doc,
@@ -23,32 +23,32 @@ import {
   limit,
   QueryDocumentSnapshot,
 } from "firebase/firestore";
-import { MessagesLayout, ConversationLayout } from "@/layouts";
+import { MessagesLayout, ThreadLayout } from "@/layouts";
 import { MessageInput } from "@/components";
 import { speakText } from "@/lib/textToSpeech";
 
-interface ConversationParams {
+interface ChatParams {
   [key: string]: string | undefined;
   conversationId?: string;
 }
 
-const Conversation: FC = () => {
-  const { conversationId } = useParams<ConversationParams>();
+const Thread: FC = () => {
+  const { conversationId } = useParams<ChatParams>();
   const router = useRouter();
   const { user, loading } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const {
-    messagesByConversation,
+    messagesByThread,
     setMessages,
     addMessagesToTop,
     addMessageToBottom,
-  } = useChatMessages();
+  } = useThreadMessages();
 
-  const storedMessages = messagesByConversation[conversationId || ""] || [];
+  const storedMessages = messagesByThread[conversationId || ""] || [];
 
   const [loadingMessages, setLoadingMessages] = useState(true);
-  const { getInput, setInput } = useChatInput();
+  const { getInput, setInput } = useThreadInput();
   const input = getInput(conversationId || "home");
   const [isFetchingResponse, setIsFetchingResponse] = useState(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
@@ -182,7 +182,7 @@ const Conversation: FC = () => {
     addMessagesToTop(conversationId!, olderMessages);
   };
 
-  const fetchBotResponse = async (userMessage: Message, convoId: string) => {
+  const fetchBotResponse = async (userMessage: Message, id: string) => {
     setIsFetchingResponse(true);
 
     try {
@@ -203,15 +203,15 @@ const Conversation: FC = () => {
         createdAt: new Date().toISOString(),
       };
 
-      addMessageToBottom(convoId, botMessage);
+      addMessageToBottom(id, botMessage);
 
-      const messagesRef = collection(db, "conversations", convoId, "messages");
+      const messagesRef = collection(db, "conversations", id, "messages");
       await addDoc(messagesRef, {
         ...botMessage,
         isGenerated: true,
       });
 
-      await updateDoc(doc(db, "conversations", convoId), {
+      await updateDoc(doc(db, "conversations", id), {
         updatedAt: serverTimestamp(),
         lastMessage: {
           text: botMessage.text,
@@ -266,7 +266,7 @@ const Conversation: FC = () => {
   if (loading) return null;
 
   return (
-    <ConversationLayout>
+    <ThreadLayout>
       <MessagesLayout
         messages={user ? storedMessages : []}
         isFetchingResponse={user ? isFetchingResponse : false}
@@ -286,8 +286,8 @@ const Conversation: FC = () => {
         isFetchingResponse={isFetchingResponse}
         sendMessage={sendMessage}
       />
-    </ConversationLayout>
+    </ThreadLayout>
   );
 };
 
-export default Conversation;
+export default Thread;

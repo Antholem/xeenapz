@@ -49,7 +49,7 @@ import {
   User,
   getDocs,
 } from "@/lib/firebase";
-import { ConversationList } from "@/components";
+import { ThreadList } from "@/components";
 import { useAuth } from "@/stores";
 import { Input, Spinner } from "@themed-components";
 
@@ -199,9 +199,9 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
   }, [isResizing, handleResizing]);
 
   const fetchMessages = useCallback(
-    async (convoId: string): Promise<Message[]> => {
+    async (conversationId: string): Promise<Message[]> => {
       const q = query(
-        collection(db, "conversations", convoId, "messages"),
+        collection(db, "conversations", conversationId, "messages"),
         orderBy("timestamp", "asc")
       );
       const snapshot = await getDocs(q);
@@ -317,10 +317,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
             </Flex>
           ) : (
             <Box flex="1" overflow="hidden">
-              <ConversationList
-                conversations={conversations}
-                searchTerm={searchTerm}
-              />
+              <ThreadList threads={conversations} searchTerm={searchTerm} />
             </Box>
           )}
         </Flex>
@@ -399,10 +396,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
                 <Spinner size="xl" />
               </Flex>
             ) : (
-              <ConversationList
-                conversations={conversations}
-                searchTerm={searchTerm}
-              />
+              <ThreadList threads={conversations} searchTerm={searchTerm} />
             )}
           </DrawerBody>
         </Card>
