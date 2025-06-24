@@ -115,19 +115,14 @@ const Home: FC = () => {
       if (user && threadId && !isMessageTemporary) {
         addMessageToBottom(threadId, botMessage);
 
-        const messagesRef = collection(
-          db,
-          "conversations",
-          threadId,
-          "messages"
-        );
+        const messagesRef = collection(db, "threads", threadId, "messages");
         await addDoc(messagesRef, {
           ...botMessage,
           isGenerated: true,
         });
 
         await setDoc(
-          doc(db, "conversations", threadId),
+          doc(db, "threads", threadId),
           {
             updatedAt: serverTimestamp(),
             lastMessage: {
@@ -171,7 +166,7 @@ const Home: FC = () => {
 
       if (newTitle) {
         await setDoc(
-          doc(db, "conversations", threadId),
+          doc(db, "threads", threadId),
           { title: newTitle },
           { merge: true }
         );
@@ -205,7 +200,7 @@ const Home: FC = () => {
           id = uuidv4();
           setThreadId(id);
 
-          await setDoc(doc(db, "conversations", id), {
+          await setDoc(doc(db, "threads", id), {
             userId: user.uid,
             title: "",
             createdAt: serverTimestamp(),
@@ -220,11 +215,11 @@ const Home: FC = () => {
 
           fetchBotSetTitle(userMessage.text, id);
 
-          window.history.pushState({}, "", `/chat/${id}`);
+          window.history.pushState({}, "", `/thread/${id}`);
           setGlobalMessages(id, [userMessage]);
         } else {
           await setDoc(
-            doc(db, "conversations", id),
+            doc(db, "threads", id),
             {
               updatedAt: serverTimestamp(),
               lastMessage: {
@@ -239,7 +234,7 @@ const Home: FC = () => {
           addMessageToBottom(id, userMessage);
         }
 
-        const messagesRef = collection(db, "conversations", id, "messages");
+        const messagesRef = collection(db, "threads", id, "messages");
 
         await addDoc(messagesRef, {
           ...userMessage,

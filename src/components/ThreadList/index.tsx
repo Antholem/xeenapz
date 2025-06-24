@@ -186,7 +186,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
     setIsLoadingMoreThreads(true);
 
     try {
-      const ref = collection(db, "conversations");
+      const ref = collection(db, "threads");
       const threadQuery = lastDoc
         ? query(
             ref,
@@ -344,7 +344,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
   }, [isSearchActive, hasResults, titleResults, messageResults, loadedThreads]);
 
   const handleThreadClick = (threadId: string) => {
-    router.push(`/chat/${threadId}`);
+    router.push(`/thread/${threadId}`);
   };
 
   return (
@@ -401,7 +401,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
                   <Box mx={3}>
                     <ThreadItem
                       thread={thread}
-                      isActive={pathname === `/chat/${thread.id}`}
+                      isActive={pathname === `/thread/${thread.id}`}
                       onThreadClick={handleThreadClick}
                       isMessageMatch={isMessageMatch}
                       highlightedText={highlightedText}

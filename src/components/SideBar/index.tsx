@@ -60,7 +60,7 @@ interface SideBarProps {
   onClose?: () => void;
 }
 
-interface Conversation {
+interface Thread {
   id: string;
   userId: string;
   updatedAt?: { seconds: number; nanoseconds: number } | null;
@@ -160,7 +160,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
   const router = useRouter();
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
 
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [threads, setThreads] = useState<Thread[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -199,9 +199,9 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
   }, [isResizing, handleResizing]);
 
   const fetchMessages = useCallback(
-    async (conversationId: string): Promise<Message[]> => {
+    async (threadId: string): Promise<Message[]> => {
       const q = query(
-        collection(db, "conversations", conversationId, "messages"),
+        collection(db, "threads", threadId, "messages"),
         orderBy("timestamp", "asc")
       );
       const snapshot = await getDocs(q);
@@ -217,20 +217,20 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
 
     setLoading(true);
     const q = query(
-      collection(db, "conversations"),
+      collection(db, "threads"),
       where("userId", "==", user.uid),
       orderBy("updatedAt", "desc")
     );
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const convoList = await Promise.all(
+      const threadList = await Promise.all(
         snapshot.docs.map(async (doc) => {
-          const convo = { id: doc.id, ...doc.data() } as Conversation;
+          const thread = { id: doc.id, ...doc.data() } as Thread;
           const messages = await fetchMessages(doc.id);
-          return { ...convo, messages };
+          return { ...thread, messages };
         })
       );
-      setConversations(convoList);
+      setThreads(threadList);
       setLoading(false);
     });
 
@@ -317,7 +317,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
             </Flex>
           ) : (
             <Box flex="1" overflow="hidden">
-              <ThreadList threads={conversations} searchTerm={searchTerm} />
+              <ThreadList threads={threads} searchTerm={searchTerm} />
             </Box>
           )}
         </Flex>
@@ -396,7 +396,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
                 <Spinner size="xl" />
               </Flex>
             ) : (
-              <ThreadList threads={conversations} searchTerm={searchTerm} />
+              <ThreadList threads={threads} searchTerm={searchTerm} />
             )}
           </DrawerBody>
         </Card>

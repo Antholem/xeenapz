@@ -149,7 +149,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
     );
   }
 
-  if (messages.length === 0 && pathname !== "/" && pathname !== "/chat/temp")
+  if (messages.length === 0 && pathname !== "/" && pathname !== "/thread/temp")
     return notFound();
 
   return (

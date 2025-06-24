@@ -27,13 +27,13 @@ import { MessagesLayout, ThreadLayout } from "@/layouts";
 import { MessageInput } from "@/components";
 import { speakText } from "@/lib/textToSpeech";
 
-interface ChatParams {
+interface ThreadParams {
   [key: string]: string | undefined;
-  conversationId?: string;
+  threadId?: string;
 }
 
 const Thread: FC = () => {
-  const { conversationId } = useParams<ChatParams>();
+  const { threadId } = useParams<ThreadParams>();
   const router = useRouter();
   const { user, loading } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -45,11 +45,11 @@ const Thread: FC = () => {
     addMessageToBottom,
   } = useThreadMessages();
 
-  const storedMessages = messagesByThread[conversationId || ""] || [];
+  const storedMessages = messagesByThread[threadId || ""] || [];
 
   const [loadingMessages, setLoadingMessages] = useState(true);
   const { getInput, setInput } = useThreadInput();
-  const input = getInput(conversationId || "home");
+  const input = getInput(threadId || "home");
   const [isFetchingResponse, setIsFetchingResponse] = useState(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
@@ -65,7 +65,7 @@ const Thread: FC = () => {
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (!conversationId || !user || storedMessages.length > 0) {
+    if (!threadId || !user || storedMessages.length > 0) {
       setLoadingMessages(false);
       return;
     }
@@ -74,14 +74,10 @@ const Thread: FC = () => {
     setOldestDoc(null);
     setHasMore(true);
 
-    const conversationDocRef: DocumentReference = doc(
-      db,
-      "conversations",
-      conversationId
-    );
+    const threadDocRef: DocumentReference = doc(db, "threads", threadId);
 
-    const unsubscribeConversation = onSnapshot(
-      conversationDocRef,
+    const unsubscribeThread = onSnapshot(
+      threadDocRef,
       (docSnap) => {
         if (!docSnap.exists()) {
           notFound();
@@ -89,15 +85,15 @@ const Thread: FC = () => {
         setLoadingMessages(false);
       },
       (error) => {
-        console.error("Error fetching conversation:", error);
+        console.error("Error fetching thread:", error);
         setLoadingMessages(false);
       }
     );
 
     const messagesCollectionRef = collection(
       db,
-      "conversations",
-      conversationId,
+      "threads",
+      threadId,
       "messages"
     );
 
@@ -110,7 +106,7 @@ const Thread: FC = () => {
           (doc) => ({ ...doc.data() } as Message)
         );
 
-        setMessages(conversationId, messagesList);
+        setMessages(threadId, messagesList);
         if (snapshot.docs.length > 0) {
           setOldestDoc(snapshot.docs[0]);
         }
@@ -121,35 +117,30 @@ const Thread: FC = () => {
     );
 
     return () => {
-      unsubscribeConversation();
+      unsubscribeThread();
       unsubscribeMessages();
     };
-  }, [conversationId, user, storedMessages.length, setMessages]);
+  }, [threadId, user, storedMessages.length, setMessages]);
 
   useEffect(() => {
     if (transcript && transcript !== prevTranscriptRef.current) {
       const newText = transcript.replace(prevTranscriptRef.current, "").trim();
-      setInput(conversationId || "home", (prev) =>
+      setInput(threadId || "home", (prev) =>
         prev ? `${prev} ${newText}`.trim() : newText
       );
       prevTranscriptRef.current = transcript;
     }
-  }, [transcript, conversationId, setInput]);
+  }, [transcript, threadId, setInput]);
 
   useEffect(() => {
     setIsListening(listening);
   }, [listening]);
 
   const fetchOlderMessages = async (): Promise<Message[]> => {
-    if (!conversationId || !hasMore || !oldestDoc) return [];
+    if (!threadId || !hasMore || !oldestDoc) return [];
 
     try {
-      const messagesRef = collection(
-        db,
-        "conversations",
-        conversationId,
-        "messages"
-      );
+      const messagesRef = collection(db, "threads", threadId, "messages");
 
       const baseQuery = query(
         messagesRef,
@@ -179,7 +170,7 @@ const Thread: FC = () => {
 
   const handleLoadMessages = async () => {
     const olderMessages = await fetchOlderMessages();
-    addMessagesToTop(conversationId!, olderMessages);
+    addMessagesToTop(threadId!, olderMessages);
   };
 
   const fetchBotResponse = async (userMessage: Message, id: string) => {
@@ -205,13 +196,13 @@ const Thread: FC = () => {
 
       addMessageToBottom(id, botMessage);
 
-      const messagesRef = collection(db, "conversations", id, "messages");
+      const messagesRef = collection(db, "threads", id, "messages");
       await addDoc(messagesRef, {
         ...botMessage,
         isGenerated: true,
       });
 
-      await updateDoc(doc(db, "conversations", id), {
+      await updateDoc(doc(db, "threads", id), {
         updatedAt: serverTimestamp(),
         lastMessage: {
           text: botMessage.text,
@@ -227,7 +218,7 @@ const Thread: FC = () => {
   };
 
   const sendMessage = async () => {
-    if (!input.trim() || !user || !conversationId) return;
+    if (!input.trim() || !user || !threadId) return;
 
     const timestamp = Date.now();
     const userMessage: Message = {
@@ -237,18 +228,13 @@ const Thread: FC = () => {
       createdAt: new Date().toISOString(),
     };
 
-    setInput(conversationId, "");
-    addMessageToBottom(conversationId, userMessage);
+    setInput(threadId, "");
+    addMessageToBottom(threadId, userMessage);
 
     try {
-      const messagesRef = collection(
-        db,
-        "conversations",
-        conversationId,
-        "messages"
-      );
+      const messagesRef = collection(db, "threads", threadId, "messages");
       await addDoc(messagesRef, userMessage);
-      await updateDoc(doc(db, "conversations", conversationId), {
+      await updateDoc(doc(db, "threads", threadId), {
         updatedAt: serverTimestamp(),
         lastMessage: {
           text: userMessage.text,
@@ -257,7 +243,7 @@ const Thread: FC = () => {
         },
       });
 
-      fetchBotResponse(userMessage, conversationId);
+      fetchBotResponse(userMessage, threadId);
     } catch (error) {
       console.error("Error sending message:", error);
     }
@@ -280,7 +266,7 @@ const Thread: FC = () => {
       />
       <MessageInput
         input={user ? input : ""}
-        setInput={(val) => setInput(conversationId || "home", val)}
+        setInput={(val) => setInput(threadId || "home", val)}
         isListening={user ? isListening : false}
         resetTranscript={resetTranscript}
         isFetchingResponse={isFetchingResponse}
