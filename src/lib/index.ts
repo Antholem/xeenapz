@@ -1,3 +1,3 @@
 export * from "@/lib/firebase";
-export * from "@/lib/speechRecognition";
-export * from "@/lib/textToSpeech";
+export * from "@/lib/speech/recognition";
+export * from "@/lib/speech/tts";
