@@ -14,7 +14,6 @@ import {
   Flex,
   IconButton,
   Text,
-  Tooltip,
   useColorMode,
   useDisclosure,
 } from "@chakra-ui/react";
