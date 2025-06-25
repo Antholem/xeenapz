@@ -13,8 +13,7 @@ import {
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
-import { Box, Text, Flex, ButtonProps, useColorMode } from "@chakra-ui/react";
-import { formatNormalTime } from "@/utils/dateFormatter";
+import { Box, Text, Flex, useColorMode, ButtonProps } from "@chakra-ui/react";
 import { db, collection, query, orderBy, getDocs, where } from "@/lib";
 import {
   DocumentData,
@@ -22,8 +21,8 @@ import {
   QueryDocumentSnapshot,
   startAfter,
 } from "firebase/firestore";
-import { Progress } from "@themed-components";
-import { Button } from "@themed-components";
+import { formatNormalTime } from "@/utils/dateFormatter";
+import { Progress, Button } from "@themed-components";
 import { useAuth, useTheme } from "@/stores";
 
 interface Thread {
@@ -130,6 +129,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
   const router = useRouter();
   const pathname = usePathname();
   const isSearchActive = !!searchTerm;
+
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [loadedThreads, setLoadedThreads] = useState<Thread[]>([]);
   const [lastDoc, setLastDoc] =
@@ -138,6 +138,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
   const [hasMoreThreads, setHasMoreThreads] = useState(true);
   const [readyToRender, setReadyToRender] = useState(false);
   const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
+
   const { colorScheme } = useTheme();
 
   useEffect(() => {
@@ -152,9 +153,8 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
       isSearchActive ||
       !pathname ||
       loadedThreads.length === 0
-    ) {
+    )
       return;
-    }
 
     const activeId = pathname.split("/").pop();
     const index = loadedThreads.findIndex((t) => t.id === activeId);

@@ -4,8 +4,8 @@ import { FC, memo } from "react";
 import ReactMarkdown from "react-markdown";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
-import { IoStop } from "react-icons/io5";
 import { IoIosMic } from "react-icons/io";
+import { IoStop } from "react-icons/io5";
 import {
   Box,
   Flex,

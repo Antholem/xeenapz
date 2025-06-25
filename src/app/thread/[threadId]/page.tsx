@@ -1,9 +1,10 @@
 "use client";
 
+import { FC, useState, useEffect, useRef } from "react";
 import { notFound, useParams, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, FC } from "react";
 import { useSpeechRecognition } from "react-speech-recognition";
-import { useAuth, useThreadInput, useThreadMessages, Message } from "@/stores";
+import { ThreadLayout, MessagesLayout } from "@/layouts";
+import { MessageInput } from "@/components";
 import {
   db,
   doc,
@@ -14,16 +15,15 @@ import {
   serverTimestamp,
   updateDoc,
   getDocs,
-  DocumentReference,
   onSnapshot,
+  DocumentReference,
   DocumentData,
   endBefore,
   limit,
   QueryDocumentSnapshot,
   speakText,
 } from "@/lib";
-import { MessagesLayout, ThreadLayout } from "@/layouts";
-import { MessageInput } from "@/components";
+import { useAuth, useThreadInput, useThreadMessages, Message } from "@/stores";
 
 interface ThreadParams {
   [key: string]: string | undefined;
@@ -33,8 +33,11 @@ interface ThreadParams {
 const Thread: FC = () => {
   const { threadId } = useParams<ThreadParams>();
   const router = useRouter();
+
   const { user, loading } = useAuth();
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  const { getInput, setInput } = useThreadInput();
+  const input = getInput(threadId || "home");
 
   const {
     messagesByThread,
@@ -45,14 +48,14 @@ const Thread: FC = () => {
 
   const storedMessages = messagesByThread[threadId || ""] || [];
 
-  const [loadingMessages, setLoadingMessages] = useState(true);
-  const { getInput, setInput } = useThreadInput();
-  const input = getInput(threadId || "home");
-  const [isFetchingResponse, setIsFetchingResponse] = useState(false);
-  const [playingMessage, setPlayingMessage] = useState<string | null>(null);
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
   const [isListening, setIsListening] = useState(false);
   const prevTranscriptRef = useRef("");
+
+  const [loadingMessages, setLoadingMessages] = useState(true);
+  const [isFetchingResponse, setIsFetchingResponse] = useState(false);
+  const [playingMessage, setPlayingMessage] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const [oldestDoc, setOldestDoc] =
     useState<QueryDocumentSnapshot<DocumentData> | null>(null);

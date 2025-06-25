@@ -1,5 +1,6 @@
 "use client";
 
+import { FC } from "react";
 import {
   Spinner as ChakraSpinner,
   SpinnerProps,
@@ -7,7 +8,7 @@ import {
 } from "@chakra-ui/react";
 import { useTheme } from "@/stores";
 
-const Spinner = (props: SpinnerProps) => {
+const Spinner: FC<SpinnerProps> = (props) => {
   const { colorScheme } = useTheme();
   const { colorMode } = useColorMode();
 

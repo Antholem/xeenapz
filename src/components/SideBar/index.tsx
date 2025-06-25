@@ -2,57 +2,58 @@
 
 import {
   FC,
+  Fragment,
+  memo,
+  useCallback,
   useEffect,
   useState,
-  useCallback,
   ChangeEvent,
-  memo,
   MouseEvent as ReactMouseEvent,
-  Fragment,
 } from "react";
 import { useRouter } from "next/navigation";
-import { IoAdd, IoSettingsSharp, IoSearch } from "react-icons/io5";
-import { FiLogOut, FiUserCheck } from "react-icons/fi";
 import {
+  Avatar,
   Box,
-  Flex,
-  IconButton,
-  Divider,
-  InputGroup,
-  InputLeftElement,
   Card,
-  useBreakpointValue,
+  Divider,
   Drawer,
-  DrawerOverlay,
+  DrawerBody,
   DrawerContent,
   DrawerHeader,
-  DrawerBody,
-  Text,
-  Tooltip,
-  Avatar,
+  DrawerOverlay,
+  Flex,
+  Icon,
+  IconButton,
+  InputGroup,
+  InputLeftElement,
   Menu,
   MenuButton,
-  MenuList,
   MenuItem,
-  Icon,
+  MenuList,
+  Text,
+  Tooltip,
+  useBreakpointValue,
 } from "@chakra-ui/react";
+import { FiLogOut, FiUserCheck } from "react-icons/fi";
+import { IoAdd, IoSearch, IoSettingsSharp } from "react-icons/io5";
+
 import {
   auth,
-  provider,
-  db,
   collection,
-  query,
-  where,
-  orderBy,
+  db,
+  getDocs,
   onSnapshot,
+  orderBy,
+  provider,
+  query,
   signInWithPopup,
   signOut,
   User,
-  getDocs,
+  where,
 } from "@/lib";
-import { ThreadList } from "@/components";
+import { Spinner, Input } from "@themed-components";
 import { useAuth } from "@/stores";
-import { Input, Spinner } from "@themed-components";
+import { ThreadList } from "@/components";
 
 interface SideBarProps {
   type: "temporary" | "persistent";
@@ -301,13 +302,11 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
                 </Text>
               </Box>
             </Flex>
-
             <Flex flexShrink={0}>
               <NewChatButton />
               <SettingsButton />
             </Flex>
           </Flex>
-
           <Flex p={3}>
             <SearchBar onSearch={handleSearch} />
           </Flex>
@@ -323,7 +322,6 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
           )}
         </Flex>
       </Card>
-
       <Card
         w="3px"
         cursor="col-resize"

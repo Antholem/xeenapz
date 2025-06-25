@@ -1,30 +1,31 @@
 "use client";
 
-import React, {
+import {
   FC,
+  Fragment,
+  memo,
   useMemo,
   useRef,
-  memo,
-  RefObject,
-  useEffect,
   useState,
   useCallback,
+  useEffect,
+  RefObject,
 } from "react";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import {
   Box,
-  VStack,
-  Text,
   Flex,
+  Text,
   Image,
-  SkeletonCircle,
+  VStack,
   Divider,
+  SkeletonCircle,
 } from "@chakra-ui/react";
-import { User } from "@/lib";
+import { useAuth } from "@/stores";
 import { MessageItem } from "@/components";
 import { formatDateGrouping } from "@/utils/dateFormatter";
-import { useAuth } from "@/stores";
-import { Progress, Spinner } from "@themed-components";
+import { Spinner, Progress } from "@themed-components";
+import { User } from "@/lib";
 
 interface Message {
   id?: string;
@@ -105,10 +106,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
             behavior: "auto",
             offset: 1000000,
           });
-
-          setTimeout(() => {
-            setReadyToRender(true);
-          }, 300);
+          setTimeout(() => setReadyToRender(true), 300);
         });
       });
     }
@@ -124,8 +122,8 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
       setIsLoadingMore(true);
       try {
         await onLoadMore();
-      } catch (e) {
-        console.error("Error loading older messages:", e);
+      } catch (err) {
+        console.error("Error loading older messages:", err);
       } finally {
         setIsLoadingMore(false);
       }
@@ -134,13 +132,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
 
   if (isLoading && messages.length === 0) {
     return (
-      <Flex
-        flex="1"
-        overflowY="auto"
-        p={4}
-        justifyContent="center"
-        alignItems="center"
-      >
+      <Flex flex="1" p={4} justify="center" alignItems="center">
         <Spinner size="xl" />
       </Flex>
     );
@@ -150,7 +142,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
     <Box flex="1" overflow="hidden">
       {messages.length === 0 ? (
         <VStack height="100%">
-          <Flex justify="center" align="center" flex="1">
+          <Flex flex="1" justify="center" align="center">
             <Text fontSize={{ base: "lg", md: "3xl" }} textAlign="center">
               {emptyStateText}
             </Text>
