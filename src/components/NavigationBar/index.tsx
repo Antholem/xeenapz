@@ -2,28 +2,32 @@
 
 import { FC, Fragment, memo, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+
 import { HiPencilAlt } from "react-icons/hi";
 import { IoMdMenu } from "react-icons/io";
 import { RiChat3Line, RiChatHistoryFill } from "react-icons/ri";
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
+
 import {
+  Card,
+  Divider,
   Flex,
+  IconButton,
   Text,
   useColorMode,
-  IconButton,
-  Divider,
   useDisclosure,
-  Card,
 } from "@chakra-ui/react";
+
 import {
   auth,
-  provider,
   db,
   doc,
   onSnapshot,
-  Unsubscribe,
+  provider,
   signInWithPopup,
-} from "@/lib/firebase";
+  Unsubscribe,
+} from "@/lib";
+
 import { useAuth } from "@/stores";
 import { SideBar } from "@/components";
 import { Button } from "@themed-components";
@@ -37,11 +41,12 @@ const NavigationBar: FC = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { user, loading: authLoading } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
+
   const [currentThreadTitle, setCurrentThreadTitle] = useState<string | null>(
     null
   );
   const unsubscribeRef = useRef<Unsubscribe | undefined>(undefined);
-  const router = useRouter();
 
   useEffect(() => {
     const fetchThreadTitle = async () => {
@@ -126,6 +131,7 @@ const NavigationBar: FC = () => {
               />
             )}
           </Flex>
+
           <Flex align="center" gap={3}>
             <Text
               fontSize="lg"
@@ -136,6 +142,7 @@ const NavigationBar: FC = () => {
               {pathname === "/" ? "Xeenapz" : currentThreadTitle || "Xeenapz"}
             </Text>
           </Flex>
+
           <Flex align="center" gap={4}>
             {user && (pathname === "/" || pathname === "/thread/temp") && (
               <IconButton

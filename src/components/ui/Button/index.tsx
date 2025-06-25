@@ -1,12 +1,13 @@
 "use client";
 
-import { Button as ButtonInput, ButtonProps } from "@chakra-ui/react";
+import { FC } from "react";
+import { Button as ChakraButton, ButtonProps } from "@chakra-ui/react";
 import { useTheme } from "@/stores";
 
-const Button = (props: ButtonProps) => {
+const Button: FC<ButtonProps> = (props) => {
   const { colorScheme } = useTheme();
 
-  return <ButtonInput colorScheme={colorScheme} {...props} />;
+  return <ChakraButton colorScheme={colorScheme} {...props} />;
 };
 
 export default Button;

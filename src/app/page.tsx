@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef, FC } from "react";
-import { v4 as uuidv4 } from "uuid";
+import { FC, useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useSpeechRecognition } from "react-speech-recognition";
-import { speakText } from "@/lib/textToSpeech";
+import { v4 as uuidv4 } from "uuid";
+
 import {
   db,
   collection,
@@ -11,11 +12,11 @@ import {
   setDoc,
   addDoc,
   serverTimestamp,
-} from "@/lib/firebase";
+  speakText,
+} from "@/lib";
 import { useAuth, useThreadInput, useThreadMessages } from "@/stores";
 import { MessageInput } from "@/components";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
-import { usePathname } from "next/navigation";
 
 interface Message {
   text: string;
@@ -25,26 +26,26 @@ interface Message {
 }
 
 const Home: FC = () => {
-  const [threadId, setThreadId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const { getInput, setInput } = useThreadInput();
-  const input = getInput("home");
-  const [isFetchingResponse, setIsFetchingResponse] = useState<boolean>(false);
-  const [playingMessage, setPlayingMessage] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { transcript, listening, resetTranscript } = useSpeechRecognition();
-  const [isListening, setIsListening] = useState(false);
-  const prevTranscriptRef = useRef("");
-  const { user } = useAuth();
   const pathname = usePathname();
-  const hasMounted = useRef(false);
-
+  const { user } = useAuth();
+  const { getInput, setInput } = useThreadInput();
   const { setMessages: setGlobalMessages, addMessageToBottom } =
     useThreadMessages();
+  const { transcript, listening, resetTranscript } = useSpeechRecognition();
+
+  const [threadId, setThreadId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isFetchingResponse, setIsFetchingResponse] = useState<boolean>(false);
+  const [playingMessage, setPlayingMessage] = useState<string | null>(null);
+  const [isListening, setIsListening] = useState(false);
+
+  const input = getInput("home");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const prevTranscriptRef = useRef("");
+  const hasMounted = useRef(false);
 
   useEffect(() => {
     if (!user) return;
-
     if (!hasMounted.current) {
       hasMounted.current = true;
       if (pathname === "/") {
@@ -85,7 +86,6 @@ const Home: FC = () => {
     threadId?: string | null
   ) => {
     setIsFetchingResponse(true);
-
     try {
       const res = await fetch("/api/gemini", {
         method: "POST",
@@ -122,7 +122,7 @@ const Home: FC = () => {
             lastMessage: {
               text: botMessage.text,
               sender: botMessage.sender,
-              createdAt: new Date().toISOString(),
+              createdAt: botMessage.createdAt,
             },
           },
           { merge: true }
@@ -148,11 +148,12 @@ const Home: FC = () => {
     threadId: string
   ) => {
     try {
-      const titlePrompt = `Generate a short, descriptive title/subject/topic (only the title, no extra words) for the following thread message: "${userMessageText}"`;
+      const prompt = `Generate a short, descriptive title/subject/topic (only the title, no extra words) for the following thread message: "${userMessageText}"`;
+
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: titlePrompt }),
+        body: JSON.stringify({ message: prompt }),
       });
 
       const data = await res.json();
@@ -228,7 +229,6 @@ const Home: FC = () => {
         }
 
         const messagesRef = collection(db, "threads", id, "messages");
-
         await addDoc(messagesRef, {
           ...userMessage,
           createdAt: now,

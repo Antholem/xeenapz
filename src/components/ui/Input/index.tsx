@@ -1,11 +1,11 @@
 "use client";
 
+import { FC, ReactNode } from "react";
 import {
   Input as ChakraInput,
   InputProps,
   useColorMode,
 } from "@chakra-ui/react";
-import { ReactNode } from "react";
 import { useTheme } from "@/stores";
 
 interface CustomInputProps extends InputProps {
@@ -13,14 +13,14 @@ interface CustomInputProps extends InputProps {
   rightElement?: ReactNode;
 }
 
-const Input = ({
+const Input: FC<CustomInputProps> = ({
   leftElement,
   rightElement,
   pl,
   pr,
   focusBorderColor,
   ...rest
-}: CustomInputProps) => {
+}) => {
   const { colorScheme } = useTheme();
   const { colorMode } = useColorMode();
 

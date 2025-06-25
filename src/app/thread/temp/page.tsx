@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef, FC } from "react";
+import { FC, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useSpeechRecognition } from "react-speech-recognition";
-import { speakText } from "@/lib/textToSpeech";
+
 import { MessageInput } from "@/components";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
+import { speakText } from "@/lib";
 import { useAuth, useThreadInput } from "@/stores";
 
 interface Message {
@@ -16,19 +17,23 @@ interface Message {
 }
 
 const TempThread: FC = () => {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [messages, setMessages] = useState<Message[]>([]);
+  const [isFetchingResponse, setIsFetchingResponse] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [playingMessage, setPlayingMessage] = useState<string | null>(null);
+
   const { getInput, setInput } = useThreadInput();
   const input = getInput("home");
-  const [isFetchingResponse, setIsFetchingResponse] = useState<boolean>(false);
-  const [playingMessage, setPlayingMessage] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
-  const [isListening, setIsListening] = useState(false);
   const prevTranscriptRef = useRef("");
-  const { user, loading } = useAuth();
-  const pathname = usePathname();
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasMounted = useRef(false);
-  const router = useRouter();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -74,7 +79,6 @@ const TempThread: FC = () => {
 
   const fetchBotResponse = async (userMessage: Message) => {
     setIsFetchingResponse(true);
-
     try {
       const res = await fetch("/api/gemini", {
         method: "POST",
@@ -117,7 +121,7 @@ const TempThread: FC = () => {
     const userMessage: Message = {
       text: input,
       sender: "user",
-      timestamp,
+      timestamp: timestamp,
       createdAt: now,
     };
 

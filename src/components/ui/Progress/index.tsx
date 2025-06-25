@@ -1,12 +1,13 @@
 "use client";
 
-import { Progress as ProgressInput, ProgressProps } from "@chakra-ui/react";
+import { FC } from "react";
+import { Progress as ChakraProgress, ProgressProps } from "@chakra-ui/react";
 import { useTheme } from "@/stores";
 
-const Progress = (props: ProgressProps) => {
+const Progress: FC<ProgressProps> = (props) => {
   const { colorScheme } = useTheme();
 
-  return <ProgressInput colorScheme={colorScheme} {...props} />;
+  return <ChakraProgress colorScheme={colorScheme} {...props} />;
 };
 
 export default Progress;
