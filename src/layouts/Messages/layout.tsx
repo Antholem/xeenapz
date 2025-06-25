@@ -2,7 +2,6 @@
 
 import React, {
   FC,
-  Fragment,
   useMemo,
   useRef,
   memo,
@@ -11,7 +10,6 @@ import React, {
   useState,
   useCallback,
 } from "react";
-import { notFound, usePathname } from "next/navigation";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import {
   Box,
@@ -66,7 +64,6 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
   onLoadMore,
 }) => {
   const { user: authUser } = useAuth();
-  const pathname = usePathname();
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [readyToRender, setReadyToRender] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -149,103 +146,98 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
     );
   }
 
-  if (messages.length === 0 && pathname !== "/" && pathname !== "/thread/temp")
-    return notFound();
-
   return (
-    <Fragment>
-      <Box flex="1" overflow="hidden">
-        {messages.length === 0 ? (
-          <VStack height="100%">
-            <Flex justify="center" align="center" flex="1">
-              <Text fontSize={{ base: "lg", md: "3xl" }} textAlign="center">
-                {emptyStateText}
-              </Text>
-            </Flex>
-          </VStack>
-        ) : (
-          <Box
-            h="100%"
-            overflow={readyToRender ? "auto" : "hidden"}
-            visibility={readyToRender ? "visible" : "hidden"}
-          >
-            <Virtuoso
-              ref={virtuosoRef}
-              style={{ height: "100%", minHeight: 100 }}
-              data={virtualMessages}
-              followOutput="auto"
-              increaseViewportBy={200}
-              startReached={handleStartReached}
-              components={{
-                Header: () =>
-                  isLoadingMore &&
-                  !hasScrolledOnce && <Progress size="xs" isIndeterminate />,
-              }}
-              itemContent={(index, item) => {
-                const isFirst = index === 0;
-                const isLast = index === virtualMessages.length - 1;
+    <Box flex="1" overflow="hidden">
+      {messages.length === 0 ? (
+        <VStack height="100%">
+          <Flex justify="center" align="center" flex="1">
+            <Text fontSize={{ base: "lg", md: "3xl" }} textAlign="center">
+              {emptyStateText}
+            </Text>
+          </Flex>
+        </VStack>
+      ) : (
+        <Box
+          h="100%"
+          overflow={readyToRender ? "auto" : "hidden"}
+          visibility={readyToRender ? "visible" : "hidden"}
+        >
+          <Virtuoso
+            ref={virtuosoRef}
+            style={{ height: "100%", minHeight: 100 }}
+            data={virtualMessages}
+            followOutput="auto"
+            increaseViewportBy={200}
+            startReached={handleStartReached}
+            components={{
+              Header: () =>
+                isLoadingMore &&
+                !hasScrolledOnce && <Progress size="xs" isIndeterminate />,
+            }}
+            itemContent={(index, item) => {
+              const isFirst = index === 0;
+              const isLast = index === virtualMessages.length - 1;
 
-                if (item.type === "separator" && authUser) {
-                  return (
-                    <Flex
-                      justify="center"
-                      align="center"
-                      mx={4}
-                      mt={isFirst ? 3 : 2}
-                      mb={2}
-                      gap={2}
-                    >
-                      <Divider />
-                      <Box
-                        bgColor="mutedSurface"
-                        px={2}
-                        py={1}
-                        borderRadius="full"
-                      >
-                        <Text fontSize="xs" whiteSpace="nowrap">
-                          {item.value}
-                        </Text>
-                      </Box>
-                      <Divider />
-                    </Flex>
-                  );
-                }
-
-                if (item.type === "loader") {
-                  return (
-                    <Flex pl={5} pt={2} pb={5} gap={2} alignItems="flex-end">
-                      <Image boxSize="24px" src="/favicon.ico" alt="Bot Icon" />
-                      <Flex gap={1}>
-                        {[...Array(3)].map((_, i) => (
-                          <SkeletonCircle key={i} size="2" />
-                        ))}
-                      </Flex>
-                    </Flex>
-                  );
-                }
-
-                const msg = item.value as Message;
+              if (item.type === "separator" && authUser) {
                 return (
-                  <Box mx={5}>
-                    <MessageItem
-                      message={msg}
-                      user={user}
-                      speakText={speakText}
-                      playingMessage={playingMessage}
-                      setPlayingMessage={setPlayingMessage}
-                      mt={isFirst && !authUser ? 3 : 0}
-                      pt={isFirst ? 3 : 2}
-                      pb={isLast ? 3 : 2}
-                    />
-                  </Box>
+                  <Flex
+                    justify="center"
+                    align="center"
+                    mx={4}
+                    mt={isFirst ? 3 : 2}
+                    mb={2}
+                    gap={2}
+                  >
+                    <Divider />
+                    <Box
+                      bgColor="mutedSurface"
+                      px={2}
+                      py={1}
+                      borderRadius="full"
+                    >
+                      <Text fontSize="xs" whiteSpace="nowrap">
+                        {item.value}
+                      </Text>
+                    </Box>
+                    <Divider />
+                  </Flex>
                 );
-              }}
-            />
-          </Box>
-        )}
-        <Box as="div" ref={messagesEndRef} />
-      </Box>
-    </Fragment>
+              }
+
+              if (item.type === "loader") {
+                return (
+                  <Flex pl={5} pt={2} pb={5} gap={2} alignItems="flex-end">
+                    <Image boxSize="24px" src="/favicon.ico" alt="Bot Icon" />
+                    <Flex gap={1}>
+                      {[...Array(3)].map((_, i) => (
+                        <SkeletonCircle key={i} size="2" />
+                      ))}
+                    </Flex>
+                  </Flex>
+                );
+              }
+
+              const msg = item.value as Message;
+              return (
+                <Box mx={5}>
+                  <MessageItem
+                    message={msg}
+                    user={user}
+                    speakText={speakText}
+                    playingMessage={playingMessage}
+                    setPlayingMessage={setPlayingMessage}
+                    mt={isFirst && !authUser ? 3 : 0}
+                    pt={isFirst ? 3 : 2}
+                    pb={isLast ? 3 : 2}
+                  />
+                </Box>
+              );
+            }}
+          />
+        </Box>
+      )}
+      <Box as="div" ref={messagesEndRef} />
+    </Box>
   );
 };
 

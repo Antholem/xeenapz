@@ -12,7 +12,7 @@ const AuthInitializer = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, [initializeAuth]);
 
-  return loading ? <Progress size="xs" isIndeterminate /> : <>{children}</>;
+  return loading ? <Progress size="xs" isIndeterminate /> : children;
 };
 
 export default AuthInitializer;

@@ -8,6 +8,7 @@ import {
   ChangeEvent,
   memo,
   MouseEvent as ReactMouseEvent,
+  Fragment,
 } from "react";
 import { useRouter } from "next/navigation";
 import { IoAdd, IoSettingsSharp, IoSearch } from "react-icons/io5";
@@ -335,10 +336,10 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
   if (authLoading || !user) return null;
 
   return type === "persistent" ? (
-    <>
+    <Fragment>
       {content}
       <Divider orientation="vertical" />
-    </>
+    </Fragment>
   ) : (
     <Drawer
       isOpen={!!isOpen}

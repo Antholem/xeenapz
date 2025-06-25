@@ -12,12 +12,7 @@ import {
   addDoc,
   serverTimestamp,
 } from "@/lib/firebase";
-import {
-  useAuth,
-  useThreadInput,
-  useThreadMessages,
-  useTempThread,
-} from "@/stores";
+import { useAuth, useThreadInput, useThreadMessages } from "@/stores";
 import { MessageInput } from "@/components";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
 import { usePathname } from "next/navigation";
@@ -41,7 +36,6 @@ const Home: FC = () => {
   const [isListening, setIsListening] = useState(false);
   const prevTranscriptRef = useRef("");
   const { user } = useAuth();
-  const { isMessageTemporary } = useTempThread();
   const pathname = usePathname();
   const hasMounted = useRef(false);
 
@@ -49,7 +43,7 @@ const Home: FC = () => {
     useThreadMessages();
 
   useEffect(() => {
-    if (!user || isMessageTemporary) return;
+    if (!user) return;
 
     if (!hasMounted.current) {
       hasMounted.current = true;
@@ -61,7 +55,7 @@ const Home: FC = () => {
       setMessages([]);
       setThreadId(null);
     }
-  }, [pathname, user, isMessageTemporary]);
+  }, [pathname, user]);
 
   useEffect(() => {
     if (transcript && transcript !== prevTranscriptRef.current) {
@@ -112,7 +106,7 @@ const Home: FC = () => {
 
       setMessages((prev) => [...prev, botMessage]);
 
-      if (user && threadId && !isMessageTemporary) {
+      if (user && threadId) {
         addMessageToBottom(threadId, botMessage);
 
         const messagesRef = collection(db, "threads", threadId, "messages");
@@ -192,7 +186,7 @@ const Home: FC = () => {
     setInput("home", "");
     setMessages((prev) => [...prev, userMessage]);
 
-    if (user && !isMessageTemporary) {
+    if (user) {
       try {
         let id = threadId;
 
@@ -214,7 +208,6 @@ const Home: FC = () => {
           });
 
           fetchBotSetTitle(userMessage.text, id);
-
           window.history.pushState({}, "", `/thread/${id}`);
           setGlobalMessages(id, [userMessage]);
         } else {

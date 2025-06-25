@@ -350,9 +350,27 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
   return (
     <Box as="span" w="100%" h="100%" position="relative">
       {isSearchActive && !hasResults ? (
-        <Flex justify="center" align="center" h="100%" px={4}>
-          <Text fontSize="sm" textAlign="center" color="secondaryText">
-            No results found.
+        <Flex
+          direction="column"
+          justify="center"
+          align="center"
+          h="100%"
+          px={6}
+        >
+          <Text fontSize="md" color="secondaryText" textAlign="center">
+            No threads or messages match your search.
+          </Text>
+        </Flex>
+      ) : loadedThreads.length === 0 ? (
+        <Flex
+          direction="column"
+          justify="center"
+          align="center"
+          h="100%"
+          px={6}
+        >
+          <Text fontSize="md" color="secondaryText" textAlign="center">
+            You have no threads yet.
           </Text>
         </Flex>
       ) : (
@@ -366,6 +384,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
             h="100%"
             overflow={readyToRender ? "auto" : "hidden"}
             visibility={readyToRender ? "visible" : "hidden"}
+            transition="opacity 0.2s ease"
           >
             <Virtuoso
               ref={virtuosoRef}
@@ -373,9 +392,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
               data={allItems}
               initialTopMostItemIndex={0}
               endReached={() => {
-                if (hasScrolledOnce) {
-                  loadMoreThreads();
-                }
+                if (hasScrolledOnce) loadMoreThreads();
               }}
               itemContent={(index, item) => {
                 const isFirst = index === 0;
