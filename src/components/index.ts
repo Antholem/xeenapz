@@ -2,7 +2,7 @@ import NavigationBar from "@/components/NavigationBar";
 import SideBar from "@/components/SideBar";
 import MessageInput from "@/components/MessageInput";
 import MessageItem from "@/components/MessageItem";
-import ConversationList from "@/components/ConversationList";
+import ThreadList from "@/components/ThreadList";
 import AuthInitializer from "@/components/AuthInitializer";
 
 export {
@@ -10,6 +10,6 @@ export {
   SideBar,
   MessageInput,
   MessageItem,
-  ConversationList,
+  ThreadList,
   AuthInitializer,
 };

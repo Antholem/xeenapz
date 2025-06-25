@@ -5,9 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useSpeechRecognition } from "react-speech-recognition";
 import { speakText } from "@/lib/textToSpeech";
 import { MessageInput } from "@/components";
-import { ConversationLayout, MessagesLayout } from "@/layouts";
-import useAuth from "@/stores/useAuth";
-import useMessageInputPersistent from "@/stores/useMessageInputPersistent";
+import { ThreadLayout, MessagesLayout } from "@/layouts";
+import { useAuth, useThreadInput } from "@/stores";
 
 interface Message {
   text: string;
@@ -16,9 +15,9 @@ interface Message {
   createdAt?: string;
 }
 
-const TempChat: FC = () => {
+const TempThread: FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const { getInput, setInput } = useMessageInputPersistent();
+  const { getInput, setInput } = useThreadInput();
   const input = getInput("home");
   const [isFetchingResponse, setIsFetchingResponse] = useState<boolean>(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
@@ -130,7 +129,7 @@ const TempChat: FC = () => {
   const isBlocked = !user && !loading;
 
   return (
-    <ConversationLayout>
+    <ThreadLayout>
       <MessagesLayout
         messages={isBlocked ? [] : messages}
         isFetchingResponse={isBlocked ? false : isFetchingResponse}
@@ -139,7 +138,7 @@ const TempChat: FC = () => {
         playingMessage={playingMessage}
         setPlayingMessage={setPlayingMessage}
         messagesEndRef={messagesEndRef}
-        emptyStateText="Temporary Chat"
+        emptyStateText="Temporary Thread"
       />
       <MessageInput
         input={isBlocked ? "" : input}
@@ -149,8 +148,8 @@ const TempChat: FC = () => {
         isFetchingResponse={isFetchingResponse}
         sendMessage={sendMessage}
       />
-    </ConversationLayout>
+    </ThreadLayout>
   );
 };
 
-export default TempChat;
+export default TempThread;

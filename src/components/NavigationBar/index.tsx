@@ -24,11 +24,11 @@ import {
   Unsubscribe,
   signInWithPopup,
 } from "@/lib/firebase";
-import useAuth from "@/stores/useAuth";
+import { useAuth } from "@/stores";
 import { SideBar } from "@/components";
 import { Button } from "@themed-components";
 
-interface Conversation {
+interface Thread {
   title?: string;
 }
 
@@ -37,20 +37,20 @@ const NavigationBar: FC = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { user, loading: authLoading } = useAuth();
   const pathname = usePathname();
-  const [currentConvoTitle, setCurrentConvoTitle] = useState<string | null>(
+  const [currentThreadTitle, setCurrentThreadTitle] = useState<string | null>(
     null
   );
   const unsubscribeRef = useRef<Unsubscribe | undefined>(undefined);
   const router = useRouter();
 
   useEffect(() => {
-    const fetchConvoTitle = async () => {
+    const fetchThreadTitle = async () => {
       if (
         !user ||
-        pathname === "/chat/temp" ||
-        !pathname?.startsWith("/chat/")
+        pathname === "/thread/temp" ||
+        !pathname?.startsWith("/thread/")
       ) {
-        setCurrentConvoTitle(null);
+        setCurrentThreadTitle(null);
         if (unsubscribeRef.current) {
           unsubscribeRef.current();
           unsubscribeRef.current = undefined;
@@ -58,27 +58,27 @@ const NavigationBar: FC = () => {
         return;
       }
 
-      const convoId = pathname.split("/")[2];
-      const docRef = doc(db, "conversations", convoId);
+      const threadId = pathname.split("/")[2];
+      const docRef = doc(db, "threads", threadId);
 
       unsubscribeRef.current = onSnapshot(
         docRef,
         (docSnap) => {
           if (docSnap.exists()) {
-            const data = docSnap.data() as Conversation;
-            setCurrentConvoTitle(data.title || null);
+            const data = docSnap.data() as Thread;
+            setCurrentThreadTitle(data.title || null);
           } else {
-            setCurrentConvoTitle(null);
+            setCurrentThreadTitle(null);
           }
         },
         (error) => {
-          console.error("Error listening for conversation updates:", error);
-          setCurrentConvoTitle(null);
+          console.error("Error listening for thread updates:", error);
+          setCurrentThreadTitle(null);
         }
       );
     };
 
-    fetchConvoTitle();
+    fetchThreadTitle();
 
     return () => {
       if (unsubscribeRef.current) {
@@ -98,7 +98,7 @@ const NavigationBar: FC = () => {
 
   const toggleTemporaryChat = () => {
     if (pathname === "/") {
-      router.push("/chat/temp");
+      router.push("/thread/temp");
     } else {
       router.push("/");
     }
@@ -133,11 +133,11 @@ const NavigationBar: FC = () => {
               textAlign="center"
               noOfLines={1}
             >
-              {pathname === "/" ? "Xeenapz" : currentConvoTitle || "Xeenapz"}
+              {pathname === "/" ? "Xeenapz" : currentThreadTitle || "Xeenapz"}
             </Text>
           </Flex>
           <Flex align="center" gap={4}>
-            {user && (pathname === "/" || pathname === "/chat/temp") && (
+            {user && (pathname === "/" || pathname === "/thread/temp") && (
               <IconButton
                 aria-label="Temporary Chat"
                 icon={

@@ -3,6 +3,7 @@
 import { notFound, useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, FC } from "react";
 import { useSpeechRecognition } from "react-speech-recognition";
+import { useAuth, useThreadInput, useThreadMessages, Message } from "@/stores";
 import {
   db,
   doc,
@@ -22,36 +23,33 @@ import {
   limit,
   QueryDocumentSnapshot,
 } from "firebase/firestore";
-import { MessagesLayout, ConversationLayout } from "@/layouts";
+import { MessagesLayout, ThreadLayout } from "@/layouts";
 import { MessageInput } from "@/components";
 import { speakText } from "@/lib/textToSpeech";
-import useAuth from "@/stores/useAuth";
-import useMessagePersistent, { Message } from "@/stores/useMessagePersistent";
-import useMessageInputPersistent from "@/stores/useMessageInputPersistent";
 
-interface ConversationParams {
+interface ThreadParams {
   [key: string]: string | undefined;
-  conversationId?: string;
+  threadId?: string;
 }
 
-const Conversation: FC = () => {
-  const { conversationId } = useParams<ConversationParams>();
+const Thread: FC = () => {
+  const { threadId } = useParams<ThreadParams>();
   const router = useRouter();
   const { user, loading } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const {
-    messagesByConversation,
+    messagesByThread,
     setMessages,
     addMessagesToTop,
     addMessageToBottom,
-  } = useMessagePersistent();
+  } = useThreadMessages();
 
-  const storedMessages = messagesByConversation[conversationId || ""] || [];
+  const storedMessages = messagesByThread[threadId || ""] || [];
 
   const [loadingMessages, setLoadingMessages] = useState(true);
-  const { getInput, setInput } = useMessageInputPersistent();
-  const input = getInput(conversationId || "home");
+  const { getInput, setInput } = useThreadInput();
+  const input = getInput(threadId || "home");
   const [isFetchingResponse, setIsFetchingResponse] = useState(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
@@ -67,7 +65,7 @@ const Conversation: FC = () => {
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (!conversationId || !user || storedMessages.length > 0) {
+    if (!threadId || !user || storedMessages.length > 0) {
       setLoadingMessages(false);
       return;
     }
@@ -76,14 +74,10 @@ const Conversation: FC = () => {
     setOldestDoc(null);
     setHasMore(true);
 
-    const conversationDocRef: DocumentReference = doc(
-      db,
-      "conversations",
-      conversationId
-    );
+    const threadDocRef: DocumentReference = doc(db, "threads", threadId);
 
-    const unsubscribeConversation = onSnapshot(
-      conversationDocRef,
+    const unsubscribeThread = onSnapshot(
+      threadDocRef,
       (docSnap) => {
         if (!docSnap.exists()) {
           notFound();
@@ -91,15 +85,15 @@ const Conversation: FC = () => {
         setLoadingMessages(false);
       },
       (error) => {
-        console.error("Error fetching conversation:", error);
+        console.error("Error fetching thread:", error);
         setLoadingMessages(false);
       }
     );
 
     const messagesCollectionRef = collection(
       db,
-      "conversations",
-      conversationId,
+      "threads",
+      threadId,
       "messages"
     );
 
@@ -112,7 +106,7 @@ const Conversation: FC = () => {
           (doc) => ({ ...doc.data() } as Message)
         );
 
-        setMessages(conversationId, messagesList);
+        setMessages(threadId, messagesList);
         if (snapshot.docs.length > 0) {
           setOldestDoc(snapshot.docs[0]);
         }
@@ -123,35 +117,30 @@ const Conversation: FC = () => {
     );
 
     return () => {
-      unsubscribeConversation();
+      unsubscribeThread();
       unsubscribeMessages();
     };
-  }, [conversationId, user, storedMessages.length, setMessages]);
+  }, [threadId, user, storedMessages.length, setMessages]);
 
   useEffect(() => {
     if (transcript && transcript !== prevTranscriptRef.current) {
       const newText = transcript.replace(prevTranscriptRef.current, "").trim();
-      setInput(conversationId || "home", (prev) =>
+      setInput(threadId || "home", (prev) =>
         prev ? `${prev} ${newText}`.trim() : newText
       );
       prevTranscriptRef.current = transcript;
     }
-  }, [transcript, conversationId, setInput]);
+  }, [transcript, threadId, setInput]);
 
   useEffect(() => {
     setIsListening(listening);
   }, [listening]);
 
   const fetchOlderMessages = async (): Promise<Message[]> => {
-    if (!conversationId || !hasMore || !oldestDoc) return [];
+    if (!threadId || !hasMore || !oldestDoc) return [];
 
     try {
-      const messagesRef = collection(
-        db,
-        "conversations",
-        conversationId,
-        "messages"
-      );
+      const messagesRef = collection(db, "threads", threadId, "messages");
 
       const baseQuery = query(
         messagesRef,
@@ -181,10 +170,10 @@ const Conversation: FC = () => {
 
   const handleLoadMessages = async () => {
     const olderMessages = await fetchOlderMessages();
-    addMessagesToTop(conversationId!, olderMessages);
+    addMessagesToTop(threadId!, olderMessages);
   };
 
-  const fetchBotResponse = async (userMessage: Message, convoId: string) => {
+  const fetchBotResponse = async (userMessage: Message, id: string) => {
     setIsFetchingResponse(true);
 
     try {
@@ -205,15 +194,15 @@ const Conversation: FC = () => {
         createdAt: new Date().toISOString(),
       };
 
-      addMessageToBottom(convoId, botMessage);
+      addMessageToBottom(id, botMessage);
 
-      const messagesRef = collection(db, "conversations", convoId, "messages");
+      const messagesRef = collection(db, "threads", id, "messages");
       await addDoc(messagesRef, {
         ...botMessage,
         isGenerated: true,
       });
 
-      await updateDoc(doc(db, "conversations", convoId), {
+      await updateDoc(doc(db, "threads", id), {
         updatedAt: serverTimestamp(),
         lastMessage: {
           text: botMessage.text,
@@ -229,7 +218,7 @@ const Conversation: FC = () => {
   };
 
   const sendMessage = async () => {
-    if (!input.trim() || !user || !conversationId) return;
+    if (!input.trim() || !user || !threadId) return;
 
     const timestamp = Date.now();
     const userMessage: Message = {
@@ -239,18 +228,13 @@ const Conversation: FC = () => {
       createdAt: new Date().toISOString(),
     };
 
-    setInput(conversationId, "");
-    addMessageToBottom(conversationId, userMessage);
+    setInput(threadId, "");
+    addMessageToBottom(threadId, userMessage);
 
     try {
-      const messagesRef = collection(
-        db,
-        "conversations",
-        conversationId,
-        "messages"
-      );
+      const messagesRef = collection(db, "threads", threadId, "messages");
       await addDoc(messagesRef, userMessage);
-      await updateDoc(doc(db, "conversations", conversationId), {
+      await updateDoc(doc(db, "threads", threadId), {
         updatedAt: serverTimestamp(),
         lastMessage: {
           text: userMessage.text,
@@ -259,7 +243,7 @@ const Conversation: FC = () => {
         },
       });
 
-      fetchBotResponse(userMessage, conversationId);
+      fetchBotResponse(userMessage, threadId);
     } catch (error) {
       console.error("Error sending message:", error);
     }
@@ -268,7 +252,7 @@ const Conversation: FC = () => {
   if (loading) return null;
 
   return (
-    <ConversationLayout>
+    <ThreadLayout>
       <MessagesLayout
         messages={user ? storedMessages : []}
         isFetchingResponse={user ? isFetchingResponse : false}
@@ -282,14 +266,14 @@ const Conversation: FC = () => {
       />
       <MessageInput
         input={user ? input : ""}
-        setInput={(val) => setInput(conversationId || "home", val)}
+        setInput={(val) => setInput(threadId || "home", val)}
         isListening={user ? isListening : false}
         resetTranscript={resetTranscript}
         isFetchingResponse={isFetchingResponse}
         sendMessage={sendMessage}
       />
-    </ConversationLayout>
+    </ThreadLayout>
   );
 };
 
-export default Conversation;
+export default Thread;

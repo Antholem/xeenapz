@@ -15,7 +15,6 @@ import { useRouter, usePathname } from "next/navigation";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import { Box, Text, Flex, ButtonProps, useColorMode } from "@chakra-ui/react";
 import { formatNormalTime } from "@/utils/dateFormatter";
-import useAuth from "@/stores/useAuth";
 import { db, collection, query, orderBy, getDocs, where } from "@/lib/firebase";
 import {
   DocumentData,
@@ -23,11 +22,11 @@ import {
   QueryDocumentSnapshot,
   startAfter,
 } from "firebase/firestore";
-import useTheme from "@/stores/useTheme";
 import { Progress } from "@themed-components";
 import { Button } from "@themed-components";
+import { useAuth, useTheme } from "@/stores";
 
-interface Conversation {
+interface Thread {
   id: string;
   title?: string;
   messages?: Message[];
@@ -41,19 +40,19 @@ interface Message {
   timestamp?: { seconds: number; nanoseconds: number };
 }
 
-interface ConversationItemProps extends Omit<ButtonProps, "onClick"> {
-  convo: Conversation;
+interface ThreadItemProps extends Omit<ButtonProps, "onClick"> {
+  thread: Thread;
   isActive: boolean;
-  onConversationClick: (id: string) => void;
+  onThreadClick: (id: string) => void;
   isMessageMatch?: boolean;
   highlightedText?: ReactNode;
   isSearchActive: boolean;
 }
 
-const ConversationItem: FC<ConversationItemProps> = ({
-  convo,
+const ThreadItem: FC<ThreadItemProps> = ({
+  thread,
   isActive,
-  onConversationClick,
+  onThreadClick,
   isMessageMatch = false,
   highlightedText,
   isSearchActive,
@@ -67,7 +66,7 @@ const ConversationItem: FC<ConversationItemProps> = ({
       variant={isSearchActive ? "ghost" : isActive ? "solid" : "ghost"}
       w="100%"
       justifyContent="flex-start"
-      onClick={() => onConversationClick(convo.id)}
+      onClick={() => onThreadClick(thread.id)}
       cursor="pointer"
       textAlign="left"
       py={isMessageMatch ? 6 : 0}
@@ -92,11 +91,11 @@ const ConversationItem: FC<ConversationItemProps> = ({
       >
         {isMessageMatch ? (
           <Fragment>
-            {convo.title}
+            {thread.title}
             {highlightedText}
           </Fragment>
         ) : (
-          convo.title
+          thread.title
         )}
       </Box>
     </Button>
@@ -104,14 +103,14 @@ const ConversationItem: FC<ConversationItemProps> = ({
 };
 
 interface SearchResultItem {
-  convo: Conversation;
+  thread: Thread;
   message?: Message;
   highlightedText?: ReactNode;
   createdAt?: number | null;
 }
 
-interface ConversationListProps {
-  conversations: Conversation[];
+interface ThreadListProps {
+  threads: Thread[];
   searchTerm: string;
 }
 
@@ -120,48 +119,45 @@ type VirtuosoItem =
   | {
       type: "message";
       data: {
-        convo: Conversation;
+        thread: Thread;
         isMessageMatch: boolean;
         highlightedText?: ReactNode;
       };
     };
 
-const ConversationList: FC<ConversationListProps> = ({
-  conversations,
-  searchTerm,
-}) => {
+const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
   const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const isSearchActive = !!searchTerm;
   const virtuosoRef = useRef<VirtuosoHandle>(null);
-  const [loadedConvos, setLoadedConvos] = useState<Conversation[]>([]);
+  const [loadedThreads, setLoadedThreads] = useState<Thread[]>([]);
   const [lastDoc, setLastDoc] =
     useState<QueryDocumentSnapshot<DocumentData> | null>(null);
-  const [isLoadingMoreConvos, setIsLoadingMoreConvos] = useState(false);
-  const [hasMoreConvos, setHasMoreConvos] = useState(true);
+  const [isLoadingMoreThreads, setIsLoadingMoreThreads] = useState(false);
+  const [hasMoreThreads, setHasMoreThreads] = useState(true);
   const [readyToRender, setReadyToRender] = useState(false);
   const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
   const { colorScheme } = useTheme();
 
   useEffect(() => {
-    if (!isSearchActive && conversations.length > 0) {
-      setLoadedConvos(conversations);
+    if (!isSearchActive && threads.length > 0) {
+      setLoadedThreads(threads);
     }
-  }, [conversations, isSearchActive]);
+  }, [threads, isSearchActive]);
 
   useEffect(() => {
     if (
       hasScrolledOnce ||
       isSearchActive ||
       !pathname ||
-      loadedConvos.length === 0
+      loadedThreads.length === 0
     ) {
       return;
     }
 
     const activeId = pathname.split("/").pop();
-    const index = loadedConvos.findIndex((c) => c.id === activeId);
+    const index = loadedThreads.findIndex((t) => t.id === activeId);
 
     if (index >= 0 && virtuosoRef.current) {
       requestAnimationFrame(() => {
@@ -182,75 +178,75 @@ const ConversationList: FC<ConversationListProps> = ({
       setReadyToRender(true);
       setHasScrolledOnce(true);
     }
-  }, [pathname, loadedConvos, isSearchActive, hasScrolledOnce]);
+  }, [pathname, loadedThreads, isSearchActive, hasScrolledOnce]);
 
-  const loadMoreConversations = useCallback(async () => {
-    if (isSearchActive || isLoadingMoreConvos || !hasMoreConvos) return;
+  const loadMoreThreads = useCallback(async () => {
+    if (isSearchActive || isLoadingMoreThreads || !hasMoreThreads) return;
 
-    setIsLoadingMoreConvos(true);
+    setIsLoadingMoreThreads(true);
 
     try {
-      const convRef = collection(db, "conversations");
-      const convQuery = lastDoc
+      const ref = collection(db, "threads");
+      const threadQuery = lastDoc
         ? query(
-            convRef,
+            ref,
             where("userId", "==", user?.uid),
             orderBy("updatedAt", "desc"),
             startAfter(lastDoc),
             limit(20)
           )
         : query(
-            convRef,
+            ref,
             where("userId", "==", user?.uid),
             orderBy("updatedAt", "desc"),
             limit(20)
           );
 
-      const snap = await getDocs(convQuery);
+      const snap = await getDocs(threadQuery);
 
       if (!snap.empty) {
-        const newConvos = snap.docs.map((doc) => ({
+        const newThreads = snap.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-        })) as Conversation[];
+        })) as Thread[];
 
-        const newUniqueConvos = newConvos.filter(
-          (c) => !loadedConvos.some((loaded) => loaded.id === c.id)
+        const newUniqueThreads = newThreads.filter(
+          (t) => !loadedThreads.some((loaded) => loaded.id === t.id)
         );
 
-        setLoadedConvos((prev) => [...prev, ...newUniqueConvos]);
+        setLoadedThreads((prev) => [...prev, ...newUniqueThreads]);
         setLastDoc(snap.docs[snap.docs.length - 1]);
 
-        if (newUniqueConvos.length < 20) setHasMoreConvos(false);
+        if (newUniqueThreads.length < 20) setHasMoreThreads(false);
       } else {
-        setHasMoreConvos(false);
+        setHasMoreThreads(false);
       }
     } catch (err) {
-      console.error("Failed to load conversations:", err);
+      console.error("Failed to load threads:", err);
     } finally {
-      setIsLoadingMoreConvos(false);
+      setIsLoadingMoreThreads(false);
     }
   }, [
-    hasMoreConvos,
-    isLoadingMoreConvos,
+    hasMoreThreads,
+    isLoadingMoreThreads,
     isSearchActive,
     lastDoc,
-    loadedConvos,
+    loadedThreads,
     user?.uid,
   ]);
 
   const { titleResults, messageResults } = useMemo(() => {
     const lower = searchTerm.toLowerCase();
 
-    const titles = loadedConvos
-      .filter((c) => !searchTerm || c.title?.toLowerCase().includes(lower))
+    const titles = loadedThreads
+      .filter((t) => !searchTerm || t.title?.toLowerCase().includes(lower))
       .sort((a, b) => (a.title || "").localeCompare(b.title || ""));
 
     const messages: SearchResultItem[] = [];
 
     if (searchTerm) {
-      loadedConvos.forEach((convo) => {
-        convo.messages?.forEach((msg) => {
+      loadedThreads.forEach((thread) => {
+        thread.messages?.forEach((msg) => {
           if (msg.text.toLowerCase().includes(lower)) {
             const start = msg.text.toLowerCase().indexOf(lower);
             const end = start + searchTerm.length;
@@ -291,7 +287,7 @@ const ConversationList: FC<ConversationListProps> = ({
             );
 
             messages.push({
-              convo,
+              thread,
               message: msg,
               highlightedText: highlight,
               createdAt,
@@ -304,7 +300,7 @@ const ConversationList: FC<ConversationListProps> = ({
     }
 
     return { titleResults: titles, messageResults: messages };
-  }, [searchTerm, loadedConvos, colorScheme]);
+  }, [searchTerm, loadedThreads, colorScheme]);
 
   const hasResults = titleResults.length > 0 || messageResults.length > 0;
 
@@ -314,10 +310,10 @@ const ConversationList: FC<ConversationListProps> = ({
 
       if (titleResults.length > 0) {
         items.push({ type: "title", data: "Titles" });
-        titleResults.forEach((convo) =>
+        titleResults.forEach((thread) =>
           items.push({
             type: "message",
-            data: { convo, isMessageMatch: false },
+            data: { thread, isMessageMatch: false },
           })
         );
       }
@@ -328,7 +324,7 @@ const ConversationList: FC<ConversationListProps> = ({
           items.push({
             type: "message",
             data: {
-              convo: result.convo,
+              thread: result.thread,
               isMessageMatch: true,
               highlightedText: result.highlightedText,
             },
@@ -339,29 +335,47 @@ const ConversationList: FC<ConversationListProps> = ({
       return items;
     }
 
-    return loadedConvos
-      .filter((convo) => convo.title)
-      .map((convo) => ({
+    return loadedThreads
+      .filter((t) => t.title)
+      .map((thread) => ({
         type: "message",
-        data: { convo, isMessageMatch: false },
+        data: { thread, isMessageMatch: false },
       }));
-  }, [isSearchActive, hasResults, titleResults, messageResults, loadedConvos]);
+  }, [isSearchActive, hasResults, titleResults, messageResults, loadedThreads]);
 
-  const handleConversationClick = (conversationId: string) => {
-    router.push(`/chat/${conversationId}`);
+  const handleThreadClick = (threadId: string) => {
+    router.push(`/thread/${threadId}`);
   };
 
   return (
     <Box as="span" w="100%" h="100%" position="relative">
       {isSearchActive && !hasResults ? (
-        <Flex justify="center" align="center" h="100%" px={4}>
-          <Text fontSize="sm" textAlign="center" color="secondaryText">
-            No results found.
+        <Flex
+          direction="column"
+          justify="center"
+          align="center"
+          h="100%"
+          px={6}
+        >
+          <Text fontSize="md" color="secondaryText" textAlign="center">
+            No threads or messages match your search.
+          </Text>
+        </Flex>
+      ) : loadedThreads.length === 0 ? (
+        <Flex
+          direction="column"
+          justify="center"
+          align="center"
+          h="100%"
+          px={6}
+        >
+          <Text fontSize="md" color="secondaryText" textAlign="center">
+            You have no threads yet.
           </Text>
         </Flex>
       ) : (
         <Fragment>
-          {isLoadingMoreConvos && hasScrolledOnce && readyToRender && (
+          {isLoadingMoreThreads && hasScrolledOnce && readyToRender && (
             <Box position="absolute" top={0} left={0} right={0} zIndex={1}>
               <Progress size="xs" isIndeterminate />
             </Box>
@@ -370,6 +384,7 @@ const ConversationList: FC<ConversationListProps> = ({
             h="100%"
             overflow={readyToRender ? "auto" : "hidden"}
             visibility={readyToRender ? "visible" : "hidden"}
+            transition="opacity 0.2s ease"
           >
             <Virtuoso
               ref={virtuosoRef}
@@ -377,9 +392,7 @@ const ConversationList: FC<ConversationListProps> = ({
               data={allItems}
               initialTopMostItemIndex={0}
               endReached={() => {
-                if (hasScrolledOnce) {
-                  loadMoreConversations();
-                }
+                if (hasScrolledOnce) loadMoreThreads();
               }}
               itemContent={(index, item) => {
                 const isFirst = index === 0;
@@ -400,13 +413,13 @@ const ConversationList: FC<ConversationListProps> = ({
                   );
                 }
 
-                const { convo, isMessageMatch, highlightedText } = item.data;
+                const { thread, isMessageMatch, highlightedText } = item.data;
                 return (
                   <Box mx={3}>
-                    <ConversationItem
-                      convo={convo}
-                      isActive={pathname === `/chat/${convo.id}`}
-                      onConversationClick={handleConversationClick}
+                    <ThreadItem
+                      thread={thread}
+                      isActive={pathname === `/thread/${thread.id}`}
+                      onThreadClick={handleThreadClick}
                       isMessageMatch={isMessageMatch}
                       highlightedText={highlightedText}
                       isSearchActive={isSearchActive}
@@ -424,4 +437,4 @@ const ConversationList: FC<ConversationListProps> = ({
   );
 };
 
-export default memo(ConversationList);
+export default memo(ThreadList);

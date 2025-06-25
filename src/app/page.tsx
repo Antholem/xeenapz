@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, FC } from "react";
+import { v4 as uuidv4 } from "uuid";
 import { useSpeechRecognition } from "react-speech-recognition";
 import { speakText } from "@/lib/textToSpeech";
 import {
@@ -11,14 +12,10 @@ import {
   addDoc,
   serverTimestamp,
 } from "@/lib/firebase";
-import { v4 as uuidv4 } from "uuid";
+import { useAuth, useThreadInput, useThreadMessages } from "@/stores";
 import { MessageInput } from "@/components";
-import { ConversationLayout, MessagesLayout } from "@/layouts";
+import { ThreadLayout, MessagesLayout } from "@/layouts";
 import { usePathname } from "next/navigation";
-import useTempChat from "@/stores/useTempChat";
-import useAuth from "@/stores/useAuth";
-import useMessagePersistent from "@/stores/useMessagePersistent";
-import useMessageInputPersistent from "@/stores/useMessageInputPersistent";
 
 interface Message {
   text: string;
@@ -28,9 +25,9 @@ interface Message {
 }
 
 const Home: FC = () => {
-  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [threadId, setThreadId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const { getInput, setInput } = useMessageInputPersistent();
+  const { getInput, setInput } = useThreadInput();
   const input = getInput("home");
   const [isFetchingResponse, setIsFetchingResponse] = useState<boolean>(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
@@ -39,27 +36,26 @@ const Home: FC = () => {
   const [isListening, setIsListening] = useState(false);
   const prevTranscriptRef = useRef("");
   const { user } = useAuth();
-  const { isMessageTemporary } = useTempChat();
   const pathname = usePathname();
   const hasMounted = useRef(false);
 
   const { setMessages: setGlobalMessages, addMessageToBottom } =
-    useMessagePersistent();
+    useThreadMessages();
 
   useEffect(() => {
-    if (!user || isMessageTemporary) return;
+    if (!user) return;
 
     if (!hasMounted.current) {
       hasMounted.current = true;
       if (pathname === "/") {
         setMessages([]);
-        setConversationId(null);
+        setThreadId(null);
       }
     } else if (pathname === "/") {
       setMessages([]);
-      setConversationId(null);
+      setThreadId(null);
     }
-  }, [pathname, user, isMessageTemporary]);
+  }, [pathname, user]);
 
   useEffect(() => {
     if (transcript && transcript !== prevTranscriptRef.current) {
@@ -86,7 +82,7 @@ const Home: FC = () => {
 
   const fetchBotResponse = async (
     userMessage: Message,
-    convoId?: string | null
+    threadId?: string | null
   ) => {
     setIsFetchingResponse(true);
 
@@ -110,22 +106,17 @@ const Home: FC = () => {
 
       setMessages((prev) => [...prev, botMessage]);
 
-      if (user && convoId && !isMessageTemporary) {
-        addMessageToBottom(convoId, botMessage);
+      if (user && threadId) {
+        addMessageToBottom(threadId, botMessage);
 
-        const messagesRef = collection(
-          db,
-          "conversations",
-          convoId,
-          "messages"
-        );
+        const messagesRef = collection(db, "threads", threadId, "messages");
         await addDoc(messagesRef, {
           ...botMessage,
           isGenerated: true,
         });
 
         await setDoc(
-          doc(db, "conversations", convoId),
+          doc(db, "threads", threadId),
           {
             updatedAt: serverTimestamp(),
             lastMessage: {
@@ -152,9 +143,12 @@ const Home: FC = () => {
     }
   };
 
-  const fetchBotSetTitle = async (userMessageText: string, convoId: string) => {
+  const fetchBotSetTitle = async (
+    userMessageText: string,
+    threadId: string
+  ) => {
     try {
-      const titlePrompt = `Generate a short, descriptive title/subject/topic (only the title, no extra words) for the following chat message: "${userMessageText}"`;
+      const titlePrompt = `Generate a short, descriptive title/subject/topic (only the title, no extra words) for the following thread message: "${userMessageText}"`;
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -166,7 +160,7 @@ const Home: FC = () => {
 
       if (newTitle) {
         await setDoc(
-          doc(db, "conversations", convoId),
+          doc(db, "threads", threadId),
           { title: newTitle },
           { merge: true }
         );
@@ -192,15 +186,15 @@ const Home: FC = () => {
     setInput("home", "");
     setMessages((prev) => [...prev, userMessage]);
 
-    if (user && !isMessageTemporary) {
+    if (user) {
       try {
-        let convoId = conversationId;
+        let id = threadId;
 
-        if (!convoId) {
-          convoId = uuidv4();
-          setConversationId(convoId);
+        if (!id) {
+          id = uuidv4();
+          setThreadId(id);
 
-          await setDoc(doc(db, "conversations", convoId), {
+          await setDoc(doc(db, "threads", id), {
             userId: user.uid,
             title: "",
             createdAt: serverTimestamp(),
@@ -213,14 +207,12 @@ const Home: FC = () => {
             },
           });
 
-          fetchBotSetTitle(userMessage.text, convoId);
-
-          window.history.pushState({}, "", `/chat/${convoId}`);
-
-          setGlobalMessages(convoId, [userMessage]);
+          fetchBotSetTitle(userMessage.text, id);
+          window.history.pushState({}, "", `/thread/${id}`);
+          setGlobalMessages(id, [userMessage]);
         } else {
           await setDoc(
-            doc(db, "conversations", convoId),
+            doc(db, "threads", id),
             {
               updatedAt: serverTimestamp(),
               lastMessage: {
@@ -232,22 +224,17 @@ const Home: FC = () => {
             { merge: true }
           );
 
-          addMessageToBottom(convoId, userMessage);
+          addMessageToBottom(id, userMessage);
         }
 
-        const messagesRef = collection(
-          db,
-          "conversations",
-          convoId,
-          "messages"
-        );
+        const messagesRef = collection(db, "threads", id, "messages");
 
         await addDoc(messagesRef, {
           ...userMessage,
           createdAt: now,
         });
 
-        fetchBotResponse(userMessage, convoId);
+        fetchBotResponse(userMessage, id);
       } catch (error) {
         console.error("Error sending message:", error);
       }
@@ -257,7 +244,7 @@ const Home: FC = () => {
   };
 
   return (
-    <ConversationLayout>
+    <ThreadLayout>
       <MessagesLayout
         messages={messages}
         isFetchingResponse={isFetchingResponse}
@@ -275,7 +262,7 @@ const Home: FC = () => {
         isFetchingResponse={isFetchingResponse}
         sendMessage={sendMessage}
       />
-    </ConversationLayout>
+    </ThreadLayout>
   );
 };
 

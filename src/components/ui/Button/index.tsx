@@ -1,7 +1,7 @@
 "use client";
 
 import { Button as ButtonInput, ButtonProps } from "@chakra-ui/react";
-import useTheme from "@/stores/useTheme";
+import { useTheme } from "@/stores";
 
 const Button = (props: ButtonProps) => {
   const { colorScheme } = useTheme();

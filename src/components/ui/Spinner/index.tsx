@@ -5,7 +5,7 @@ import {
   SpinnerProps,
   useColorMode,
 } from "@chakra-ui/react";
-import useTheme from "@/stores/useTheme";
+import { useTheme } from "@/stores";
 
 const Spinner = (props: SpinnerProps) => {
   const { colorScheme } = useTheme();

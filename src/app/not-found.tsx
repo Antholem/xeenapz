@@ -5,7 +5,7 @@ import { Flex, Text } from "@chakra-ui/react";
 import { IoAdd } from "react-icons/io5";
 import { useRouter } from "next/navigation";
 import { MessageInput } from "@/components";
-import { ConversationLayout } from "@/layouts";
+import { ThreadLayout } from "@/layouts";
 import { Button } from "@themed-components";
 
 const NotFound = () => {
@@ -13,7 +13,7 @@ const NotFound = () => {
   const noop = () => {};
 
   return (
-    <ConversationLayout>
+    <ThreadLayout>
       <Flex
         flex="1"
         direction="column"
@@ -44,7 +44,7 @@ const NotFound = () => {
         isFetchingResponse={false}
         sendMessage={noop}
       />
-    </ConversationLayout>
+    </ThreadLayout>
   );
 };
 

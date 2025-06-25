@@ -1,4 +1,4 @@
-import ConversationLayout from "@/layouts/Conversation/layout";
+import ThreadLayout from "@/layouts/Thread/layout";
 import MessagesLayout from "@/layouts/Messages/layout";
 
-export { ConversationLayout, MessagesLayout };
+export { ThreadLayout, MessagesLayout };
