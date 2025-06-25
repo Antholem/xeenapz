@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, FC } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { useSpeechRecognition } from "react-speech-recognition";
-import { speakText } from "@/lib/textToSpeech";
 import {
   db,
   collection,
@@ -11,7 +10,8 @@ import {
   setDoc,
   addDoc,
   serverTimestamp,
-} from "@/lib/firebase";
+  speakText,
+} from "@/lib";
 import { useAuth, useThreadInput, useThreadMessages } from "@/stores";
 import { MessageInput } from "@/components";
 import { ThreadLayout, MessagesLayout } from "@/layouts";

@@ -15,7 +15,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import { Box, Text, Flex, ButtonProps, useColorMode } from "@chakra-ui/react";
 import { formatNormalTime } from "@/utils/dateFormatter";
-import { db, collection, query, orderBy, getDocs, where } from "@/lib/firebase";
+import { db, collection, query, orderBy, getDocs, where } from "@/lib";
 import {
   DocumentData,
   limit,

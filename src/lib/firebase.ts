@@ -23,6 +23,10 @@ import {
   onSnapshot,
   type DocumentReference,
   type Unsubscribe,
+  DocumentData,
+  endBefore,
+  limit,
+  QueryDocumentSnapshot,
 } from "firebase/firestore";
 
 // Firebase config
@@ -63,6 +67,10 @@ export {
   orderBy,
   onSnapshot,
   serverTimestamp,
+  endBefore,
+  limit,
+  QueryDocumentSnapshot,
+  type DocumentData,
   type User,
   type Unsubscribe,
   type DocumentReference,

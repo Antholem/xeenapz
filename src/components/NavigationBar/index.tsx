@@ -23,7 +23,7 @@ import {
   onSnapshot,
   Unsubscribe,
   signInWithPopup,
-} from "@/lib/firebase";
+} from "@/lib";
 import { useAuth } from "@/stores";
 import { SideBar } from "@/components";
 import { Button } from "@themed-components";

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, FC } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useSpeechRecognition } from "react-speech-recognition";
-import { speakText } from "@/lib/textToSpeech";
+import { speakText } from "@/lib";
 import { MessageInput } from "@/components";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
 import { useAuth, useThreadInput } from "@/stores";

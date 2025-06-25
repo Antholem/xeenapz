@@ -49,7 +49,7 @@ import {
   signOut,
   User,
   getDocs,
-} from "@/lib/firebase";
+} from "@/lib";
 import { ThreadList } from "@/components";
 import { useAuth } from "@/stores";
 import { Input, Spinner } from "@themed-components";

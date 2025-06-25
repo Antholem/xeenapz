@@ -20,7 +20,7 @@ import {
   SkeletonCircle,
   Divider,
 } from "@chakra-ui/react";
-import { User } from "@/lib/firebase";
+import { User } from "@/lib";
 import { MessageItem } from "@/components";
 import { formatDateGrouping } from "@/utils/dateFormatter";
 import { useAuth } from "@/stores";

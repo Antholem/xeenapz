@@ -16,16 +16,14 @@ import {
   getDocs,
   DocumentReference,
   onSnapshot,
-} from "@/lib/firebase";
-import {
   DocumentData,
   endBefore,
   limit,
   QueryDocumentSnapshot,
-} from "firebase/firestore";
+  speakText,
+} from "@/lib";
 import { MessagesLayout, ThreadLayout } from "@/layouts";
 import { MessageInput } from "@/components";
-import { speakText } from "@/lib/textToSpeech";
 
 interface ThreadParams {
   [key: string]: string | undefined;

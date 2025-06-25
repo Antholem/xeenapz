@@ -15,7 +15,7 @@ import {
   IconButton,
   BoxProps,
 } from "@chakra-ui/react";
-import { User } from "@/lib/firebase";
+import { User } from "@/lib";
 import { useTheme } from "@/stores";
 
 interface Message {

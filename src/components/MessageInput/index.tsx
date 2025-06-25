@@ -2,7 +2,7 @@ import { FC, Fragment } from "react";
 import { Flex, IconButton, Card, Tooltip, Divider } from "@chakra-ui/react";
 import { IoStop } from "react-icons/io5";
 import { IoIosMic, IoMdSend } from "react-icons/io";
-import { SpeechRecognize } from "@/lib/speechRecognition";
+import { SpeechRecognize } from "@/lib";
 import { Input } from "@themed-components";
 
 interface MessageInputProps {
