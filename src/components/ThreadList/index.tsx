@@ -13,7 +13,20 @@ import {
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
-import { Box, Text, Flex, useColorMode, ButtonProps } from "@chakra-ui/react";
+import {
+  Box,
+  Text,
+  Flex,
+  useColorMode,
+  ButtonProps,
+  IconButton,
+  Menu,
+  MenuButton,
+  Portal,
+  MenuList,
+  MenuItem,
+  Icon,
+} from "@chakra-ui/react";
 import { db, collection, query, orderBy, getDocs, where } from "@/lib";
 import {
   DocumentData,
@@ -24,6 +37,7 @@ import {
 import { formatNormalTime } from "@/utils/dateFormatter";
 import { Progress, Button } from "@themed-components";
 import { useAuth, useTheme } from "@/stores";
+import { HiOutlineDotsVertical, HiPencil, HiTrash } from "react-icons/hi";
 
 interface Thread {
   id: string;
@@ -55,49 +69,127 @@ const ThreadItem: FC<ThreadItemProps> = ({
   isMessageMatch = false,
   highlightedText,
   isSearchActive,
-  ...props
 }) => {
   const { colorScheme } = useTheme();
   const { colorMode } = useColorMode();
 
   return (
-    <Button
-      variant={isSearchActive ? "ghost" : isActive ? "solid" : "ghost"}
-      w="100%"
-      justifyContent="flex-start"
-      onClick={() => onThreadClick(thread.id)}
-      cursor="pointer"
-      textAlign="left"
-      py={isMessageMatch ? 6 : 0}
-      color={
-        !isSearchActive && isActive
+    <Flex
+      role="group"
+      direction="row"
+      justify="center"
+      align="center"
+      borderRadius="md"
+      transition="background 0.15s ease"
+      my={0.7}
+      bgColor={
+        isActive
           ? colorMode === "dark"
-            ? `${colorScheme}.300`
-            : `${colorScheme}.500`
-          : "inherit"
+            ? "gray.800"
+            : "gray.100"
+          : "transparent"
       }
-      colorScheme="gray"
-      {...props}
+      _hover={{
+        bgColor:
+          colorMode === "dark"
+            ? isActive
+              ? "gray.700"
+              : "gray.800"
+            : isActive
+            ? "gray.200"
+            : "gray.100",
+      }}
+      _active={{
+        bgColor:
+          colorMode === "dark"
+            ? isActive
+              ? "gray.600"
+              : "gray.700"
+            : isActive
+            ? "gray.300"
+            : "gray.200",
+      }}
+      _focus={{
+        bgColor:
+          colorMode === "dark"
+            ? "gray.700"
+            : isActive
+            ? "gray.200"
+            : "gray.100",
+      }}
     >
-      <Box
-        as="span"
+      <Button
+        variant="ghost"
         w="100%"
-        overflow="hidden"
-        textOverflow="ellipsis"
-        whiteSpace="nowrap"
-        display="block"
+        justifyContent="flex-start"
+        onClick={() => onThreadClick(thread.id)}
+        cursor="pointer"
         textAlign="left"
+        py={isMessageMatch ? 6 : 0}
+        color={
+          !isSearchActive && isActive
+            ? colorMode === "dark"
+              ? `${colorScheme}.300`
+              : `${colorScheme}.500`
+            : "inherit"
+        }
+        colorScheme="gray"
+        _hover={{ bgColor: "transparent" }}
+        _active={{ bgColor: "transparent" }}
+        _focus={{ bgColor: "transparent" }}
       >
-        {isMessageMatch ? (
-          <Fragment>
-            {thread.title}
-            {highlightedText}
-          </Fragment>
-        ) : (
-          thread.title
-        )}
-      </Box>
-    </Button>
+        <Box
+          as="span"
+          w="100%"
+          overflow="hidden"
+          textOverflow="ellipsis"
+          whiteSpace="nowrap"
+          display="block"
+          textAlign="left"
+        >
+          {isMessageMatch ? (
+            <Fragment>
+              {thread.title}
+              {highlightedText}
+            </Fragment>
+          ) : (
+            thread.title
+          )}
+        </Box>
+      </Button>
+
+      {!isSearchActive && (
+        <Menu placement="right-start">
+          <MenuButton
+            as={IconButton}
+            variant="ghost"
+            colorScheme="gray"
+            py={isMessageMatch ? 6 : 0}
+            aria-label="More Options"
+            icon={<HiOutlineDotsVertical />}
+            opacity={0}
+            _groupHover={{ opacity: 1 }}
+            _hover={{ bgColor: "transparent" }}
+            _active={{ bgColor: "transparent" }}
+            _focus={{ bgColor: "transparent" }}
+            transition="opacity 0.2s ease"
+          />
+          <Portal>
+            <MenuList fontSize="md" color="primaryText">
+              <MenuItem icon={<Icon as={HiPencil} boxSize={4} />}>
+                Rename
+              </MenuItem>
+              <MenuItem
+                icon={<Icon as={HiTrash} boxSize={4} color="red.500" />}
+                color="red.500"
+              >
+                Delete
+              </MenuItem>
+            </MenuList>
+          </Portal>
+        </Menu>
+      )}
+    </Flex>
   );
 };
 
@@ -415,7 +507,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
 
                 const { thread, isMessageMatch, highlightedText } = item.data;
                 return (
-                  <Box mx={3}>
+                  <Box mx={3} pt={isFirst ? 3 : 0} pb={isLast ? 3 : 0}>
                     <ThreadItem
                       thread={thread}
                       isActive={pathname === `/thread/${thread.id}`}
