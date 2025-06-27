@@ -66,6 +66,7 @@ interface ThreadItemProps extends Omit<ButtonProps, "onClick"> {
   thread: Thread;
   isActive: boolean;
   onThreadClick: (id: string) => void;
+  onDeleteThread?: (id: string) => void;
   isMessageMatch?: boolean;
   highlightedText?: ReactNode;
   isSearchActive: boolean;
@@ -75,6 +76,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
   thread,
   isActive,
   onThreadClick,
+  onDeleteThread,
   isMessageMatch = false,
   highlightedText,
   isSearchActive,
@@ -85,17 +87,35 @@ const ThreadItem: FC<ThreadItemProps> = ({
   const pathname = usePathname();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
-    if (pathname === `/thread/${thread.id}`) {
-      router.push("/");
-      // setTimeout(async () => {
-      //   await deleteDoc(doc(db, "threads", thread.id));
-      // }, 300);
-    } else {
-      // await deleteDoc(doc(db, "threads", thread.id));
+    try {
+      setIsDeleting(true);
+
+      const threadRef = doc(db, "threads", thread.id);
+      const messagesRef = collection(db, "threads", thread.id, "messages");
+
+      const messagesSnap = await getDocs(messagesRef);
+      const deletePromises = messagesSnap.docs.map((msgDoc) =>
+        deleteDoc(msgDoc.ref)
+      );
+      await Promise.all(deletePromises);
+
+      await deleteDoc(threadRef);
+
+      if (pathname === `/thread/${thread.id}`) {
+        router.push("/");
+      }
+
+      if (onDeleteThread) onDeleteThread(thread.id);
+
+      onClose();
+    } catch (err) {
+      console.error("Failed to delete thread:", err);
+    } finally {
+      setIsDeleting(false);
     }
-    onClose();
   };
 
   return (
@@ -246,7 +266,14 @@ const ThreadItem: FC<ThreadItemProps> = ({
               >
                 Cancel
               </Button>
-              <Button colorScheme="red" onClick={handleDelete} ml={3}>
+              <Button
+                colorScheme="red"
+                onClick={handleDelete}
+                ml={3}
+                isLoading={isDeleting}
+                loadingText="Deleting"
+                spinnerPlacement="start"
+              >
                 Delete
               </Button>
             </AlertDialogFooter>
@@ -298,7 +325,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
   const { colorScheme } = useTheme();
 
   useEffect(() => {
-    if (!isSearchActive && threads.length > 0) {
+    if (!isSearchActive) {
       setLoadedThreads(threads);
     }
   }, [threads, isSearchActive]);
@@ -581,6 +608,11 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
                       isSearchActive={isSearchActive}
                       mt={isFirst ? 3 : 0.4}
                       mb={isLast ? 3 : 0.4}
+                      onDeleteThread={(deletedId) => {
+                        setLoadedThreads((prev) =>
+                          prev.filter((t) => t.id !== deletedId)
+                        );
+                      }}
                     />
                   </Box>
                 );
