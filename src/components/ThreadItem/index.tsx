@@ -119,18 +119,16 @@ const ThreadItem: FC<ThreadItemProps> = ({
       my={0.7}
       transition="background 0.15s ease"
       bgColor={
-        !isSearchActive
-          ? isActive
-            ? colorMode === "dark"
-              ? "gray.800"
-              : "gray.100"
-            : "transparent"
+        isActive && !isSearchActive
+          ? colorMode === "dark"
+            ? "gray.800"
+            : "gray.100"
           : "transparent"
       }
       _hover={{
         bgColor:
           colorMode === "dark"
-            ? isActive
+            ? isActive && !isSearchActive
               ? "gray.700"
               : "gray.800"
             : isActive
@@ -140,7 +138,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
       _active={{
         bgColor:
           colorMode === "dark"
-            ? isActive
+            ? isActive && !isSearchActive
               ? "gray.600"
               : "gray.700"
             : isActive
@@ -151,7 +149,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
         bgColor:
           colorMode === "dark"
             ? "gray.700"
-            : isActive
+            : isActive && !isSearchActive
             ? "gray.200"
             : "gray.100",
       }}
@@ -263,6 +261,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
                   Cancel
                 </Button>
                 <Button
+                  variant="ghost"
                   colorScheme="red"
                   onClick={handleDelete}
                   isLoading={isDeleting}

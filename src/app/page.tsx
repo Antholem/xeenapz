@@ -201,6 +201,7 @@ const Home: FC = () => {
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
             isArchived: false,
+            isDeleted: false,
             isPinned: false,
             lastMessage: {
               text: userMessage.text,

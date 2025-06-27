@@ -31,6 +31,8 @@ interface Thread {
   title?: string;
   messages?: Message[];
   updatedAt?: { seconds: number; nanoseconds: number } | null;
+  isDeleted: boolean;
+  isArchived: boolean;
 }
 
 interface Message {
@@ -244,6 +246,10 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
   const hasResults = titleResults.length > 0 || messageResults.length > 0;
 
   const allItems: VirtuosoItem[] = useMemo(() => {
+    const filteredThreads = loadedThreads.filter(
+      (t) => !t.isArchived && t.isDeleted !== true
+    );
+
     if (isSearchActive && hasResults) {
       const items: VirtuosoItem[] = [];
 
@@ -274,7 +280,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
       return items;
     }
 
-    return loadedThreads
+    return filteredThreads
       .filter((t) => t.title)
       .map((thread) => ({
         type: "message",
@@ -339,7 +345,12 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
 
                 if (item.type === "title") {
                   return (
-                    <Box pt={item.data === "Titles" ? 3 : 5} pr={2} pl={7}>
+                    <Box
+                      mt={item.data === "Titles" ? 3 : 5}
+                      mr={2}
+                      ml={7}
+                      mb={2}
+                    >
                       <Text
                         fontSize="sm"
                         textAlign="left"
