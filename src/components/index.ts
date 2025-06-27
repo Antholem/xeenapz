@@ -3,6 +3,7 @@ import SideBar from "@/components/SideBar";
 import MessageInput from "@/components/MessageInput";
 import MessageItem from "@/components/MessageItem";
 import ThreadList from "@/components/ThreadList";
+import ThreadItem from "@/components/ThreadItem";
 import AuthInitializer from "@/components/AuthInitializer";
 
 export {
@@ -11,5 +12,6 @@ export {
   MessageInput,
   MessageItem,
   ThreadList,
+  ThreadItem,
   AuthInitializer,
 };
