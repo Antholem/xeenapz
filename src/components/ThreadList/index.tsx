@@ -26,9 +26,18 @@ import {
   MenuList,
   MenuItem,
   Icon,
+  useDisclosure,
+  AlertDialog,
+  AlertDialogOverlay,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogBody,
+  AlertDialogFooter,
 } from "@chakra-ui/react";
 import { db, collection, query, orderBy, getDocs, where } from "@/lib";
 import {
+  deleteDoc,
+  doc,
   DocumentData,
   limit,
   QueryDocumentSnapshot,
@@ -70,8 +79,24 @@ const ThreadItem: FC<ThreadItemProps> = ({
   highlightedText,
   isSearchActive,
 }) => {
-  const { colorScheme } = useTheme();
   const { colorMode } = useColorMode();
+  const { colorScheme } = useTheme();
+  const router = useRouter();
+  const pathname = usePathname();
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const cancelRef = useRef<HTMLButtonElement>(null);
+
+  const handleDelete = async () => {
+    if (pathname === `/thread/${thread.id}`) {
+      router.push("/");
+      // setTimeout(async () => {
+      //   await deleteDoc(doc(db, "threads", thread.id));
+      // }, 300);
+    } else {
+      // await deleteDoc(doc(db, "threads", thread.id));
+    }
+    onClose();
+  };
 
   return (
     <Flex
@@ -159,7 +184,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
       </Button>
 
       {!isSearchActive && (
-        <Menu placement="right-start">
+        <Menu>
           <MenuButton
             as={IconButton}
             variant="ghost"
@@ -173,6 +198,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
             _active={{ bgColor: "transparent" }}
             _focus={{ bgColor: "transparent" }}
             transition="opacity 0.2s ease"
+            onClick={(e) => e.stopPropagation()}
           />
           <Portal>
             <MenuList fontSize="md" color="primaryText">
@@ -182,6 +208,10 @@ const ThreadItem: FC<ThreadItemProps> = ({
               <MenuItem
                 icon={<Icon as={HiTrash} boxSize={4} color="red.500" />}
                 color="red.500"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpen();
+                }}
               >
                 Delete
               </MenuItem>
@@ -189,6 +219,40 @@ const ThreadItem: FC<ThreadItemProps> = ({
           </Portal>
         </Menu>
       )}
+
+      <AlertDialog
+        isOpen={isOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={onClose}
+        isCentered
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent bgColor="mutedSurface">
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Delete Thread
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
+              Are you sure you want to delete this thread? This action cannot be
+              undone.
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button
+                variant="ghost"
+                colorScheme="gray"
+                onClick={onClose}
+                ref={cancelRef}
+              >
+                Cancel
+              </Button>
+              <Button colorScheme="red" onClick={handleDelete} ml={3}>
+                Delete
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
     </Flex>
   );
 };
