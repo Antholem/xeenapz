@@ -21,10 +21,11 @@ import {
   AlertDialogHeader,
   AlertDialogBody,
   AlertDialogFooter,
+  HStack,
 } from "@chakra-ui/react";
 import { HiOutlineDotsVertical, HiPencil, HiTrash } from "react-icons/hi";
-import { db, collection, getDocs, deleteDoc, doc } from "@/lib";
-import { Button } from "@themed-components";
+import { db, collection, getDocs, deleteDoc, doc, updateDoc } from "@/lib";
+import { Button, Input } from "@themed-components";
 import { useTheme } from "@/stores";
 
 interface Thread {
@@ -55,9 +56,19 @@ const ThreadItem: FC<ThreadItemProps> = ({
   const { colorScheme } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
+
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const {
+    isOpen: isRenameOpen,
+    onOpen: onRenameOpen,
+    onClose: onRenameClose,
+  } = useDisclosure();
+
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const renameCancelRef = useRef<HTMLButtonElement>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [newTitle, setNewTitle] = useState(thread.title || "");
 
   const handleDelete = async () => {
     try {
@@ -70,16 +81,32 @@ const ThreadItem: FC<ThreadItemProps> = ({
         messagesSnap.docs.map((msgDoc) => deleteDoc(msgDoc.ref))
       );
 
+      if (pathname === `/thread/${thread.id}`) {
+        router.push("/");
+      }
+
       await deleteDoc(threadRef);
-
-      if (pathname === `/thread/${thread.id}`) router.push("/");
       onDeleteThread?.(thread.id);
-
       onClose();
     } catch (err) {
       console.error("Failed to delete thread:", err);
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleRename = async () => {
+    if (!newTitle.trim()) return;
+
+    try {
+      setIsRenaming(true);
+      const threadRef = doc(db, "threads", thread.id);
+      await updateDoc(threadRef, { title: newTitle.trim() });
+      onRenameClose();
+    } catch (err) {
+      console.error("Failed to rename thread:", err);
+    } finally {
+      setIsRenaming(false);
     }
   };
 
@@ -92,10 +119,12 @@ const ThreadItem: FC<ThreadItemProps> = ({
       my={0.7}
       transition="background 0.15s ease"
       bgColor={
-        isActive
-          ? colorMode === "dark"
-            ? "gray.800"
-            : "gray.100"
+        !isSearchActive
+          ? isActive
+            ? colorMode === "dark"
+              ? "gray.800"
+              : "gray.100"
+            : "transparent"
           : "transparent"
       }
       _hover={{
@@ -108,8 +137,24 @@ const ThreadItem: FC<ThreadItemProps> = ({
             ? "gray.200"
             : "gray.100",
       }}
-      _active={{ bgColor: colorMode === "dark" ? "gray.700" : "gray.200" }}
-      _focus={{ bgColor: colorMode === "dark" ? "gray.700" : "gray.100" }}
+      _active={{
+        bgColor:
+          colorMode === "dark"
+            ? isActive
+              ? "gray.600"
+              : "gray.700"
+            : isActive
+            ? "gray.300"
+            : "gray.200",
+      }}
+      _focus={{
+        bgColor:
+          colorMode === "dark"
+            ? "gray.700"
+            : isActive
+            ? "gray.200"
+            : "gray.100",
+      }}
     >
       <Button
         variant="ghost"
@@ -167,7 +212,14 @@ const ThreadItem: FC<ThreadItemProps> = ({
           />
           <Portal>
             <MenuList fontSize="md">
-              <MenuItem icon={<Icon as={HiPencil} boxSize={4} />}>
+              <MenuItem
+                icon={<Icon as={HiPencil} boxSize={4} />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setNewTitle(thread.title || "");
+                  onRenameOpen();
+                }}
+              >
                 Rename
               </MenuItem>
               <MenuItem
@@ -201,23 +253,70 @@ const ThreadItem: FC<ThreadItemProps> = ({
               undone.
             </AlertDialogBody>
             <AlertDialogFooter>
-              <Button
-                variant="ghost"
-                colorScheme="gray"
-                onClick={onClose}
-                ref={cancelRef}
-              >
-                Cancel
-              </Button>
-              <Button
-                colorScheme="red"
-                onClick={handleDelete}
-                ml={3}
-                isLoading={isDeleting}
-                loadingText="Deleting"
-              >
-                Delete
-              </Button>
+              <HStack gap={4}>
+                <Button
+                  variant="ghost"
+                  colorScheme="gray"
+                  onClick={onClose}
+                  ref={cancelRef}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  colorScheme="red"
+                  onClick={handleDelete}
+                  isLoading={isDeleting}
+                  loadingText="Deleting"
+                >
+                  Delete
+                </Button>
+              </HStack>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
+
+      <AlertDialog
+        isOpen={isRenameOpen}
+        leastDestructiveRef={renameCancelRef}
+        onClose={onRenameClose}
+        isCentered
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent bgColor="mutedSurface">
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Rename Thread
+            </AlertDialogHeader>
+            <AlertDialogBody>
+              <Input
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                placeholder="Enter new thread title"
+                autoFocus
+              />
+            </AlertDialogBody>
+            <AlertDialogFooter>
+              <HStack gap={2}>
+                <Button
+                  variant="ghost"
+                  colorScheme="gray"
+                  ref={renameCancelRef}
+                  onClick={onRenameClose}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleRename}
+                  isLoading={isRenaming}
+                  isDisabled={
+                    isRenaming ||
+                    !newTitle.trim() ||
+                    newTitle.trim() === (thread.title || "")
+                  }
+                >
+                  Rename
+                </Button>
+              </HStack>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialogOverlay>
