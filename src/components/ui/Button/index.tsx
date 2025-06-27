@@ -9,4 +9,6 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
   return <ChakraButton ref={ref} colorScheme={colorScheme} {...props} />;
 });
 
+Button.displayName = "Button";
+
 export default Button;
