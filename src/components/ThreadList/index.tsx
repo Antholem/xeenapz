@@ -13,6 +13,7 @@ import {
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
+import type { Thread, Message } from "@/types/thread";
 import { Box, Text, Flex } from "@chakra-ui/react";
 import { db, collection, query, orderBy, getDocs, where } from "@/lib";
 import {
@@ -25,22 +26,6 @@ import { formatNormalTime } from "@/utils/dateFormatter";
 import { Progress } from "@themed-components";
 import { useAuth, useTheme } from "@/stores";
 import { ThreadItem } from "@/components";
-
-interface Thread {
-  id: string;
-  title?: string;
-  messages?: Message[];
-  updatedAt?: { seconds: number; nanoseconds: number } | null;
-  isDeleted: boolean;
-  isArchived: boolean;
-}
-
-interface Message {
-  id: string;
-  text: string;
-  createdAt?: string;
-  timestamp?: { seconds: number; nanoseconds: number };
-}
 
 interface SearchResultItem {
   thread: Thread;
