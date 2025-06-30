@@ -24,55 +24,61 @@ const Toast = () => {
   const chakraToast = useToast();
 
   useEffect(() => {
-    if (toast) {
-      chakraToast({
-        duration: toast.duration || 5000,
-        position: "bottom-left",
-        isClosable: true,
-        render: ({ onClose }) => {
-          const IconComponent = getIcon(toast.status || "info");
-          const iconColor = getIconColor(toast.status || "info");
+    if (!toast) return;
 
-          return (
-            <Flex
-              bg="contrastBackground"
-              color="contrastText"
-              borderRadius="md"
-              p={3}
-              boxShadow="md"
-              align="flex-start"
-              justify="space-between"
-              gap={3}
-              minW="300px"
-              maxW="350px"
-            >
-              <Icon as={IconComponent} boxSize={5} mt={0.5} color={iconColor} />
-              <Box flex="1">
-                <Text>{toast.title}</Text>
-                {toast.description && (
-                  <Text fontSize="sm" mt={1}>
-                    {toast.description}
-                  </Text>
-                )}
-              </Box>
-              <IconButton
-                aria-label="Close"
-                color="gray"
-                size="xs"
-                variant="ghost"
-                icon={<CloseIcon boxSize={3} />}
-                onClick={onClose}
-                _hover={{ bgColor: "transparent" }}
-                _active={{ bgColor: "transparent" }}
-                _focus={{ bgColor: "transparent" }}
-              />
-            </Flex>
-          );
-        },
-      });
+    chakraToast({
+      duration: toast.duration || 5000,
+      position: "bottom-left",
+      isClosable: true,
+      render: ({ onClose }) => {
+        const IconComponent = getIcon(toast.status || "info");
 
-      clearToast();
-    }
+        const iconColor = {
+          success: useColorModeValue("green.300", "green.500"),
+          error: useColorModeValue("red.300", "red.500"),
+          warning: useColorModeValue("yellow.300", "yellow.500"),
+          info: useColorModeValue("blue.300", "blue.500"),
+        }[toast.status || "info"];
+
+        return (
+          <Flex
+            bg="contrastBackground"
+            color="contrastText"
+            borderRadius="md"
+            p={3}
+            boxShadow="md"
+            align="flex-start"
+            justify="space-between"
+            gap={3}
+            minW="300px"
+            maxW="350px"
+          >
+            <Icon as={IconComponent} boxSize={5} mt={0.5} color={iconColor} />
+            <Box flex="1">
+              <Text>{toast.title}</Text>
+              {toast.description && (
+                <Text fontSize="sm" mt={1}>
+                  {toast.description}
+                </Text>
+              )}
+            </Box>
+            <IconButton
+              aria-label="Close"
+              color="gray"
+              size="xs"
+              variant="ghost"
+              icon={<CloseIcon boxSize={3} />}
+              onClick={onClose}
+              _hover={{ bgColor: "transparent" }}
+              _active={{ bgColor: "transparent" }}
+              _focus={{ bgColor: "transparent" }}
+            />
+          </Flex>
+        );
+      },
+    });
+
+    clearToast();
   }, [toast, chakraToast, clearToast]);
 
   return null;
@@ -89,20 +95,6 @@ const getIcon = (status: string) => {
     case "info":
     default:
       return InfoIcon;
-  }
-};
-
-const getIconColor = (status: string) => {
-  switch (status) {
-    case "success":
-      return useColorModeValue("green.300", "green.500");
-    case "error":
-      return useColorModeValue("red.300", "red.500");
-    case "warning":
-      return useColorModeValue("yellow.300", "yellow.500");
-    case "info":
-    default:
-      return useColorModeValue("blue.300", "blue.500");
   }
 };
 
