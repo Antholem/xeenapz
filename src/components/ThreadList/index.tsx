@@ -13,7 +13,8 @@ import {
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
-import { Box, Text, Flex, useColorMode, ButtonProps } from "@chakra-ui/react";
+import type { Thread, Message } from "@/types/thread";
+import { Box, Text, Flex } from "@chakra-ui/react";
 import { db, collection, query, orderBy, getDocs, where } from "@/lib";
 import {
   DocumentData,
@@ -22,84 +23,9 @@ import {
   startAfter,
 } from "firebase/firestore";
 import { formatNormalTime } from "@/utils/dateFormatter";
-import { Progress, Button } from "@themed-components";
+import { Progress } from "@themed-components";
 import { useAuth, useTheme } from "@/stores";
-
-interface Thread {
-  id: string;
-  title?: string;
-  messages?: Message[];
-  updatedAt?: { seconds: number; nanoseconds: number } | null;
-}
-
-interface Message {
-  id: string;
-  text: string;
-  createdAt?: string;
-  timestamp?: { seconds: number; nanoseconds: number };
-}
-
-interface ThreadItemProps extends Omit<ButtonProps, "onClick"> {
-  thread: Thread;
-  isActive: boolean;
-  onThreadClick: (id: string) => void;
-  isMessageMatch?: boolean;
-  highlightedText?: ReactNode;
-  isSearchActive: boolean;
-}
-
-const ThreadItem: FC<ThreadItemProps> = ({
-  thread,
-  isActive,
-  onThreadClick,
-  isMessageMatch = false,
-  highlightedText,
-  isSearchActive,
-  ...props
-}) => {
-  const { colorScheme } = useTheme();
-  const { colorMode } = useColorMode();
-
-  return (
-    <Button
-      variant={isSearchActive ? "ghost" : isActive ? "solid" : "ghost"}
-      w="100%"
-      justifyContent="flex-start"
-      onClick={() => onThreadClick(thread.id)}
-      cursor="pointer"
-      textAlign="left"
-      py={isMessageMatch ? 6 : 0}
-      color={
-        !isSearchActive && isActive
-          ? colorMode === "dark"
-            ? `${colorScheme}.300`
-            : `${colorScheme}.500`
-          : "inherit"
-      }
-      colorScheme="gray"
-      {...props}
-    >
-      <Box
-        as="span"
-        w="100%"
-        overflow="hidden"
-        textOverflow="ellipsis"
-        whiteSpace="nowrap"
-        display="block"
-        textAlign="left"
-      >
-        {isMessageMatch ? (
-          <Fragment>
-            {thread.title}
-            {highlightedText}
-          </Fragment>
-        ) : (
-          thread.title
-        )}
-      </Box>
-    </Button>
-  );
-};
+import { ThreadItem } from "@/components";
 
 interface SearchResultItem {
   thread: Thread;
@@ -142,7 +68,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
   const { colorScheme } = useTheme();
 
   useEffect(() => {
-    if (!isSearchActive && threads.length > 0) {
+    if (!isSearchActive) {
       setLoadedThreads(threads);
     }
   }, [threads, isSearchActive]);
@@ -305,6 +231,10 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
   const hasResults = titleResults.length > 0 || messageResults.length > 0;
 
   const allItems: VirtuosoItem[] = useMemo(() => {
+    const filteredThreads = loadedThreads.filter(
+      (t) => !t.isArchived && t.isDeleted !== true
+    );
+
     if (isSearchActive && hasResults) {
       const items: VirtuosoItem[] = [];
 
@@ -335,7 +265,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
       return items;
     }
 
-    return loadedThreads
+    return filteredThreads
       .filter((t) => t.title)
       .map((thread) => ({
         type: "message",
@@ -400,7 +330,12 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
 
                 if (item.type === "title") {
                   return (
-                    <Box pt={item.data === "Titles" ? 3 : 5} pr={2} pl={7}>
+                    <Box
+                      mt={item.data === "Titles" ? 3 : 5}
+                      mr={2}
+                      ml={7}
+                      mb={2}
+                    >
                       <Text
                         fontSize="sm"
                         textAlign="left"
@@ -415,7 +350,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
 
                 const { thread, isMessageMatch, highlightedText } = item.data;
                 return (
-                  <Box mx={3}>
+                  <Box mx={3} pt={isFirst ? 3 : 0} pb={isLast ? 3 : 0}>
                     <ThreadItem
                       thread={thread}
                       isActive={pathname === `/thread/${thread.id}`}
@@ -425,6 +360,11 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
                       isSearchActive={isSearchActive}
                       mt={isFirst ? 3 : 0.4}
                       mb={isLast ? 3 : 0.4}
+                      onDeleteThread={(deletedId) => {
+                        setLoadedThreads((prev) =>
+                          prev.filter((t) => t.id !== deletedId)
+                        );
+                      }}
                     />
                   </Box>
                 );

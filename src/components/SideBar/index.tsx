@@ -11,6 +11,7 @@ import {
   MouseEvent as ReactMouseEvent,
 } from "react";
 import { useRouter } from "next/navigation";
+import type { Thread, Message } from "@/types/thread";
 import {
   Avatar,
   Box,
@@ -60,22 +61,6 @@ interface SideBarProps {
   isOpen?: boolean;
   placement?: "left" | "right" | "top" | "bottom";
   onClose?: () => void;
-}
-
-interface Thread {
-  id: string;
-  userId: string;
-  updatedAt?: { seconds: number; nanoseconds: number } | null;
-  title?: string;
-  messages?: Message[];
-  [key: string]: any;
-}
-
-interface Message {
-  id: string;
-  senderId: string;
-  text: string;
-  timestamp: { seconds: number; nanoseconds: number };
 }
 
 interface MenuItemsProps {
