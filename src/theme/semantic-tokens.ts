@@ -12,6 +12,10 @@ export const SEMANTIC_COLORS = {
       default: "#E5E5E5",
       _dark: "#262626",
     },
+    contrastBackground: {
+      default: "#000000",
+      _dark: "#ffffff",
+    },
     primaryText: {
       default: "#1F2937",
       _dark: "#E5E5E5",
@@ -23,6 +27,10 @@ export const SEMANTIC_COLORS = {
     tertiaryText: {
       default: "#A3A3A3",
       _dark: "#D4D4D4",
+    },
+    contrastText: {
+      default: "#ffffff",
+      _dark: "#000000",
     },
     border: {
       default: "#cacaca",

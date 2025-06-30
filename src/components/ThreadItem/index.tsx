@@ -268,7 +268,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
         isCentered
       >
         <AlertDialogOverlay>
-          <AlertDialogContent bgColor="mutedSurface">
+          <AlertDialogContent bgColor="surface">
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
               Delete Thread
             </AlertDialogHeader>
@@ -308,13 +308,14 @@ const ThreadItem: FC<ThreadItemProps> = ({
         isCentered
       >
         <AlertDialogOverlay>
-          <AlertDialogContent bgColor="mutedSurface">
+          <AlertDialogContent bgColor="surface">
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
               Rename Thread
             </AlertDialogHeader>
             <AlertDialogBody>
               <Input
                 value={newTitle}
+                variant="filled"
                 onChange={(e) => setNewTitle(e.target.value)}
                 placeholder="Enter new thread title"
                 autoFocus
