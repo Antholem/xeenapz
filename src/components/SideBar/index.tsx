@@ -53,7 +53,7 @@ import {
   where,
 } from "@/lib";
 import { Spinner, Input } from "@themed-components";
-import { useAuth } from "@/stores";
+import { useAuth, useToastStore } from "@/stores";
 import { ThreadList } from "@/components";
 
 interface SideBarProps {
@@ -154,6 +154,8 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
   const [sidebarWidth, setSidebarWidth] = useState(350);
   const [isResizing, setIsResizing] = useState(false);
 
+  const { showToast } = useToastStore();
+
   const startResizing = (e: ReactMouseEvent) => {
     setIsResizing(true);
     e.preventDefault();
@@ -231,6 +233,22 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
       await signInWithPopup(auth!, provider);
       router.push("/");
       setAuthLoading(true);
+
+      showToast({
+        id: `login-${Date.now()}`,
+        title: `Welcome, ${auth?.currentUser?.displayName || "User"}!`,
+        status: "success",
+      });
+    } catch (error) {
+      showToast({
+        id: `login-error-${Date.now()}`,
+        title: "Login failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred.",
+        status: "error",
+      });
     } finally {
       setTimeout(() => setAuthLoading(false), 2000);
     }
@@ -241,7 +259,24 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
       await signOut(auth!);
       router.push("/");
       setAuthLoading(true);
+
+      showToast({
+        id: `logout-${Date.now()}`,
+        title: "Signed out successfully",
+        status: "info",
+      });
+
       if (onClose) onClose();
+    } catch (error) {
+      showToast({
+        id: `logout-error-${Date.now()}`,
+        title: "Logout failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred.",
+        status: "error",
+      });
     } finally {
       setTimeout(() => setAuthLoading(false), 2000);
     }
