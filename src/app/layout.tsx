@@ -6,6 +6,7 @@ import { ReactNode } from "react";
 import { Box, Flex } from "@chakra-ui/react";
 import Providers from "@/app/providers";
 import { NavigationBar, SideBar, AuthInitializer } from "@/components";
+import { Toast } from "@themed-components";
 
 const RootLayout = ({ children }: { children: ReactNode }) => {
   return (
@@ -31,6 +32,7 @@ const RootLayout = ({ children }: { children: ReactNode }) => {
               </Flex>
             </Flex>
           </AuthInitializer>
+          <Toast />
         </Providers>
       </body>
     </html>
