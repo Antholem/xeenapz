@@ -118,6 +118,10 @@ const Home: FC = () => {
         await setDoc(
           doc(db, "threads", threadId),
           {
+            isArchived: false,
+            isDeleted: false,
+            isPinned: false,
+            createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
             lastMessage: {
               text: botMessage.text,
@@ -197,17 +201,6 @@ const Home: FC = () => {
 
           await setDoc(doc(db, "threads", id), {
             userId: user.uid,
-            title: "",
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-            isArchived: false,
-            isDeleted: false,
-            isPinned: false,
-            lastMessage: {
-              text: userMessage.text,
-              sender: userMessage.sender,
-              createdAt: now,
-            },
           });
 
           fetchBotSetTitle(userMessage.text, id);
