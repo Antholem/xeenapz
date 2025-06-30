@@ -26,7 +26,7 @@ import {
 import { HiOutlineDotsVertical, HiPencil, HiTrash } from "react-icons/hi";
 import { db, collection, getDocs, deleteDoc, doc, updateDoc } from "@/lib";
 import { Button, Input } from "@themed-components";
-import { useTheme } from "@/stores";
+import { useTheme, useToastStore } from "@/stores";
 
 interface Thread {
   id: string;
@@ -54,6 +54,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
 }) => {
   const { colorMode } = useColorMode();
   const { colorScheme } = useTheme();
+  const { showToast } = useToastStore();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -83,13 +84,26 @@ const ThreadItem: FC<ThreadItemProps> = ({
 
       if (pathname === `/thread/${thread.id}`) {
         router.push("/");
+        await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
       await deleteDoc(threadRef);
       onDeleteThread?.(thread.id);
       onClose();
+
+      showToast({
+        id: `delete-${thread.id}`,
+        title: "Thread deleted",
+        status: "success",
+      });
     } catch (err) {
       console.error("Failed to delete thread:", err);
+      showToast({
+        id: `delete-error-${thread.id}`,
+        title: "Failed to delete",
+        description: "An error occurred while deleting the thread.",
+        status: "error",
+      });
     } finally {
       setIsDeleting(false);
     }
@@ -103,8 +117,19 @@ const ThreadItem: FC<ThreadItemProps> = ({
       const threadRef = doc(db, "threads", thread.id);
       await updateDoc(threadRef, { title: newTitle.trim() });
       onRenameClose();
+      showToast({
+        id: `rename-${thread.id}`,
+        title: "Thread renamed",
+        status: "success",
+      });
     } catch (err) {
       console.error("Failed to rename thread:", err);
+      showToast({
+        id: `rename-error-${thread.id}`,
+        title: "Rename failed",
+        description: "Unable to rename this thread.",
+        status: "error",
+      });
     } finally {
       setIsRenaming(false);
     }
@@ -305,6 +330,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
                   Cancel
                 </Button>
                 <Button
+                  variant="ghost"
                   onClick={handleRename}
                   isLoading={isRenaming}
                   isDisabled={

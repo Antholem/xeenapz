@@ -31,6 +31,7 @@ import {
 import { useAuth } from "@/stores";
 import { SideBar } from "@/components";
 import { Button } from "@themed-components";
+import { useToastStore } from "@/stores";
 
 interface Thread {
   title?: string;
@@ -42,6 +43,7 @@ const NavigationBar: FC = () => {
   const { user, loading: authLoading } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
+  const { showToast } = useToastStore();
 
   const [currentThreadTitle, setCurrentThreadTitle] = useState<string | null>(
     null
@@ -96,8 +98,22 @@ const NavigationBar: FC = () => {
   const handleGoogleSignIn = async () => {
     try {
       await signInWithPopup(auth!, provider);
-    } catch (error) {
+      showToast({
+        id: `login-${Date.now()}`,
+        title: `Welcome, ${auth?.currentUser?.displayName || "User"}!`,
+        status: "success",
+      });
+    } catch (error: any) {
       console.error("Google Sign-In Error:", error);
+      showToast({
+        id: `login-error-${Date.now()}`,
+        title: "Login failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred.",
+        status: "error",
+      });
     }
   };
 
