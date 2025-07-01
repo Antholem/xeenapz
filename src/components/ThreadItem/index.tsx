@@ -180,28 +180,6 @@ const ThreadItem: FC<ThreadItemProps> = ({
     }
   };
 
-  const menuIcon = thread.isPinned ? (
-    <Box position="relative">
-      <Icon
-        as={RiPushpinFill}
-        boxSize={4}
-        position="absolute"
-        opacity={1}
-        transition="opacity 0.2s"
-        _groupHover={{ opacity: 0 }}
-      />
-      <Icon
-        as={HiOutlineDotsVertical}
-        boxSize={4}
-        opacity={0}
-        transition="opacity 0.2s"
-        _groupHover={{ opacity: 1 }}
-      />
-    </Box>
-  ) : (
-    <HiOutlineDotsVertical />
-  );
-
   return (
     <Flex
       role="group"
@@ -294,7 +272,30 @@ const ThreadItem: FC<ThreadItemProps> = ({
               colorScheme="gray"
               size="sm"
               py={isMessageMatch ? 6 : 0}
-              icon={<HiOutlineDotsVertical />}
+              position="relative"
+              icon={
+                thread.isPinned ? (
+                  <>
+                    <Icon
+                      as={RiPushpinFill}
+                      boxSize={4}
+                      position="absolute"
+                      opacity={1}
+                      transition="opacity 0.2s"
+                      _groupHover={{ opacity: 0 }}
+                    />
+                    <Icon
+                      as={HiOutlineDotsVertical}
+                      boxSize={4}
+                      opacity={0}
+                      transition="opacity 0.2s"
+                      _groupHover={{ opacity: 1 }}
+                    />
+                  </>
+                ) : (
+                  <HiOutlineDotsVertical />
+                )
+              }
               opacity={thread.isPinned ? 1 : 0}
               _groupHover={{ opacity: 1 }}
               isRound
