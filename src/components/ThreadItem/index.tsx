@@ -294,7 +294,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
               colorScheme="gray"
               size="sm"
               py={isMessageMatch ? 6 : 0}
-              icon={menuIcon}
+              icon={<HiOutlineDotsVertical />}
               opacity={thread.isPinned ? 1 : 0}
               _groupHover={{ opacity: 1 }}
               isRound
