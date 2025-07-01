@@ -180,8 +180,8 @@ const ThreadItem: FC<ThreadItemProps> = ({
     }
   };
 
-  const MenuIcon = thread.isPinned ? (
-    <Box position="relative" w="1em" h="1em">
+  const menuIcon = thread.isPinned ? (
+    <Box position="relative">
       <Icon
         as={RiPushpinFill}
         boxSize={4}
@@ -199,7 +199,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
       />
     </Box>
   ) : (
-    <Icon as={HiOutlineDotsVertical} boxSize={4} />
+    <HiOutlineDotsVertical />
   );
 
   return (
@@ -294,7 +294,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
               colorScheme="gray"
               size="sm"
               py={isMessageMatch ? 6 : 0}
-              icon={MenuIcon}
+              icon={menuIcon}
               opacity={thread.isPinned ? 1 : 0}
               _groupHover={{ opacity: 1 }}
               isRound
