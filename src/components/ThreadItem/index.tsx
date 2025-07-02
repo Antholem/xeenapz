@@ -272,9 +272,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
               colorScheme="gray"
               size="sm"
               py={isMessageMatch ? 6 : 0}
-              icon={
-                thread.isPinned ? <RiPushpinFill /> : <HiOutlineDotsVertical />
-              }
+              icon={<HiOutlineDotsVertical />}
               opacity={0}
               _groupHover={{ opacity: 1 }}
               isRound
