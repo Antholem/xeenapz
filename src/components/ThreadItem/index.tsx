@@ -25,10 +25,10 @@ import {
   Tooltip,
 } from "@chakra-ui/react";
 import { HiOutlineDotsVertical, HiPencil, HiTrash } from "react-icons/hi";
-import { db, collection, getDocs, deleteDoc, doc, updateDoc } from "@/lib";
+import { RiPushpinFill, RiUnpinFill } from "react-icons/ri";
 import { Button, Input } from "@themed-components";
 import { useTheme, useToastStore } from "@/stores";
-import { RiPushpinFill, RiUnpinFill } from "react-icons/ri";
+import { db, collection, getDocs, deleteDoc, doc, updateDoc } from "@/lib";
 
 interface Thread {
   id: string;
@@ -61,32 +61,33 @@ const ThreadItem: FC<ThreadItemProps> = ({
   const router = useRouter();
   const pathname = usePathname();
 
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const {
-    isOpen: isRenameOpen,
-    onOpen: onRenameOpen,
-    onClose: onRenameClose,
-  } = useDisclosure();
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const renameCancelRef = useRef<HTMLButtonElement>(null);
 
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [newTitle, setNewTitle] = useState(thread.title || "");
   const [isHover, setIsHover] = useState(false);
+
   const {
     isOpen: isMenuOpen,
     onOpen: onMenuOpen,
     onClose: onMenuClose,
   } = useDisclosure();
 
-  const cancelRef = useRef<HTMLButtonElement>(null);
-  const renameCancelRef = useRef<HTMLButtonElement>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isRenaming, setIsRenaming] = useState(false);
-  const [newTitle, setNewTitle] = useState(thread.title || "");
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  const {
+    isOpen: isRenameOpen,
+    onOpen: onRenameOpen,
+    onClose: onRenameClose,
+  } = useDisclosure();
 
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
       const threadRef = doc(db, "threads", thread.id);
       const messagesRef = collection(db, "threads", thread.id, "messages");
-
       const messagesSnap = await getDocs(messagesRef);
       await Promise.all(
         messagesSnap.docs.map((msgDoc) => deleteDoc(msgDoc.ref))
@@ -271,6 +272,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
           )}
         </Box>
       </Button>
+
       {!isSearchActive && (
         <Menu onOpen={onMenuOpen} onClose={onMenuClose}>
           <Tooltip label="More Options">
@@ -300,7 +302,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
           </Tooltip>
 
           <Portal>
-            <MenuList fontSize="md" onMouseEnter={() => setIsHover(false)}>
+            <MenuList fontSize="md">
               <MenuItem
                 icon={
                   <Icon
@@ -315,7 +317,6 @@ const ThreadItem: FC<ThreadItemProps> = ({
               >
                 {thread.isPinned ? "Unpin" : "Pin"}
               </MenuItem>
-
               <MenuItem
                 icon={<Icon as={HiPencil} boxSize={4} />}
                 onClick={(e) => {
@@ -326,7 +327,6 @@ const ThreadItem: FC<ThreadItemProps> = ({
               >
                 Rename
               </MenuItem>
-
               <MenuItem
                 icon={<Icon as={HiTrash} boxSize={4} color="red.500" />}
                 color="red.500"
@@ -406,7 +406,6 @@ const ThreadItem: FC<ThreadItemProps> = ({
                 <Button
                   variant="ghost"
                   colorScheme="gray"
-                  ref={renameCancelRef}
                   onClick={onRenameClose}
                 >
                   Cancel
