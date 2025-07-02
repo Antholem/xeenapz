@@ -28,10 +28,12 @@ import { HiOutlineDotsVertical, HiPencil, HiTrash } from "react-icons/hi";
 import { db, collection, getDocs, deleteDoc, doc, updateDoc } from "@/lib";
 import { Button, Input } from "@themed-components";
 import { useTheme, useToastStore } from "@/stores";
+import { RiPushpinFill } from "react-icons/ri";
 
 interface Thread {
   id: string;
   title?: string;
+  isPinned?: boolean;
 }
 
 interface ThreadItemProps extends Omit<ButtonProps, "onClick"> {
@@ -229,7 +231,9 @@ const ThreadItem: FC<ThreadItemProps> = ({
               colorScheme="gray"
               size="sm"
               py={isMessageMatch ? 6 : 0}
-              icon={<HiOutlineDotsVertical />}
+              icon={
+                thread.isPinned ? <RiPushpinFill /> : <HiOutlineDotsVertical />
+              }
               opacity={0}
               _groupHover={{ opacity: 1 }}
               isRound
