@@ -296,12 +296,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
           <Portal>
             <MenuList fontSize="md">
               <MenuItem
-                icon={
-                  <Icon
-                    as={thread.isPinned ? RiUnpinFill : RiPushpinFill}
-                    boxSize={4}
-                  />
-                }
+                icon={<Icon as={RiPushpinFill} boxSize={4} />}
                 onClick={(e) => {
                   e.stopPropagation();
                   thread.isPinned ? handleUnpin() : handlePin();
