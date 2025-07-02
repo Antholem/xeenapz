@@ -180,8 +180,6 @@ const ThreadItem: FC<ThreadItemProps> = ({
     }
   };
 
-  const [isHover, setIsHover] = useState(false);
-
   return (
     <Flex
       role="group"
@@ -226,8 +224,6 @@ const ThreadItem: FC<ThreadItemProps> = ({
             ? "gray.200"
             : "gray.100",
       }}
-      onMouseEnter={() => setIsHover(true)}
-      onMouseLeave={() => setIsHover(false)}
     >
       <Button
         variant="ghost"
@@ -276,7 +272,9 @@ const ThreadItem: FC<ThreadItemProps> = ({
               colorScheme="gray"
               size="sm"
               py={isMessageMatch ? 6 : 0}
-              icon={thread.isPinned ? <HiPencil /> : <HiOutlineDotsVertical />}
+              icon={
+                thread.isPinned ? <RiPushpinFill /> : <HiOutlineDotsVertical />
+              }
               opacity={0}
               _groupHover={{ opacity: 1 }}
               isRound
