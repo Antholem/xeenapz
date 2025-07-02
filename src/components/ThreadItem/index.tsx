@@ -28,12 +28,10 @@ import { HiOutlineDotsVertical, HiPencil, HiTrash } from "react-icons/hi";
 import { db, collection, getDocs, deleteDoc, doc, updateDoc } from "@/lib";
 import { Button, Input } from "@themed-components";
 import { useTheme, useToastStore } from "@/stores";
-import { RiPushpinFill } from "react-icons/ri";
 
 interface Thread {
   id: string;
   title?: string;
-  isPinned?: boolean;
 }
 
 interface ThreadItemProps extends Omit<ButtonProps, "onClick"> {
@@ -138,48 +136,6 @@ const ThreadItem: FC<ThreadItemProps> = ({
     }
   };
 
-  const handlePin = async () => {
-    try {
-      const threadRef = doc(db, "threads", thread.id);
-      await updateDoc(threadRef, { isPinned: true });
-
-      showToast({
-        id: `pin-${thread.id}`,
-        title: "Thread pinned",
-        status: "success",
-      });
-    } catch (err) {
-      console.error("Failed to pin thread:", err);
-      showToast({
-        id: `pin-error-${thread.id}`,
-        title: "Failed to pin thread",
-        description: "An error occurred while pinning.",
-        status: "error",
-      });
-    }
-  };
-
-  const handleUnpin = async () => {
-    try {
-      const threadRef = doc(db, "threads", thread.id);
-      await updateDoc(threadRef, { isPinned: false });
-
-      showToast({
-        id: `unpin-${thread.id}`,
-        title: "Thread unpinned",
-        status: "info",
-      });
-    } catch (err) {
-      console.error("Failed to unpin thread:", err);
-      showToast({
-        id: `unpin-error-${thread.id}`,
-        title: "Failed to unpin thread",
-        description: "An error occurred while unpinning.",
-        status: "error",
-      });
-    }
-  };
-
   return (
     <Flex
       role="group"
@@ -262,6 +218,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
           )}
         </Box>
       </Button>
+
       {!isSearchActive && (
         <Menu>
           <Tooltip label="More Options">
@@ -281,15 +238,6 @@ const ThreadItem: FC<ThreadItemProps> = ({
           </Tooltip>
           <Portal>
             <MenuList fontSize="md">
-              <MenuItem
-                icon={<Icon as={RiPushpinFill} boxSize={4} />}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  thread.isPinned ? handleUnpin() : handlePin();
-                }}
-              >
-                {thread.isPinned ? "Unpin" : "Pin"}
-              </MenuItem>
               <MenuItem
                 icon={<Icon as={HiPencil} boxSize={4} />}
                 onClick={(e) => {
