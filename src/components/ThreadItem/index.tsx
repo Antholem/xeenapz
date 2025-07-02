@@ -296,6 +296,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
           <Portal>
             <MenuList fontSize="md">
               <MenuItem
+                display={thread.isPinned ? "none" : "block"}
                 icon={<Icon as={RiPushpinFill} boxSize={4} />}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -305,6 +306,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
                 Pin
               </MenuItem>
               <MenuItem
+                display={!thread.isPinned ? "none" : "block"}
                 icon={<Icon as={RiUnpinFill} boxSize={4} />}
                 onClick={(e) => {
                   e.stopPropagation();
