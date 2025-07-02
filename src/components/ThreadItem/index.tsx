@@ -289,6 +289,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
               }
               opacity={thread.isPinned ? 1 : 0}
               _groupHover={{ opacity: 1 }}
+              transition="opacity 0.2s ease-in-out"
               isRound
               onClick={(e) => e.stopPropagation()}
             />
