@@ -180,6 +180,8 @@ const ThreadItem: FC<ThreadItemProps> = ({
     }
   };
 
+  const [isHover, setIsHover] = useState(false);
+
   return (
     <Flex
       role="group"
@@ -224,6 +226,8 @@ const ThreadItem: FC<ThreadItemProps> = ({
             ? "gray.200"
             : "gray.100",
       }}
+      onMouseEnter={() => setIsHover(true)}
+      onMouseLeave={() => setIsHover(false)}
     >
       <Button
         variant="ghost"
@@ -272,26 +276,13 @@ const ThreadItem: FC<ThreadItemProps> = ({
               colorScheme="gray"
               size="sm"
               py={isMessageMatch ? 6 : 0}
-              position="relative"
               icon={
                 thread.isPinned ? (
-                  <>
-                    <Icon
-                      as={RiPushpinFill}
-                      boxSize={4}
-                      position="absolute"
-                      opacity={1}
-                      transition="opacity 0.2s"
-                      _groupHover={{ opacity: 0 }}
-                    />
-                    <Icon
-                      as={HiOutlineDotsVertical}
-                      boxSize={4}
-                      opacity={0}
-                      transition="opacity 0.2s"
-                      _groupHover={{ opacity: 1 }}
-                    />
-                  </>
+                  isHover ? (
+                    <HiOutlineDotsVertical />
+                  ) : (
+                    <RiPushpinFill />
+                  )
                 ) : (
                   <HiOutlineDotsVertical />
                 )
@@ -303,7 +294,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
             />
           </Tooltip>
           <Portal>
-            <MenuList fontSize="md">
+            <MenuList fontSize="md" onMouseEnter={() => setIsHover(false)}>
               <MenuItem
                 icon={
                   <Icon
@@ -350,7 +341,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
         isCentered
       >
         <AlertDialogOverlay>
-          <AlertDialogContent bgColor="surface">
+          <AlertDialogContent bgColor="mutedSurface">
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
               Delete Thread
             </AlertDialogHeader>
