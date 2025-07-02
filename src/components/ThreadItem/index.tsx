@@ -68,6 +68,13 @@ const ThreadItem: FC<ThreadItemProps> = ({
     onClose: onRenameClose,
   } = useDisclosure();
 
+  const [isHover, setIsHover] = useState(false);
+  const {
+    isOpen: isMenuOpen,
+    onOpen: onMenuOpen,
+    onClose: onMenuClose,
+  } = useDisclosure();
+
   const cancelRef = useRef<HTMLButtonElement>(null);
   const renameCancelRef = useRef<HTMLButtonElement>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -180,8 +187,6 @@ const ThreadItem: FC<ThreadItemProps> = ({
     }
   };
 
-  const [isHover, setIsHover] = useState(false);
-
   return (
     <Flex
       role="group"
@@ -279,12 +284,12 @@ const ThreadItem: FC<ThreadItemProps> = ({
               icon={
                 thread.isPinned ? (
                   isHover ? (
-                    <HiOutlineDotsVertical />
+                    <Icon as={HiOutlineDotsVertical} />
                   ) : (
-                    <RiPushpinFill />
+                    <Icon as={RiPushpinFill} />
                   )
                 ) : (
-                  <HiOutlineDotsVertical />
+                  <Icon as={HiOutlineDotsVertical} />
                 )
               }
               opacity={thread.isPinned ? 1 : 0}
