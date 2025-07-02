@@ -272,7 +272,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
         </Box>
       </Button>
       {!isSearchActive && (
-        <Menu>
+        <Menu onOpen={onMenuOpen} onClose={onMenuClose}>
           <Tooltip label="More Options">
             <MenuButton
               as={IconButton}
@@ -284,20 +284,21 @@ const ThreadItem: FC<ThreadItemProps> = ({
               icon={
                 thread.isPinned ? (
                   isHover ? (
-                    <Icon as={HiOutlineDotsVertical} />
+                    <HiOutlineDotsVertical />
                   ) : (
-                    <Icon as={RiPushpinFill} />
+                    <RiPushpinFill />
                   )
                 ) : (
-                  <Icon as={HiOutlineDotsVertical} />
+                  <HiOutlineDotsVertical />
                 )
               }
-              opacity={thread.isPinned ? 1 : 0}
+              opacity={isMenuOpen || isHover ? 1 : thread.isPinned ? 1 : 0}
               _groupHover={{ opacity: 1 }}
               isRound
               onClick={(e) => e.stopPropagation()}
             />
           </Tooltip>
+
           <Portal>
             <MenuList fontSize="md" onMouseEnter={() => setIsHover(false)}>
               <MenuItem
@@ -314,6 +315,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
               >
                 {thread.isPinned ? "Unpin" : "Pin"}
               </MenuItem>
+
               <MenuItem
                 icon={<Icon as={HiPencil} boxSize={4} />}
                 onClick={(e) => {
@@ -324,6 +326,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
               >
                 Rename
               </MenuItem>
+
               <MenuItem
                 icon={<Icon as={HiTrash} boxSize={4} color="red.500" />}
                 color="red.500"
