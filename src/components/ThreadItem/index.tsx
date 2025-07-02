@@ -307,7 +307,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
                   thread.isPinned ? handleUnpin() : handlePin();
                 }}
               >
-                {thread.isPinned ? "Unpin" : "Pin"}
+                Pin
               </MenuItem>
               <MenuItem
                 icon={<Icon as={HiPencil} boxSize={4} />}
