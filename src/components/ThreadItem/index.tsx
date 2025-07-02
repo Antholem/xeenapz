@@ -25,10 +25,10 @@ import {
   Tooltip,
 } from "@chakra-ui/react";
 import { HiOutlineDotsVertical, HiPencil, HiTrash } from "react-icons/hi";
-import { RiPushpinFill, RiUnpinFill } from "react-icons/ri";
+import { db, collection, getDocs, deleteDoc, doc, updateDoc } from "@/lib";
 import { Button, Input } from "@themed-components";
 import { useTheme, useToastStore } from "@/stores";
-import { db, collection, getDocs, deleteDoc, doc, updateDoc } from "@/lib";
+import { RiPushpinFill } from "react-icons/ri";
 
 interface Thread {
   id: string;
@@ -61,33 +61,25 @@ const ThreadItem: FC<ThreadItemProps> = ({
   const router = useRouter();
   const pathname = usePathname();
 
-  const cancelRef = useRef<HTMLButtonElement>(null);
-  const renameCancelRef = useRef<HTMLButtonElement>(null);
-
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isRenaming, setIsRenaming] = useState(false);
-  const [newTitle, setNewTitle] = useState(thread.title || "");
-  const [isHover, setIsHover] = useState(false);
-
-  const {
-    isOpen: isMenuOpen,
-    onOpen: onMenuOpen,
-    onClose: onMenuClose,
-  } = useDisclosure();
-
   const { isOpen, onOpen, onClose } = useDisclosure();
-
   const {
     isOpen: isRenameOpen,
     onOpen: onRenameOpen,
     onClose: onRenameClose,
   } = useDisclosure();
 
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const renameCancelRef = useRef<HTMLButtonElement>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [newTitle, setNewTitle] = useState(thread.title || "");
+
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
       const threadRef = doc(db, "threads", thread.id);
       const messagesRef = collection(db, "threads", thread.id, "messages");
+
       const messagesSnap = await getDocs(messagesRef);
       await Promise.all(
         messagesSnap.docs.map((msgDoc) => deleteDoc(msgDoc.ref))
@@ -188,6 +180,8 @@ const ThreadItem: FC<ThreadItemProps> = ({
     }
   };
 
+  const [isHover, setIsHover] = useState(false);
+
   return (
     <Flex
       role="group"
@@ -272,9 +266,8 @@ const ThreadItem: FC<ThreadItemProps> = ({
           )}
         </Box>
       </Button>
-
       {!isSearchActive && (
-        <Menu onOpen={onMenuOpen} onClose={onMenuClose}>
+        <Menu>
           <Tooltip label="More Options">
             <MenuButton
               as={IconButton}
@@ -283,33 +276,17 @@ const ThreadItem: FC<ThreadItemProps> = ({
               colorScheme="gray"
               size="sm"
               py={isMessageMatch ? 6 : 0}
-              icon={
-                thread.isPinned ? (
-                  isHover ? (
-                    <HiOutlineDotsVertical />
-                  ) : (
-                    <RiPushpinFill />
-                  )
-                ) : (
-                  <HiOutlineDotsVertical />
-                )
-              }
-              opacity={isMenuOpen || isHover ? 1 : thread.isPinned ? 1 : 0}
+              icon={thread.isPinned ? <HiPencil /> : <HiOutlineDotsVertical />}
+              opacity={0}
               _groupHover={{ opacity: 1 }}
               isRound
               onClick={(e) => e.stopPropagation()}
             />
           </Tooltip>
-
           <Portal>
             <MenuList fontSize="md">
               <MenuItem
-                icon={
-                  <Icon
-                    as={thread.isPinned ? RiUnpinFill : RiPushpinFill}
-                    boxSize={4}
-                  />
-                }
+                icon={<Icon as={RiPushpinFill} boxSize={4} />}
                 onClick={(e) => {
                   e.stopPropagation();
                   thread.isPinned ? handleUnpin() : handlePin();
@@ -406,6 +383,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
                 <Button
                   variant="ghost"
                   colorScheme="gray"
+                  ref={renameCancelRef}
                   onClick={onRenameClose}
                 >
                   Cancel
