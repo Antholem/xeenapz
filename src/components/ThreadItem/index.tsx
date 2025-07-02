@@ -246,7 +246,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
                   <HiOutlineDotsVertical />
                 )
               }
-              opacity={0}
+              opacity={thread.isPinned ? 1 : 0}
               _groupHover={{ opacity: 1 }}
               isRound
               onClick={(e) => e.stopPropagation()}
