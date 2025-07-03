@@ -117,6 +117,8 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
         ? query(
             ref,
             where("userId", "==", user?.uid),
+            where("isDeleted", "==", false),
+            where("isArchived", "==", false),
             orderBy("isPinned", "desc"),
             orderBy("updatedAt", "desc"),
             startAfter(lastDoc),
@@ -125,6 +127,8 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
         : query(
             ref,
             where("userId", "==", user?.uid),
+            where("isDeleted", "==", false),
+            where("isArchived", "==", false),
             orderBy("isPinned", "desc"),
             orderBy("updatedAt", "desc"),
             limit(20)

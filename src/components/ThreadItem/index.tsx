@@ -23,12 +23,13 @@ import {
   AlertDialogFooter,
   HStack,
   Tooltip,
+  MenuDivider,
 } from "@chakra-ui/react";
 import { HiOutlineDotsVertical, HiPencil, HiTrash } from "react-icons/hi";
 import { db, collection, getDocs, deleteDoc, doc, updateDoc } from "@/lib";
 import { Button, Input } from "@themed-components";
 import { useTheme, useToastStore } from "@/stores";
-import { RiPushpinFill, RiUnpinFill } from "react-icons/ri";
+import { RiArchive2Fill, RiPushpinFill, RiUnpinFill } from "react-icons/ri";
 
 interface Thread {
   id: string;
@@ -168,7 +169,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
       showToast({
         id: `unpin-${thread.id}`,
         title: "Thread unpinned",
-        status: "info",
+        status: "success",
       });
     } catch (err) {
       console.error("Failed to unpin thread:", err);
@@ -176,6 +177,27 @@ const ThreadItem: FC<ThreadItemProps> = ({
         id: `unpin-error-${thread.id}`,
         title: "Failed to unpin thread",
         description: "An error occurred while unpinning.",
+        status: "error",
+      });
+    }
+  };
+
+  const handleArchive = async () => {
+    try {
+      const threadRef = doc(db, "threads", thread.id);
+      await updateDoc(threadRef, { isArchived: true });
+
+      showToast({
+        id: `archive-${thread.id}`,
+        title: "Thread archived",
+        status: "success",
+      });
+    } catch (err) {
+      console.error("Failed to archive thread:", err);
+      showToast({
+        id: `archive-error-${thread.id}`,
+        title: "Failed to archive thread",
+        description: "An error occurred while archiving.",
         status: "error",
       });
     }
@@ -316,6 +338,18 @@ const ThreadItem: FC<ThreadItemProps> = ({
                   Unpin
                 </MenuItem>
               )}
+              <MenuItem
+                icon={<Icon as={RiArchive2Fill} boxSize={4} />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleArchive();
+                }}
+              >
+                Archive
+              </MenuItem>
+
+              <MenuDivider />
+
               <MenuItem
                 icon={<Icon as={HiPencil} boxSize={4} />}
                 onClick={(e) => {
