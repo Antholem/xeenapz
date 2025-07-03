@@ -208,6 +208,9 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
     const q = query(
       collection(db, "threads"),
       where("userId", "==", user.uid),
+      where("isDeleted", "==", false),
+      where("isArchived", "==", false),
+      orderBy("isPinned", "desc"),
       orderBy("updatedAt", "desc")
     );
 

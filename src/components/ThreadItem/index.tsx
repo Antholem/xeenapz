@@ -22,15 +22,19 @@ import {
   AlertDialogBody,
   AlertDialogFooter,
   HStack,
+  Tooltip,
+  MenuDivider,
 } from "@chakra-ui/react";
 import { HiOutlineDotsVertical, HiPencil, HiTrash } from "react-icons/hi";
 import { db, collection, getDocs, deleteDoc, doc, updateDoc } from "@/lib";
 import { Button, Input } from "@themed-components";
 import { useTheme, useToastStore } from "@/stores";
+import { RiArchive2Fill, RiPushpinFill, RiUnpinFill } from "react-icons/ri";
 
 interface Thread {
   id: string;
   title?: string;
+  isPinned?: boolean;
 }
 
 interface ThreadItemProps extends Omit<ButtonProps, "onClick"> {
@@ -70,6 +74,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [newTitle, setNewTitle] = useState(thread.title || "");
+  const [isHover, setIsHover] = useState(false);
 
   const handleDelete = async () => {
     try {
@@ -135,6 +140,69 @@ const ThreadItem: FC<ThreadItemProps> = ({
     }
   };
 
+  const handlePin = async () => {
+    try {
+      const threadRef = doc(db, "threads", thread.id);
+      await updateDoc(threadRef, { isPinned: true });
+
+      showToast({
+        id: `pin-${thread.id}`,
+        title: "Thread pinned",
+        status: "success",
+      });
+    } catch (err) {
+      console.error("Failed to pin thread:", err);
+      showToast({
+        id: `pin-error-${thread.id}`,
+        title: "Failed to pin thread",
+        description: "An error occurred while pinning.",
+        status: "error",
+      });
+    }
+  };
+
+  const handleUnpin = async () => {
+    try {
+      const threadRef = doc(db, "threads", thread.id);
+      await updateDoc(threadRef, { isPinned: false });
+
+      showToast({
+        id: `unpin-${thread.id}`,
+        title: "Thread unpinned",
+        status: "success",
+      });
+    } catch (err) {
+      console.error("Failed to unpin thread:", err);
+      showToast({
+        id: `unpin-error-${thread.id}`,
+        title: "Failed to unpin thread",
+        description: "An error occurred while unpinning.",
+        status: "error",
+      });
+    }
+  };
+
+  const handleArchive = async () => {
+    try {
+      const threadRef = doc(db, "threads", thread.id);
+      await updateDoc(threadRef, { isArchived: true });
+
+      showToast({
+        id: `archive-${thread.id}`,
+        title: "Thread archived",
+        status: "success",
+      });
+    } catch (err) {
+      console.error("Failed to archive thread:", err);
+      showToast({
+        id: `archive-error-${thread.id}`,
+        title: "Failed to archive thread",
+        description: "An error occurred while archiving.",
+        status: "error",
+      });
+    }
+  };
+
   return (
     <Flex
       role="group"
@@ -142,6 +210,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
       align="center"
       borderRadius="md"
       my={0.7}
+      pr={2}
       transition="background 0.15s ease"
       bgColor={
         isActive && !isSearchActive
@@ -178,6 +247,8 @@ const ThreadItem: FC<ThreadItemProps> = ({
             ? "gray.200"
             : "gray.100",
       }}
+      onMouseEnter={() => setIsHover(true)}
+      onMouseLeave={() => setIsHover(false)}
     >
       <Button
         variant="ghost"
@@ -219,22 +290,66 @@ const ThreadItem: FC<ThreadItemProps> = ({
 
       {!isSearchActive && (
         <Menu>
-          <MenuButton
-            as={IconButton}
-            variant="ghost"
-            colorScheme="gray"
-            py={isMessageMatch ? 6 : 0}
-            aria-label="More Options"
-            icon={<HiOutlineDotsVertical />}
-            opacity={0}
-            _groupHover={{ opacity: 1 }}
-            _hover={{ bgColor: "transparent" }}
-            _active={{ bgColor: "transparent" }}
-            _focus={{ bgColor: "transparent" }}
-            onClick={(e) => e.stopPropagation()}
-          />
+          <Tooltip label="More Options">
+            <MenuButton
+              as={IconButton}
+              aria-label="More Options"
+              variant="ghost"
+              colorScheme="gray"
+              size="sm"
+              py={isMessageMatch ? 6 : 0}
+              icon={
+                thread.isPinned ? (
+                  isHover ? (
+                    <HiOutlineDotsVertical />
+                  ) : (
+                    <RiPushpinFill />
+                  )
+                ) : (
+                  <HiOutlineDotsVertical />
+                )
+              }
+              opacity={thread.isPinned ? 1 : 0}
+              _groupHover={{ opacity: 1 }}
+              transition="opacity 0.2s ease-in-out"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </Tooltip>
           <Portal>
             <MenuList fontSize="md">
+              {thread.isPinned ? (
+                <MenuItem
+                  icon={<Icon as={RiPushpinFill} boxSize={4} />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePin();
+                  }}
+                >
+                  Pin
+                </MenuItem>
+              ) : (
+                <MenuItem
+                  icon={<Icon as={RiUnpinFill} boxSize={4} />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleUnpin();
+                  }}
+                >
+                  Unpin
+                </MenuItem>
+              )}
+              <MenuItem
+                icon={<Icon as={RiArchive2Fill} boxSize={4} />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleArchive();
+                }}
+              >
+                Archive
+              </MenuItem>
+
+              <MenuDivider />
+
               <MenuItem
                 icon={<Icon as={HiPencil} boxSize={4} />}
                 onClick={(e) => {
@@ -290,7 +405,6 @@ const ThreadItem: FC<ThreadItemProps> = ({
                   colorScheme="red"
                   onClick={handleDelete}
                   isLoading={isDeleting}
-                  loadingText="Deleting"
                 >
                   Delete
                 </Button>
@@ -307,12 +421,13 @@ const ThreadItem: FC<ThreadItemProps> = ({
         isCentered
       >
         <AlertDialogOverlay>
-          <AlertDialogContent bgColor="mutedSurface">
+          <AlertDialogContent bgColor="surface">
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
               Rename Thread
             </AlertDialogHeader>
             <AlertDialogBody>
               <Input
+                variant="filled"
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 placeholder="Enter new thread title"
