@@ -290,32 +290,32 @@ const ThreadItem: FC<ThreadItemProps> = ({
               opacity={thread.isPinned ? 1 : 0}
               _groupHover={{ opacity: 1 }}
               transition="opacity 0.2s ease-in-out"
-              isRound
               onClick={(e) => e.stopPropagation()}
             />
           </Tooltip>
           <Portal>
             <MenuList fontSize="md">
-              <MenuItem
-                display={thread.isPinned ? "none" : "block"}
-                icon={<Icon as={RiPushpinFill} boxSize={4} />}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handlePin();
-                }}
-              >
-                Pin
-              </MenuItem>
-              <MenuItem
-                display={!thread.isPinned ? "none" : "block"}
-                icon={<Icon as={RiUnpinFill} boxSize={4} />}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleUnpin();
-                }}
-              >
-                Unpin
-              </MenuItem>
+              {thread.isPinned ? (
+                <MenuItem
+                  icon={<Icon as={RiPushpinFill} boxSize={4} />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePin();
+                  }}
+                >
+                  Pin
+                </MenuItem>
+              ) : (
+                <MenuItem
+                  icon={<Icon as={RiUnpinFill} boxSize={4} />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleUnpin();
+                  }}
+                >
+                  Unpin
+                </MenuItem>
+              )}
               <MenuItem
                 icon={<Icon as={HiPencil} boxSize={4} />}
                 onClick={(e) => {
