@@ -317,7 +317,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
           </Tooltip>
           <Portal>
             <MenuList fontSize="md">
-              {thread.isPinned ? (
+              {!thread.isPinned ? (
                 <MenuItem
                   icon={<Icon as={RiPushpinFill} boxSize={4} />}
                   onClick={(e) => {
