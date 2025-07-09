@@ -26,32 +26,23 @@ const TempThread: FC = () => {
   const [isListening, setIsListening] = useState(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
 
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
   const { getInput, setInput } = useThreadInput();
   const input = getInput("home");
 
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
   const prevTranscriptRef = useRef("");
-
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const hasMounted = useRef(false);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/");
-    }
+    if (!loading && !user) router.replace("/");
   }, [user, loading, router]);
 
   useEffect(() => {
     if (!user) return;
-
-    if (!hasMounted.current) {
-      hasMounted.current = true;
-      if (pathname === "/") {
-        setMessages([]);
-      }
-    } else if (pathname === "/") {
-      setMessages([]);
-    }
+    if (pathname === "/") setMessages([]);
   }, [pathname, user]);
 
   useEffect(() => {
@@ -77,21 +68,63 @@ const TempThread: FC = () => {
     };
   }, []);
 
-  const fetchBotResponse = async (userMessage: Message) => {
+  const handleSelectImage = (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    setSelectedImage(file);
+  };
+
+  const handleRemoveImage = () => {
+    setImagePreview(null);
+    setSelectedImage(null);
+  };
+
+  const sendMessage = async () => {
+    if (!input.trim() && !selectedImage) return;
+
+    const now = Date.now();
+    const userMessage: Message = {
+      text: input.trim() || "[Image]",
+      sender: "user",
+      timestamp: now,
+      createdAt: new Date(now).toISOString(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("home", "");
     setIsFetchingResponse(true);
+
     try {
+      let base64Image: string | null = null;
+      if (selectedImage) {
+        const reader = new FileReader();
+        base64Image = await new Promise<string>((resolve) => {
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(selectedImage);
+        });
+      }
+
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({
+          text: input.trim(),
+          image: base64Image,
+        }),
       });
 
       const data = await res.json();
-      const botResponse =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+
+      const botText =
+        data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+        data?.error ||
+        "No response";
 
       const botMessage: Message = {
-        text: botResponse,
+        text: botText,
         sender: "bot",
         timestamp: Date.now(),
         createdAt: new Date().toISOString(),
@@ -99,44 +132,19 @@ const TempThread: FC = () => {
 
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
-      console.error("Error fetching response:", error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          text: "Error fetching response",
-          sender: "bot",
-          timestamp: Date.now(),
-        },
-      ]);
+      console.error("Error:", error);
     } finally {
       setIsFetchingResponse(false);
+      setImagePreview(null);
+      setSelectedImage(null);
     }
   };
-
-  const sendMessage = async () => {
-    if (!input.trim()) return;
-
-    const timestamp = Date.now();
-    const now = new Date().toISOString();
-    const userMessage: Message = {
-      text: input,
-      sender: "user",
-      timestamp: timestamp,
-      createdAt: now,
-    };
-
-    setInput("home", "");
-    setMessages((prev) => [...prev, userMessage]);
-    fetchBotResponse(userMessage);
-  };
-
-  const isBlocked = !user && !loading;
 
   return (
     <ThreadLayout>
       <MessagesLayout
-        messages={isBlocked ? [] : messages}
-        isFetchingResponse={isBlocked ? false : isFetchingResponse}
+        messages={messages}
+        isFetchingResponse={isFetchingResponse}
         user={user}
         speakText={speakText}
         playingMessage={playingMessage}
@@ -145,12 +153,15 @@ const TempThread: FC = () => {
         emptyStateText="Temporary Thread"
       />
       <MessageInput
-        input={isBlocked ? "" : input}
+        input={input}
         setInput={(val) => setInput("home", val)}
-        isListening={isBlocked ? false : isListening}
+        isListening={isListening}
         resetTranscript={resetTranscript}
         isFetchingResponse={isFetchingResponse}
         sendMessage={sendMessage}
+        imagePreview={imagePreview}
+        onSelectImage={handleSelectImage}
+        onRemoveImage={handleRemoveImage}
       />
     </ThreadLayout>
   );
