@@ -189,8 +189,10 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
 
   const fetchMessages = useCallback(
     async (threadId: string): Promise<Message[]> => {
+      if (!user) return [];
+
       const q = query(
-        collection(db, "threads", threadId, "messages"),
+        collection(db, "users", user.uid, "threads", threadId, "messages"),
         orderBy("timestamp", "asc")
       );
       const snapshot = await getDocs(q);
@@ -198,7 +200,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
         (doc) => ({ id: doc.id, ...doc.data() } as Message)
       );
     },
-    []
+    [user]
   );
 
   useEffect(() => {
@@ -206,8 +208,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
 
     setLoading(true);
     const q = query(
-      collection(db, "threads"),
-      where("userId", "==", user.uid),
+      collection(db, "users", user.uid, "threads"),
       where("isDeleted", "==", false),
       where("isArchived", "==", false),
       orderBy("isPinned", "desc"),

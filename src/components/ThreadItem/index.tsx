@@ -28,7 +28,7 @@ import {
 import { HiOutlineDotsVertical, HiPencil, HiTrash } from "react-icons/hi";
 import { db, collection, getDocs, deleteDoc, doc, updateDoc } from "@/lib";
 import { Button, Input } from "@themed-components";
-import { useTheme, useToastStore } from "@/stores";
+import { useAuth, useTheme, useToastStore } from "@/stores";
 import { RiArchive2Fill, RiPushpinFill, RiUnpinFill } from "react-icons/ri";
 
 interface Thread {
@@ -57,6 +57,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
   isSearchActive,
 }) => {
   const { colorMode } = useColorMode();
+  const { user } = useAuth();
   const { colorScheme } = useTheme();
   const { showToast } = useToastStore();
   const router = useRouter();
@@ -77,10 +78,20 @@ const ThreadItem: FC<ThreadItemProps> = ({
   const [isHover, setIsHover] = useState(false);
 
   const handleDelete = async () => {
+    if (!user) return;
+
     try {
       setIsDeleting(true);
-      const threadRef = doc(db, "threads", thread.id);
-      const messagesRef = collection(db, "threads", thread.id, "messages");
+
+      const threadRef = doc(db, "users", user.uid, "threads", thread.id);
+      const messagesRef = collection(
+        db,
+        "users",
+        user.uid,
+        "threads",
+        thread.id,
+        "messages"
+      );
 
       const messagesSnap = await getDocs(messagesRef);
       await Promise.all(
@@ -115,11 +126,11 @@ const ThreadItem: FC<ThreadItemProps> = ({
   };
 
   const handleRename = async () => {
-    if (!newTitle.trim()) return;
+    if (!user || !newTitle.trim()) return;
 
     try {
       setIsRenaming(true);
-      const threadRef = doc(db, "threads", thread.id);
+      const threadRef = doc(db, "users", user.uid, "threads", thread.id);
       await updateDoc(threadRef, { title: newTitle.trim() });
       onRenameClose();
       showToast({
@@ -141,8 +152,10 @@ const ThreadItem: FC<ThreadItemProps> = ({
   };
 
   const handlePin = async () => {
+    if (!user) return;
+
     try {
-      const threadRef = doc(db, "threads", thread.id);
+      const threadRef = doc(db, "users", user.uid, "threads", thread.id);
       await updateDoc(threadRef, { isPinned: true });
 
       showToast({
@@ -162,8 +175,10 @@ const ThreadItem: FC<ThreadItemProps> = ({
   };
 
   const handleUnpin = async () => {
+    if (!user) return;
+
     try {
-      const threadRef = doc(db, "threads", thread.id);
+      const threadRef = doc(db, "users", user.uid, "threads", thread.id);
       await updateDoc(threadRef, { isPinned: false });
 
       showToast({
@@ -183,10 +198,17 @@ const ThreadItem: FC<ThreadItemProps> = ({
   };
 
   const handleArchive = async () => {
-    try {
-      const threadRef = doc(db, "threads", thread.id);
-      await updateDoc(threadRef, { isArchived: true });
+    if (!user) return;
 
+    try {
+      const threadRef = doc(db, "users", user.uid, "threads", thread.id);
+
+      if (pathname === `/thread/${thread.id}`) {
+        router.push("/");
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+
+      await updateDoc(threadRef, { isArchived: true });
       showToast({
         id: `archive-${thread.id}`,
         title: "Thread archived",

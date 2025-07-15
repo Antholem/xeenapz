@@ -15,12 +15,13 @@ import { useRouter, usePathname } from "next/navigation";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import type { Thread, Message } from "@/types/thread";
 import { Box, Text, Flex } from "@chakra-ui/react";
-import { db, collection, query, orderBy, getDocs, where } from "@/lib";
+import { db, collection, query, orderBy, getDocs } from "@/lib";
 import {
   DocumentData,
   limit,
   QueryDocumentSnapshot,
   startAfter,
+  where,
 } from "firebase/firestore";
 import { formatNormalTime } from "@/utils/dateFormatter";
 import { Progress } from "@themed-components";
@@ -107,16 +108,17 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
   }, [pathname, loadedThreads, isSearchActive, hasScrolledOnce]);
 
   const loadMoreThreads = useCallback(async () => {
-    if (isSearchActive || isLoadingMoreThreads || !hasMoreThreads) return;
+    if (!user || isSearchActive || isLoadingMoreThreads || !hasMoreThreads)
+      return;
 
     setIsLoadingMoreThreads(true);
 
     try {
-      const ref = collection(db, "threads");
+      const baseRef = collection(db, "users", user.uid, "threads");
+
       const threadQuery = lastDoc
         ? query(
-            ref,
-            where("userId", "==", user?.uid),
+            baseRef,
             where("isDeleted", "==", false),
             where("isArchived", "==", false),
             orderBy("isPinned", "desc"),
@@ -125,8 +127,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
             limit(20)
           )
         : query(
-            ref,
-            where("userId", "==", user?.uid),
+            baseRef,
             where("isDeleted", "==", false),
             where("isArchived", "==", false),
             orderBy("isPinned", "desc"),
@@ -164,7 +165,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
     isSearchActive,
     lastDoc,
     loadedThreads,
-    user?.uid,
+    user,
   ]);
 
   const { titleResults, messageResults } = useMemo(() => {
