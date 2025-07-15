@@ -13,6 +13,7 @@ import {
   addDoc,
   serverTimestamp,
   speakText,
+  type User,
 } from "@/lib";
 import { useAuth, useThreadInput, useThreadMessages } from "@/stores";
 import { MessageInput } from "@/components";
@@ -109,14 +110,21 @@ const Home: FC = () => {
       if (user && threadId) {
         addMessageToBottom(threadId, botMessage);
 
-        const messagesRef = collection(db, "threads", threadId, "messages");
+        const messagesRef = collection(
+          db,
+          "users",
+          user.uid,
+          "threads",
+          threadId,
+          "messages"
+        );
         await addDoc(messagesRef, {
           ...botMessage,
           isGenerated: true,
         });
 
         await setDoc(
-          doc(db, "threads", threadId),
+          doc(db, "users", user.uid, "threads", threadId),
           {
             isArchived: false,
             isDeleted: false,
@@ -149,7 +157,8 @@ const Home: FC = () => {
 
   const fetchBotSetTitle = async (
     userMessageText: string,
-    threadId: string
+    threadId: string,
+    user: User
   ) => {
     try {
       const prompt = `Generate a short, descriptive title/subject/topic (only the title, no extra words) for the following thread message: "${userMessageText}"`;
@@ -161,22 +170,32 @@ const Home: FC = () => {
       });
 
       const data = await res.json();
-      const newTitle = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
 
-      if (newTitle) {
-        await setDoc(
-          doc(db, "threads", threadId),
-          { title: newTitle },
-          { merge: true }
-        );
+      if (!res.ok) {
+        console.error("Gemini title generation failed:", data);
       }
+
+      const newTitle =
+        data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || threadId;
+
+      await setDoc(
+        doc(db, "users", user.uid, "threads", threadId),
+        { title: newTitle },
+        { merge: true }
+      );
     } catch (error) {
       console.error("Error setting title:", error);
+
+      await setDoc(
+        doc(db, "users", user.uid, "threads", threadId),
+        { title: threadId },
+        { merge: true }
+      );
     }
   };
 
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || !user) return;
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
@@ -191,50 +210,55 @@ const Home: FC = () => {
     setInput("home", "");
     setMessages((prev) => [...prev, userMessage]);
 
-    if (user) {
-      try {
-        let id = threadId;
+    try {
+      let id = threadId;
 
-        if (!id) {
-          id = uuidv4();
-          setThreadId(id);
+      if (!id) {
+        id = uuidv4();
+        setThreadId(id);
 
-          await setDoc(doc(db, "threads", id), {
-            userId: user.uid,
-          });
+        await setDoc(
+          doc(db, "users", user.uid),
+          { userId: user.uid },
+          { merge: true }
+        );
 
-          fetchBotSetTitle(userMessage.text, id);
-          window.history.pushState({}, "", `/thread/${id}`);
-          setGlobalMessages(id, [userMessage]);
-        } else {
-          await setDoc(
-            doc(db, "threads", id),
-            {
-              updatedAt: serverTimestamp(),
-              lastMessage: {
-                text: userMessage.text,
-                sender: userMessage.sender,
-                createdAt: now,
-              },
+        await fetchBotSetTitle(userMessage.text, id, user);
+        window.history.pushState({}, "", `/thread/${id}`);
+        setGlobalMessages(id, [userMessage]);
+      } else {
+        await setDoc(
+          doc(db, "users", user.uid, "threads", id),
+          {
+            updatedAt: serverTimestamp(),
+            lastMessage: {
+              text: userMessage.text,
+              sender: userMessage.sender,
+              createdAt: now,
             },
-            { merge: true }
-          );
+          },
+          { merge: true }
+        );
 
-          addMessageToBottom(id, userMessage);
-        }
-
-        const messagesRef = collection(db, "threads", id, "messages");
-        await addDoc(messagesRef, {
-          ...userMessage,
-          createdAt: now,
-        });
-
-        fetchBotResponse(userMessage, id);
-      } catch (error) {
-        console.error("Error sending message:", error);
+        addMessageToBottom(id, userMessage);
       }
-    } else {
-      fetchBotResponse(userMessage);
+
+      const messagesRef = collection(
+        db,
+        "users",
+        user.uid,
+        "threads",
+        id,
+        "messages"
+      );
+      await addDoc(messagesRef, {
+        ...userMessage,
+        createdAt: now,
+      });
+
+      fetchBotResponse(userMessage, id);
+    } catch (error) {
+      console.error("Error sending message:", error);
     }
   };
 

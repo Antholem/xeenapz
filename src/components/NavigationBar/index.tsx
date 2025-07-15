@@ -66,7 +66,7 @@ const NavigationBar: FC = () => {
       }
 
       const threadId = pathname.split("/")[2];
-      const docRef = doc(db, "threads", threadId);
+      const docRef = doc(db, "users", user.uid, "threads", threadId);
 
       unsubscribeRef.current = onSnapshot(
         docRef,

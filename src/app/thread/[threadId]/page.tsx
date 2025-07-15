@@ -35,7 +35,6 @@ const Thread: FC = () => {
   const router = useRouter();
 
   const { user, loading } = useAuth();
-
   const { getInput, setInput } = useThreadInput();
   const input = getInput(threadId || "home");
 
@@ -75,7 +74,13 @@ const Thread: FC = () => {
     setOldestDoc(null);
     setHasMore(true);
 
-    const threadDocRef: DocumentReference = doc(db, "threads", threadId);
+    const threadDocRef: DocumentReference = doc(
+      db,
+      "users",
+      user.uid,
+      "threads",
+      threadId
+    );
 
     const unsubscribeThread = onSnapshot(
       threadDocRef,
@@ -93,6 +98,8 @@ const Thread: FC = () => {
 
     const messagesCollectionRef = collection(
       db,
+      "users",
+      user.uid,
       "threads",
       threadId,
       "messages"
@@ -138,10 +145,17 @@ const Thread: FC = () => {
   }, [listening]);
 
   const fetchOlderMessages = async (): Promise<Message[]> => {
-    if (!threadId || !hasMore || !oldestDoc) return [];
+    if (!threadId || !hasMore || !oldestDoc || !user) return [];
 
     try {
-      const messagesRef = collection(db, "threads", threadId, "messages");
+      const messagesRef = collection(
+        db,
+        "users",
+        user.uid,
+        "threads",
+        threadId,
+        "messages"
+      );
 
       const baseQuery = query(
         messagesRef,
@@ -175,6 +189,8 @@ const Thread: FC = () => {
   };
 
   const fetchBotResponse = async (userMessage: Message, id: string) => {
+    if (!user || !threadId) return;
+
     setIsFetchingResponse(true);
 
     try {
@@ -197,13 +213,20 @@ const Thread: FC = () => {
 
       addMessageToBottom(id, botMessage);
 
-      const messagesRef = collection(db, "threads", id, "messages");
+      const messagesRef = collection(
+        db,
+        "users",
+        user.uid,
+        "threads",
+        id,
+        "messages"
+      );
       await addDoc(messagesRef, {
         ...botMessage,
         isGenerated: true,
       });
 
-      await updateDoc(doc(db, "threads", id), {
+      await updateDoc(doc(db, "users", user.uid, "threads", id), {
         updatedAt: serverTimestamp(),
         lastMessage: {
           text: botMessage.text,
@@ -233,9 +256,17 @@ const Thread: FC = () => {
     addMessageToBottom(threadId, userMessage);
 
     try {
-      const messagesRef = collection(db, "threads", threadId, "messages");
+      const messagesRef = collection(
+        db,
+        "users",
+        user.uid,
+        "threads",
+        threadId,
+        "messages"
+      );
       await addDoc(messagesRef, userMessage);
-      await updateDoc(doc(db, "threads", threadId), {
+
+      await updateDoc(doc(db, "users", user.uid, "threads", threadId), {
         updatedAt: serverTimestamp(),
         lastMessage: {
           text: userMessage.text,
