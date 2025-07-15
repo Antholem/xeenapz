@@ -3,10 +3,14 @@
 import { FC, Fragment, memo, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
-import { HiPencilAlt } from "react-icons/hi";
+import { IoAdd } from "react-icons/io5";
 import { IoMdMenu } from "react-icons/io";
-import { RiChat3Line, RiChatHistoryFill } from "react-icons/ri";
-import { MoonIcon, SunIcon } from "@chakra-ui/icons";
+import {
+  RiChat3Line,
+  RiChatHistoryFill,
+  RiMoonFill,
+  RiSunFill,
+} from "react-icons/ri";
 
 import {
   Card,
@@ -142,7 +146,7 @@ const NavigationBar: FC = () => {
             ) : (
               <IconButton
                 aria-label="New Chat"
-                icon={<HiPencilAlt />}
+                icon={<IoAdd />}
                 variant="ghost"
               />
             )}
@@ -172,7 +176,7 @@ const NavigationBar: FC = () => {
             )}
             <IconButton
               aria-label="Toggle Dark Mode"
-              icon={colorMode === "light" ? <MoonIcon /> : <SunIcon />}
+              icon={colorMode === "light" ? <RiMoonFill /> : <RiSunFill />}
               onClick={toggleColorMode}
               variant="ghost"
             />
