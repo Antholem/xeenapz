@@ -10,14 +10,11 @@ import {
   Menu,
   MenuButton,
   Portal,
-  MenuList,
-  MenuItem,
   Icon,
   useColorMode,
   useDisclosure,
   AlertDialog,
   AlertDialogOverlay,
-  AlertDialogContent,
   AlertDialogHeader,
   AlertDialogBody,
   AlertDialogFooter,
@@ -27,7 +24,13 @@ import {
 } from "@chakra-ui/react";
 import { HiOutlineDotsVertical, HiPencil, HiTrash } from "react-icons/hi";
 import { db, collection, getDocs, deleteDoc, doc, updateDoc } from "@/lib";
-import { Button, Input } from "@themed-components";
+import {
+  Button,
+  Input,
+  AlertDialogContent,
+  MenuItem,
+  MenuList,
+} from "@themed-components";
 import { useAuth, useTheme, useToastStore } from "@/stores";
 import { RiArchive2Fill, RiPushpinFill, RiUnpinFill } from "react-icons/ri";
 
@@ -338,7 +341,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
             />
           </Tooltip>
           <Portal>
-            <MenuList fontSize="md">
+            <MenuList>
               {!thread.isPinned ? (
                 <MenuItem
                   icon={<Icon as={RiPushpinFill} boxSize={4} />}
@@ -404,7 +407,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
         isCentered
       >
         <AlertDialogOverlay>
-          <AlertDialogContent bgColor="mutedSurface">
+          <AlertDialogContent>
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
               Delete Thread
             </AlertDialogHeader>
@@ -443,7 +446,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
         isCentered
       >
         <AlertDialogOverlay>
-          <AlertDialogContent bgColor="surface">
+          <AlertDialogContent>
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
               Rename Thread
             </AlertDialogHeader>

@@ -15,7 +15,12 @@ import {
   speakText,
   type User,
 } from "@/lib";
-import { useAuth, useThreadInput, useThreadMessages } from "@/stores";
+import {
+  useAuth,
+  useTempThread,
+  useThreadInput,
+  useThreadMessages,
+} from "@/stores";
 import { MessageInput } from "@/components";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
 
@@ -29,6 +34,7 @@ interface Message {
 const Home: FC = () => {
   const pathname = usePathname();
   const { user } = useAuth();
+  const { isMessageTemporary } = useTempThread();
   const { getInput, setInput } = useThreadInput();
   const { setMessages: setGlobalMessages, addMessageToBottom } =
     useThreadMessages();
@@ -46,7 +52,8 @@ const Home: FC = () => {
   const hasMounted = useRef(false);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || isMessageTemporary) return;
+
     if (!hasMounted.current) {
       hasMounted.current = true;
       if (pathname === "/") {
@@ -57,7 +64,7 @@ const Home: FC = () => {
       setMessages([]);
       setThreadId(null);
     }
-  }, [pathname, user]);
+  }, [pathname, user, isMessageTemporary]);
 
   useEffect(() => {
     if (transcript && transcript !== prevTranscriptRef.current) {
@@ -107,7 +114,7 @@ const Home: FC = () => {
 
       setMessages((prev) => [...prev, botMessage]);
 
-      if (user && threadId) {
+      if (user && threadId && !isMessageTemporary) {
         addMessageToBottom(threadId, botMessage);
 
         const messagesRef = collection(
@@ -195,7 +202,7 @@ const Home: FC = () => {
   };
 
   const sendMessage = async () => {
-    if (!input.trim() || !user) return;
+    if (!input.trim()) return;
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
@@ -210,55 +217,59 @@ const Home: FC = () => {
     setInput("home", "");
     setMessages((prev) => [...prev, userMessage]);
 
-    try {
-      let id = threadId;
+    if (user && !isMessageTemporary) {
+      try {
+        let id = threadId;
 
-      if (!id) {
-        id = uuidv4();
-        setThreadId(id);
+        if (!id) {
+          id = uuidv4();
+          setThreadId(id);
 
-        await setDoc(
-          doc(db, "users", user.uid),
-          { userId: user.uid },
-          { merge: true }
-        );
+          await setDoc(
+            doc(db, "users", user.uid),
+            { userId: user.uid },
+            { merge: true }
+          );
 
-        await fetchBotSetTitle(userMessage.text, id, user);
-        window.history.pushState({}, "", `/thread/${id}`);
-        setGlobalMessages(id, [userMessage]);
-      } else {
-        await setDoc(
-          doc(db, "users", user.uid, "threads", id),
-          {
-            updatedAt: serverTimestamp(),
-            lastMessage: {
-              text: userMessage.text,
-              sender: userMessage.sender,
-              createdAt: now,
+          await fetchBotSetTitle(userMessage.text, id, user);
+          window.history.pushState({}, "", `/thread/${id}`);
+          setGlobalMessages(id, [userMessage]);
+        } else {
+          await setDoc(
+            doc(db, "users", user.uid, "threads", id),
+            {
+              updatedAt: serverTimestamp(),
+              lastMessage: {
+                text: userMessage.text,
+                sender: userMessage.sender,
+                createdAt: now,
+              },
             },
-          },
-          { merge: true }
+            { merge: true }
+          );
+
+          addMessageToBottom(id, userMessage);
+        }
+
+        const messagesRef = collection(
+          db,
+          "users",
+          user.uid,
+          "threads",
+          id,
+          "messages"
         );
+        await addDoc(messagesRef, {
+          ...userMessage,
+          createdAt: now,
+        });
 
-        addMessageToBottom(id, userMessage);
+        fetchBotResponse(userMessage, id);
+      } catch (error) {
+        console.error("Error sending message:", error);
       }
-
-      const messagesRef = collection(
-        db,
-        "users",
-        user.uid,
-        "threads",
-        id,
-        "messages"
-      );
-      await addDoc(messagesRef, {
-        ...userMessage,
-        createdAt: now,
-      });
-
-      fetchBotResponse(userMessage, id);
-    } catch (error) {
-      console.error("Error sending message:", error);
+    } else {
+      fetchBotResponse(userMessage);
     }
   };
 
