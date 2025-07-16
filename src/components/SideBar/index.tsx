@@ -29,8 +29,6 @@ import {
   InputLeftElement,
   Menu,
   MenuButton,
-  MenuItem,
-  MenuList,
   Text,
   Tooltip,
   useBreakpointValue,
@@ -52,7 +50,7 @@ import {
   User,
   where,
 } from "@/lib";
-import { Spinner, Input } from "@themed-components";
+import { Spinner, Input, MenuList, MenuItem } from "@themed-components";
 import { useAuth, useToastStore } from "@/stores";
 import { ThreadList } from "@/components";
 
@@ -131,7 +129,7 @@ const MenuItems: FC<MenuItemsProps> = ({ user, switchAccount, signOut }) => (
         name={user?.displayName ?? "User"}
       />
     </MenuButton>
-    <MenuList fontSize="md">
+    <MenuList>
       <MenuItem onClick={switchAccount} icon={<Icon as={FiUserCheck} />}>
         Switch Account
       </MenuItem>
