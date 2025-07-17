@@ -5,6 +5,7 @@ import MessageItem from "@/components/MessageItem";
 import ThreadList from "@/components/ThreadList";
 import ThreadItem from "@/components/ThreadItem";
 import AuthInitializer from "@/components/AuthInitializer";
+import ThreadWrapper from "@/components/ThreadWrapper";
 
 export {
   NavigationBar,
@@ -13,5 +14,6 @@ export {
   MessageItem,
   ThreadList,
   ThreadItem,
+  ThreadWrapper,
   AuthInitializer,
 };

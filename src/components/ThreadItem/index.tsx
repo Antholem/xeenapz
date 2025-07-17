@@ -33,6 +33,7 @@ import {
 } from "@themed-components";
 import { useAuth, useTheme, useToastStore } from "@/stores";
 import { RiArchive2Fill, RiPushpinFill, RiUnpinFill } from "react-icons/ri";
+import { ThreadWrapper } from "@/components";
 
 interface Thread {
   id: string;
@@ -229,49 +230,9 @@ const ThreadItem: FC<ThreadItemProps> = ({
   };
 
   return (
-    <Flex
-      role="group"
-      direction="row"
-      align="center"
-      borderRadius="md"
-      my={0.7}
-      pr={2}
-      transition="background 0.15s ease"
-      bgColor={
-        isActive && !isSearchActive
-          ? colorMode === "dark"
-            ? "gray.800"
-            : "gray.100"
-          : "transparent"
-      }
-      _hover={{
-        bgColor:
-          colorMode === "dark"
-            ? isActive && !isSearchActive
-              ? "gray.700"
-              : "gray.800"
-            : isActive
-            ? "gray.200"
-            : "gray.100",
-      }}
-      _active={{
-        bgColor:
-          colorMode === "dark"
-            ? isActive && !isSearchActive
-              ? "gray.600"
-              : "gray.700"
-            : isActive
-            ? "gray.300"
-            : "gray.200",
-      }}
-      _focus={{
-        bgColor:
-          colorMode === "dark"
-            ? "gray.700"
-            : isActive && !isSearchActive
-            ? "gray.200"
-            : "gray.100",
-      }}
+    <ThreadWrapper
+      isActive={isActive}
+      isSearchActive={isSearchActive}
       onMouseEnter={() => setIsHover(true)}
       onMouseLeave={() => setIsHover(false)}
     >
@@ -486,7 +447,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
-    </Flex>
+    </ThreadWrapper>
   );
 };
 
