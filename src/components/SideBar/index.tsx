@@ -36,35 +36,16 @@ import {
 import { FiLogOut, FiUserCheck } from "react-icons/fi";
 import { IoAdd, IoSearch, IoSettingsSharp } from "react-icons/io5";
 
-import {
-  auth,
-  collection,
-  db,
-  getDocs,
-  onSnapshot,
-  orderBy,
-  provider,
-  query,
-  signInWithPopup,
-  signOut,
-  User,
-  where,
-} from "@/lib";
 import { Spinner, Input, MenuList, MenuItem } from "@themed-components";
 import { useAuth, useToastStore } from "@/stores";
 import { ThreadList } from "@/components";
+import { supabase } from "@/lib/supabaseClient";
 
 interface SideBarProps {
   type: "temporary" | "persistent";
   isOpen?: boolean;
   placement?: "left" | "right" | "top" | "bottom";
   onClose?: () => void;
-}
-
-interface MenuItemsProps {
-  user: User | null;
-  switchAccount: () => Promise<void>;
-  signOut: () => Promise<void>;
 }
 
 const NewChatButton = () => {
@@ -100,7 +81,6 @@ const SearchBar = ({ onSearch }: { onSearch: (term: string) => void }) => {
         <IoSearch />
       </InputLeftElement>
       <Input
-        leftElement
         type="search"
         placeholder="Search titles, messages..."
         variant="filled"
@@ -114,26 +94,28 @@ const SearchBar = ({ onSearch }: { onSearch: (term: string) => void }) => {
   );
 };
 
-const MenuItems: FC<MenuItemsProps> = ({ user, switchAccount, signOut }) => (
+const MenuItems = ({
+  user,
+  switchAccount,
+  signOut,
+}: {
+  user: any;
+  switchAccount: () => Promise<void>;
+  signOut: () => Promise<void>;
+}) => (
   <Menu>
-    <MenuButton
-      as={Box}
-      display="flex"
-      alignItems="center"
-      gap={2}
-      cursor="pointer"
-    >
+    <MenuButton as={Box} display="flex" alignItems="center" gap={2}>
       <Avatar
         size="sm"
-        src={user?.photoURL ?? "/default-avatar.png"}
-        name={user?.displayName ?? "User"}
+        src={user?.user_metadata?.avatar_url ?? "/default-avatar.png"}
+        name={user?.user_metadata?.full_name ?? "User"}
       />
     </MenuButton>
     <MenuList>
-      <MenuItem onClick={switchAccount} icon={<Icon as={FiUserCheck} />}>
+      <MenuItem onClick={switchAccount} icon={<FiUserCheck />}>
         Switch Account
       </MenuItem>
-      <MenuItem onClick={signOut} icon={<Icon as={FiLogOut} />}>
+      <MenuItem onClick={signOut} icon={<FiLogOut />}>
         Log out
       </MenuItem>
     </MenuList>
@@ -189,56 +171,90 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
     async (threadId: string): Promise<Message[]> => {
       if (!user) return [];
 
-      const q = query(
-        collection(db, "users", user.uid, "threads", threadId, "messages"),
-        orderBy("timestamp", "asc")
-      );
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map(
-        (doc) => ({ id: doc.id, ...doc.data() } as Message)
-      );
+      const { data, error } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("thread_id", threadId)
+        .order("timestamp", { ascending: true });
+
+      if (error) {
+        console.error("Failed to fetch messages:", error);
+        return [];
+      }
+
+      return data || [];
     },
     [user]
   );
 
+  const fetchThreads = useCallback(async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("threads")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("isDeleted", false)
+      .eq("isArchived", false)
+      .order("isPinned", { ascending: false })
+      .order("updated_at", { ascending: false });
+
+    if (error) {
+      console.error("Failed to fetch threads:", error);
+      return;
+    }
+
+    const enriched = await Promise.all(
+      data!.map(async (thread) => {
+        const messages = await fetchMessages(thread.id);
+        return { ...thread, messages };
+      })
+    );
+
+    setThreads(enriched);
+    setLoading(false);
+  }, [user, fetchMessages]);
+
   useEffect(() => {
     if (!user) return;
 
-    setLoading(true);
-    const q = query(
-      collection(db, "users", user.uid, "threads"),
-      where("isDeleted", "==", false),
-      where("isArchived", "==", false),
-      orderBy("isPinned", "desc"),
-      orderBy("updatedAt", "desc")
-    );
+    // only show spinner once on mount
+    if (threads.length === 0) setLoading(true);
 
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const threadList = await Promise.all(
-        snapshot.docs.map(async (doc) => {
-          const thread = { id: doc.id, ...doc.data() } as Thread;
-          const messages = await fetchMessages(doc.id);
-          return { ...thread, messages };
-        })
-      );
-      setThreads(threadList);
-      setLoading(false);
-    });
+    fetchThreads();
 
-    return () => unsubscribe();
-  }, [user, fetchMessages]);
+    const channel = supabase
+      .channel(`threads-user-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "threads",
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          fetchThreads();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, fetchThreads]);
 
   const handleSearch = (term: string) => setSearchTerm(term);
 
   const handleGoogleSignIn = async () => {
     try {
-      await signInWithPopup(auth!, provider);
+      await supabase.auth.signInWithOAuth({ provider: "google" });
       router.push("/");
       setAuthLoading(true);
-
       showToast({
         id: `login-${Date.now()}`,
-        title: `Welcome, ${auth?.currentUser?.displayName || "User"}!`,
+        title: `Redirecting to sign in...`,
         status: "success",
       });
     } catch (error) {
@@ -246,9 +262,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
         id: `login-error-${Date.now()}`,
         title: "Login failed",
         description:
-          error instanceof Error
-            ? error.message
-            : "An unexpected error occurred.",
+          error instanceof Error ? error.message : "An error occurred.",
         status: "error",
       });
     } finally {
@@ -258,25 +272,21 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
 
   const handleSignOut = async () => {
     try {
-      await signOut(auth!);
+      await supabase.auth.signOut();
       router.push("/");
       setAuthLoading(true);
-
       showToast({
         id: `logout-${Date.now()}`,
         title: "Signed out successfully",
         status: "info",
       });
-
       if (onClose) onClose();
     } catch (error) {
       showToast({
         id: `logout-error-${Date.now()}`,
         title: "Logout failed",
         description:
-          error instanceof Error
-            ? error.message
-            : "An unexpected error occurred.",
+          error instanceof Error ? error.message : "An error occurred.",
         status: "error",
       });
     } finally {
@@ -312,7 +322,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
                 minW={0}
               >
                 <Text fontWeight="bold" fontSize="sm" isTruncated maxW="100%">
-                  {user?.displayName}
+                  {user?.user_metadata?.full_name}
                 </Text>
                 <Text
                   fontSize="xs"
@@ -391,7 +401,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
                 textOverflow="ellipsis"
               >
                 <Text fontWeight="bold" fontSize="sm" isTruncated>
-                  {user?.displayName}
+                  {user?.user_metadata?.full_name}
                 </Text>
                 <Text fontSize="xs" color="gray.400" isTruncated>
                   {user?.email}

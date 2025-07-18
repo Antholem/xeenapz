@@ -5,25 +5,9 @@ import { notFound, useParams, useRouter } from "next/navigation";
 import { useSpeechRecognition } from "react-speech-recognition";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
 import { MessageInput } from "@/components";
-import {
-  db,
-  doc,
-  collection,
-  query,
-  orderBy,
-  addDoc,
-  serverTimestamp,
-  updateDoc,
-  getDocs,
-  onSnapshot,
-  DocumentReference,
-  DocumentData,
-  endBefore,
-  limit,
-  QueryDocumentSnapshot,
-  speakText,
-} from "@/lib";
 import { useAuth, useThreadInput, useThreadMessages, Message } from "@/stores";
+import { speakText } from "@/lib";
+import { supabase } from "@/lib/supabaseClient";
 
 interface ThreadParams {
   [key: string]: string | undefined;
@@ -56,8 +40,7 @@ const Thread: FC = () => {
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  const [oldestDoc, setOldestDoc] =
-    useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [oldestTimestamp, setOldestTimestamp] = useState<number | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
@@ -70,64 +53,31 @@ const Thread: FC = () => {
       return;
     }
 
-    setLoadingMessages(true);
-    setOldestDoc(null);
-    setHasMore(true);
+    const loadMessages = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("messages")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("thread_id", threadId)
+          .order("created_at", { ascending: true });
 
-    const threadDocRef: DocumentReference = doc(
-      db,
-      "users",
-      user.uid,
-      "threads",
-      threadId
-    );
-
-    const unsubscribeThread = onSnapshot(
-      threadDocRef,
-      (docSnap) => {
-        if (!docSnap.exists()) {
+        if (error || !data || data.length === 0) {
           notFound();
+          return;
         }
-        setLoadingMessages(false);
-      },
-      (error) => {
-        console.error("Error fetching thread:", error);
+
+        setMessages(threadId, data as Message[]);
+        setOldestTimestamp(data[0].timestamp || null);
+      } catch (err) {
+        console.error("Error loading thread:", err);
+        notFound();
+      } finally {
         setLoadingMessages(false);
       }
-    );
-
-    const messagesCollectionRef = collection(
-      db,
-      "users",
-      user.uid,
-      "threads",
-      threadId,
-      "messages"
-    );
-
-    const messagesQuery = query(messagesCollectionRef, orderBy("createdAt"));
-
-    const unsubscribeMessages = onSnapshot(
-      messagesQuery,
-      (snapshot) => {
-        const messagesList: Message[] = snapshot.docs.map(
-          (doc) => ({ ...doc.data() } as Message)
-        );
-
-        setMessages(threadId, messagesList);
-        if (snapshot.docs.length > 0) {
-          setOldestDoc(snapshot.docs[0]);
-        }
-      },
-      (error) => {
-        console.error("Error listening for messages:", error);
-      }
-    );
-
-    return () => {
-      unsubscribeThread();
-      unsubscribeMessages();
     };
+
+    loadMessages();
   }, [threadId, user, storedMessages.length, setMessages]);
 
   useEffect(() => {
@@ -145,38 +95,25 @@ const Thread: FC = () => {
   }, [listening]);
 
   const fetchOlderMessages = async (): Promise<Message[]> => {
-    if (!threadId || !hasMore || !oldestDoc || !user) return [];
+    if (!threadId || !hasMore || !oldestTimestamp || !user) return [];
 
     try {
-      const messagesRef = collection(
-        db,
-        "users",
-        user.uid,
-        "threads",
-        threadId,
-        "messages"
-      );
+      const { data, error } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("thread_id", threadId)
+        .lt("timestamp", oldestTimestamp)
+        .order("created_at", { ascending: true })
+        .limit(20);
 
-      const baseQuery = query(
-        messagesRef,
-        orderBy("createdAt", "asc"),
-        endBefore(oldestDoc),
-        limit(20)
-      );
-
-      const snapshot = await getDocs(baseQuery);
-
-      if (snapshot.empty) {
+      if (error || !data || data.length === 0) {
         setHasMore(false);
         return [];
       }
 
-      const olderMessages: Message[] = snapshot.docs.map(
-        (doc) => doc.data() as Message
-      );
-
-      setOldestDoc(snapshot.docs[0]);
-      return olderMessages;
+      setOldestTimestamp(data[0].timestamp);
+      return data as Message[];
     } catch (err) {
       console.error("Error fetching older messages:", err);
       return [];
@@ -213,27 +150,28 @@ const Thread: FC = () => {
 
       addMessageToBottom(id, botMessage);
 
-      const messagesRef = collection(
-        db,
-        "users",
-        user.uid,
-        "threads",
-        id,
-        "messages"
-      );
-      await addDoc(messagesRef, {
-        ...botMessage,
-        isGenerated: true,
+      await supabase.from("messages").insert({
+        user_id: user.id,
+        thread_id: id,
+        text: botMessage.text,
+        sender: "bot",
+        created_at: botMessage.createdAt,
+        timestamp: botMessage.timestamp,
+        is_generated: true,
       });
 
-      await updateDoc(doc(db, "users", user.uid, "threads", id), {
-        updatedAt: serverTimestamp(),
-        lastMessage: {
-          text: botMessage.text,
-          sender: botMessage.sender,
-          createdAt: botMessage.createdAt,
-        },
-      });
+      await supabase
+        .from("threads")
+        .update({
+          updated_at: new Date().toISOString(),
+          last_message: {
+            text: botMessage.text,
+            sender: botMessage.sender,
+            created_at: botMessage.createdAt,
+          },
+        })
+        .eq("id", id)
+        .eq("user_id", user.id);
     } catch (error) {
       console.error("Error fetching bot response:", error);
     } finally {
@@ -245,35 +183,40 @@ const Thread: FC = () => {
     if (!input.trim() || !user || !threadId) return;
 
     const timestamp = Date.now();
+    const createdAt = new Date().toISOString();
+
     const userMessage: Message = {
       text: input,
       sender: "user",
       timestamp,
-      createdAt: new Date().toISOString(),
+      createdAt,
     };
 
     setInput(threadId, "");
     addMessageToBottom(threadId, userMessage);
 
     try {
-      const messagesRef = collection(
-        db,
-        "users",
-        user.uid,
-        "threads",
-        threadId,
-        "messages"
-      );
-      await addDoc(messagesRef, userMessage);
-
-      await updateDoc(doc(db, "users", user.uid, "threads", threadId), {
-        updatedAt: serverTimestamp(),
-        lastMessage: {
-          text: userMessage.text,
-          sender: userMessage.sender,
-          createdAt: userMessage.createdAt,
-        },
+      await supabase.from("messages").insert({
+        user_id: user.id,
+        thread_id: threadId,
+        text: userMessage.text,
+        sender: "user",
+        created_at: userMessage.createdAt,
+        timestamp: userMessage.timestamp,
       });
+
+      await supabase
+        .from("threads")
+        .update({
+          updated_at: createdAt,
+          last_message: {
+            text: userMessage.text,
+            sender: userMessage.sender,
+            created_at: userMessage.createdAt,
+          },
+        })
+        .eq("id", threadId)
+        .eq("user_id", user.id);
 
       fetchBotResponse(userMessage, threadId);
     } catch (error) {

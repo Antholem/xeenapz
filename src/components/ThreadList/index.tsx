@@ -15,18 +15,11 @@ import { useRouter, usePathname } from "next/navigation";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import type { Thread, Message } from "@/types/thread";
 import { Box, Text, Flex } from "@chakra-ui/react";
-import { db, collection, query, orderBy, getDocs } from "@/lib";
-import {
-  DocumentData,
-  limit,
-  QueryDocumentSnapshot,
-  startAfter,
-  where,
-} from "firebase/firestore";
 import { formatNormalTime } from "@/utils/dateFormatter";
 import { Progress } from "@themed-components";
 import { useAuth, useTheme } from "@/stores";
 import { ThreadItem } from "@/components";
+import { supabase } from "@/lib/supabaseClient";
 
 interface SearchResultItem {
   thread: Thread;
@@ -59,8 +52,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
 
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [loadedThreads, setLoadedThreads] = useState<Thread[]>([]);
-  const [lastDoc, setLastDoc] =
-    useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null);
   const [isLoadingMoreThreads, setIsLoadingMoreThreads] = useState(false);
   const [hasMoreThreads, setHasMoreThreads] = useState(true);
   const [readyToRender, setReadyToRender] = useState(false);
@@ -69,9 +61,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
   const { colorScheme } = useTheme();
 
   useEffect(() => {
-    if (!isSearchActive) {
-      setLoadedThreads(threads);
-    }
+    if (!isSearchActive) setLoadedThreads(threads);
   }, [threads, isSearchActive]);
 
   useEffect(() => {
@@ -114,45 +104,36 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
     setIsLoadingMoreThreads(true);
 
     try {
-      const baseRef = collection(db, "users", user.uid, "threads");
+      const { data, error } = await supabase
+        .from("threads")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("isDeleted", false)
+        .eq("isArchived", false)
+        .order("isPinned", { ascending: false })
+        .order("updated_at", { ascending: false })
+        .range(loadedThreads.length, loadedThreads.length + 19);
 
-      const threadQuery = lastDoc
-        ? query(
-            baseRef,
-            where("isDeleted", "==", false),
-            where("isArchived", "==", false),
-            orderBy("isPinned", "desc"),
-            orderBy("updatedAt", "desc"),
-            startAfter(lastDoc),
-            limit(20)
-          )
-        : query(
-            baseRef,
-            where("isDeleted", "==", false),
-            where("isArchived", "==", false),
-            orderBy("isPinned", "desc"),
-            orderBy("updatedAt", "desc"),
-            limit(20)
-          );
+      if (error) throw error;
 
-      const snap = await getDocs(threadQuery);
+      const newThreads = (data || []) as Thread[];
 
-      if (!snap.empty) {
-        const newThreads = snap.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Thread[];
-
-        const newUniqueThreads = newThreads.filter(
-          (t) => !loadedThreads.some((loaded) => loaded.id === t.id)
-        );
-
-        setLoadedThreads((prev) => [...prev, ...newUniqueThreads]);
-        setLastDoc(snap.docs[snap.docs.length - 1]);
-
-        if (newUniqueThreads.length < 20) setHasMoreThreads(false);
-      } else {
+      if (newThreads.length === 0) {
         setHasMoreThreads(false);
+      } else {
+        const newUnique = newThreads.filter(
+          (t) => !loadedThreads.some((lt) => lt.id === t.id)
+        );
+        setLoadedThreads((prev) => [...prev, ...newUnique]);
+
+        if (newThreads.length < 20) {
+          setHasMoreThreads(false);
+        }
+
+        const last = newThreads.at(-1);
+        if (last?.updated_at) {
+          setLastUpdatedAt(last.updated_at);
+        }
       }
     } catch (err) {
       console.error("Failed to load threads:", err);
@@ -160,19 +141,18 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
       setIsLoadingMoreThreads(false);
     }
   }, [
-    hasMoreThreads,
-    isLoadingMoreThreads,
-    isSearchActive,
-    lastDoc,
-    loadedThreads,
     user,
+    isSearchActive,
+    isLoadingMoreThreads,
+    hasMoreThreads,
+    loadedThreads,
   ]);
 
   const { titleResults, messageResults } = useMemo(() => {
     const lower = searchTerm.toLowerCase();
 
     const titles = loadedThreads
-      .filter((t) => !searchTerm || t.title?.toLowerCase().includes(lower))
+      .filter((t) => t.title?.toLowerCase().includes(lower))
       .sort((a, b) => (a.title || "").localeCompare(b.title || ""));
 
     const messages: SearchResultItem[] = [];
@@ -238,9 +218,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
   const hasResults = titleResults.length > 0 || messageResults.length > 0;
 
   const allItems: VirtuosoItem[] = useMemo(() => {
-    const filteredThreads = loadedThreads.filter(
-      (t) => !t.isArchived && t.isDeleted !== true
-    );
+    const filtered = loadedThreads.filter((t) => !t.isArchived && !t.isDeleted);
 
     if (isSearchActive && hasResults) {
       const items: VirtuosoItem[] = [];
@@ -272,12 +250,10 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
       return items;
     }
 
-    return filteredThreads
-      .filter((t) => t.title)
-      .map((thread) => ({
-        type: "message",
-        data: { thread, isMessageMatch: false },
-      }));
+    return filtered.map((thread) => ({
+      type: "message",
+      data: { thread, isMessageMatch: false },
+    }));
   }, [isSearchActive, hasResults, titleResults, messageResults, loadedThreads]);
 
   const handleThreadClick = (threadId: string) => {
@@ -356,6 +332,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
                 }
 
                 const { thread, isMessageMatch, highlightedText } = item.data;
+
                 return (
                   <Box mx={3} pt={isFirst ? 3 : 0} pb={isLast ? 3 : 0}>
                     <ThreadItem
@@ -367,11 +344,11 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
                       isSearchActive={isSearchActive}
                       mt={isFirst ? 3 : 0.4}
                       mb={isLast ? 3 : 0.4}
-                      onDeleteThread={(deletedId) => {
+                      onDeleteThread={(deletedId) =>
                         setLoadedThreads((prev) =>
                           prev.filter((t) => t.id !== deletedId)
-                        );
-                      }}
+                        )
+                      }
                     />
                   </Box>
                 );
