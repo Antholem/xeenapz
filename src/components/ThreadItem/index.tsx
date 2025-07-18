@@ -22,7 +22,8 @@ import {
   MenuDivider,
 } from "@chakra-ui/react";
 import { HiOutlineDotsVertical, HiPencil, HiTrash } from "react-icons/hi";
-import { db, collection, getDocs, deleteDoc, doc, updateDoc } from "@/lib";
+import { RiArchive2Fill, RiPushpinFill, RiUnpinFill } from "react-icons/ri";
+
 import {
   Button,
   Input,
@@ -30,9 +31,10 @@ import {
   MenuItem,
   MenuList,
 } from "@themed-components";
+
 import { useAuth, useTheme, useToastStore } from "@/stores";
-import { RiArchive2Fill, RiPushpinFill, RiUnpinFill } from "react-icons/ri";
 import { ThreadWrapper } from "@/components";
+import { supabase } from "@/lib/supabaseClient";
 
 interface Thread {
   id: string;
@@ -82,31 +84,29 @@ const ThreadItem: FC<ThreadItemProps> = ({
 
   const handleDelete = async () => {
     if (!user) return;
+    setIsDeleting(true);
 
     try {
-      setIsDeleting(true);
+      // Delete all messages for the thread
+      await supabase
+        .from("messages")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("thread_id", thread.id);
 
-      const threadRef = doc(db, "users", user.uid, "threads", thread.id);
-      const messagesRef = collection(
-        db,
-        "users",
-        user.uid,
-        "threads",
-        thread.id,
-        "messages"
-      );
-
-      const messagesSnap = await getDocs(messagesRef);
-      await Promise.all(
-        messagesSnap.docs.map((msgDoc) => deleteDoc(msgDoc.ref))
-      );
-
+      // Navigate away if viewing the deleted thread
       if (pathname === `/thread/${thread.id}`) {
         router.push("/");
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await new Promise((res) => setTimeout(res, 500));
       }
 
-      await deleteDoc(threadRef);
+      // Delete the thread itself
+      await supabase
+        .from("threads")
+        .delete()
+        .eq("id", thread.id)
+        .eq("user_id", user.id);
+
       onDeleteThread?.(thread.id);
       onClose();
 
@@ -131,11 +131,17 @@ const ThreadItem: FC<ThreadItemProps> = ({
   const handleRename = async () => {
     if (!user || !newTitle.trim()) return;
 
+    setIsRenaming(true);
+
     try {
-      setIsRenaming(true);
-      const threadRef = doc(db, "users", user.uid, "threads", thread.id);
-      await updateDoc(threadRef, { title: newTitle.trim() });
+      await supabase
+        .from("threads")
+        .update({ title: newTitle.trim() })
+        .eq("id", thread.id)
+        .eq("user_id", user.id);
+
       onRenameClose();
+
       showToast({
         id: `rename-${thread.id}`,
         title: "Thread renamed",
@@ -158,8 +164,11 @@ const ThreadItem: FC<ThreadItemProps> = ({
     if (!user) return;
 
     try {
-      const threadRef = doc(db, "users", user.uid, "threads", thread.id);
-      await updateDoc(threadRef, { isPinned: true });
+      await supabase
+        .from("threads")
+        .update({ isPinned: true })
+        .eq("id", thread.id)
+        .eq("user_id", user.id);
 
       showToast({
         id: `pin-${thread.id}`,
@@ -181,8 +190,11 @@ const ThreadItem: FC<ThreadItemProps> = ({
     if (!user) return;
 
     try {
-      const threadRef = doc(db, "users", user.uid, "threads", thread.id);
-      await updateDoc(threadRef, { isPinned: false });
+      await supabase
+        .from("threads")
+        .update({ isPinned: false })
+        .eq("id", thread.id)
+        .eq("user_id", user.id);
 
       showToast({
         id: `unpin-${thread.id}`,
@@ -204,14 +216,17 @@ const ThreadItem: FC<ThreadItemProps> = ({
     if (!user) return;
 
     try {
-      const threadRef = doc(db, "users", user.uid, "threads", thread.id);
-
       if (pathname === `/thread/${thread.id}`) {
         router.push("/");
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await new Promise((res) => setTimeout(res, 500));
       }
 
-      await updateDoc(threadRef, { isArchived: true });
+      await supabase
+        .from("threads")
+        .update({ isArchived: true })
+        .eq("id", thread.id)
+        .eq("user_id", user.id);
+
       showToast({
         id: `archive-${thread.id}`,
         title: "Thread archived",

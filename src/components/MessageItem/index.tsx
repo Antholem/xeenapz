@@ -15,7 +15,7 @@ import {
   IconButton,
   BoxProps,
 } from "@chakra-ui/react";
-import { User } from "@/lib";
+import { type User } from "@supabase/supabase-js";
 import { useTheme } from "@/stores";
 
 interface Message {

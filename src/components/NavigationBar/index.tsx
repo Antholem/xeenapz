@@ -22,20 +22,11 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 
-import {
-  auth,
-  db,
-  doc,
-  onSnapshot,
-  provider,
-  signInWithPopup,
-  Unsubscribe,
-} from "@/lib";
-
 import { useAuth } from "@/stores";
 import { SideBar } from "@/components";
 import { Button } from "@themed-components";
 import { useToastStore } from "@/stores";
+import { supabase } from "@/lib/supabaseClient";
 
 interface Thread {
   title?: string;
@@ -52,7 +43,7 @@ const NavigationBar: FC = () => {
   const [currentThreadTitle, setCurrentThreadTitle] = useState<string | null>(
     null
   );
-  const unsubscribeRef = useRef<Unsubscribe | undefined>(undefined);
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const fetchThreadTitle = async () => {
@@ -62,49 +53,59 @@ const NavigationBar: FC = () => {
         !pathname?.startsWith("/thread/")
       ) {
         setCurrentThreadTitle(null);
-        if (unsubscribeRef.current) {
-          unsubscribeRef.current();
-          unsubscribeRef.current = undefined;
+        if (pollingRef.current) {
+          clearInterval(pollingRef.current);
+          pollingRef.current = null;
         }
         return;
       }
 
       const threadId = pathname.split("/")[2];
-      const docRef = doc(db, "users", user.uid, "threads", threadId);
 
-      unsubscribeRef.current = onSnapshot(
-        docRef,
-        (docSnap) => {
-          if (docSnap.exists()) {
-            const data = docSnap.data() as Thread;
-            setCurrentThreadTitle(data.title || null);
-          } else {
-            setCurrentThreadTitle(null);
-          }
-        },
-        (error) => {
-          console.error("Error listening for thread updates:", error);
+      const loadTitle = async () => {
+        const { data, error } = await supabase
+          .from("threads")
+          .select("title")
+          .eq("id", threadId)
+          .eq("user_id", user.id)
+          .single();
+
+        if (error || !data) {
+          console.error("Error fetching thread title:", error);
           setCurrentThreadTitle(null);
+          return;
         }
-      );
+
+        setCurrentThreadTitle(data.title || null);
+      };
+
+      await loadTitle();
+
+      // Optional: emulate realtime via polling (every 10s)
+      pollingRef.current = setInterval(loadTitle, 10000);
     };
 
     fetchThreadTitle();
 
     return () => {
-      if (unsubscribeRef.current) {
-        unsubscribeRef.current();
-        unsubscribeRef.current = undefined;
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
       }
     };
   }, [pathname, user]);
 
   const handleGoogleSignIn = async () => {
     try {
-      await signInWithPopup(auth!, provider);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+      });
+
+      if (error) throw error;
+
       showToast({
         id: `login-${Date.now()}`,
-        title: `Welcome, ${auth?.currentUser?.displayName || "User"}!`,
+        title: `Redirecting to sign in...`,
         status: "success",
       });
     } catch (error: any) {

@@ -1,12 +1,18 @@
 import { create } from "zustand";
-import { auth, onAuthStateChanged, type User } from "@/lib";
+import { supabase } from "@/lib/supabaseClient";
+
+interface User {
+  id: string;
+  email?: string;
+  [key: string]: any;
+}
 
 interface AuthState {
   user: User | null;
   loading: boolean;
   setUser: (user: User | null) => void;
   setLoading: (loading: boolean) => void;
-  initializeAuth: () => () => void;
+  initializeAuth: () => void;
 }
 
 const useAuth = create<AuthState>((set) => ({
@@ -14,14 +20,19 @@ const useAuth = create<AuthState>((set) => ({
   loading: true,
   setUser: (user) => set({ user }),
   setLoading: (loading) => set({ loading }),
-  initializeAuth: () => {
-    if (!auth) return () => {};
+  initializeAuth: async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      set({ user: firebaseUser, loading: false });
+    set({ user, loading: false });
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      set({
+        user: session?.user ?? null,
+        loading: false,
+      });
     });
-
-    return unsubscribe;
   },
 }));
 

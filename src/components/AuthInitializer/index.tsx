@@ -8,8 +8,7 @@ const AuthInitializer = ({ children }: { children: ReactNode }) => {
   const { loading, initializeAuth } = useAuth();
 
   useEffect(() => {
-    const unsubscribe = initializeAuth();
-    return () => unsubscribe();
+    initializeAuth(); // No unsubscribe needed with Supabase
   }, [initializeAuth]);
 
   return loading ? <Progress size="xs" isIndeterminate /> : children;

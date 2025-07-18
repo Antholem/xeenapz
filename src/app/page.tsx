@@ -5,16 +5,8 @@ import { usePathname } from "next/navigation";
 import { useSpeechRecognition } from "react-speech-recognition";
 import { v4 as uuidv4 } from "uuid";
 
-import {
-  db,
-  collection,
-  doc,
-  setDoc,
-  addDoc,
-  serverTimestamp,
-  speakText,
-  type User,
-} from "@/lib";
+import { saveMessage, saveThreadMetadata } from "@/lib/supabaseDb";
+
 import {
   useAuth,
   useTempThread,
@@ -23,6 +15,7 @@ import {
 } from "@/stores";
 import { MessageInput } from "@/components";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
+import { speakText } from "@/lib";
 
 interface Message {
   text: string;
@@ -117,35 +110,16 @@ const Home: FC = () => {
       if (user && threadId && !isMessageTemporary) {
         addMessageToBottom(threadId, botMessage);
 
-        const messagesRef = collection(
-          db,
-          "users",
-          user.uid,
-          "threads",
-          threadId,
-          "messages"
-        );
-        await addDoc(messagesRef, {
-          ...botMessage,
-          isGenerated: true,
-        });
+        await saveMessage(user.id, threadId, botMessage, true);
 
-        await setDoc(
-          doc(db, "users", user.uid, "threads", threadId),
-          {
-            isArchived: false,
-            isDeleted: false,
-            isPinned: false,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-            lastMessage: {
-              text: botMessage.text,
-              sender: botMessage.sender,
-              createdAt: botMessage.createdAt,
-            },
+        await saveThreadMetadata(user.id, threadId, {
+          updated_at: new Date().toISOString(),
+          last_message: {
+            text: botMessage.text,
+            sender: botMessage.sender,
+            created_at: botMessage.createdAt,
           },
-          { merge: true }
-        );
+        });
       }
     } catch (error) {
       console.error("Error fetching bot response:", error);
@@ -165,7 +139,7 @@ const Home: FC = () => {
   const fetchBotSetTitle = async (
     userMessageText: string,
     threadId: string,
-    user: User
+    userId: string
   ) => {
     try {
       const prompt = `Generate a short, descriptive title/subject/topic (only the title, no extra words) for the following thread message: "${userMessageText}"`;
@@ -177,27 +151,13 @@ const Home: FC = () => {
       });
 
       const data = await res.json();
-
-      if (!res.ok) {
-        console.error("Gemini title generation failed:", data);
-      }
-
       const newTitle =
         data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || threadId;
 
-      await setDoc(
-        doc(db, "users", user.uid, "threads", threadId),
-        { title: newTitle },
-        { merge: true }
-      );
+      await saveThreadMetadata(userId, threadId, { title: newTitle });
     } catch (error) {
       console.error("Error setting title:", error);
-
-      await setDoc(
-        doc(db, "users", user.uid, "threads", threadId),
-        { title: threadId },
-        { merge: true }
-      );
+      await saveThreadMetadata(userId, threadId, { title: threadId });
     }
   };
 
@@ -225,45 +185,28 @@ const Home: FC = () => {
           id = uuidv4();
           setThreadId(id);
 
-          await setDoc(
-            doc(db, "users", user.uid),
-            { userId: user.uid },
-            { merge: true }
-          );
+          await saveThreadMetadata(user.id, id, {
+            user_id: user.id,
+            created_at: now,
+          });
 
-          await fetchBotSetTitle(userMessage.text, id, user);
+          await fetchBotSetTitle(userMessage.text, id, user.id);
           window.history.pushState({}, "", `/thread/${id}`);
           setGlobalMessages(id, [userMessage]);
         } else {
-          await setDoc(
-            doc(db, "users", user.uid, "threads", id),
-            {
-              updatedAt: serverTimestamp(),
-              lastMessage: {
-                text: userMessage.text,
-                sender: userMessage.sender,
-                createdAt: now,
-              },
+          await saveThreadMetadata(user.id, id, {
+            updated_at: now,
+            last_message: {
+              text: userMessage.text,
+              sender: userMessage.sender,
+              created_at: now,
             },
-            { merge: true }
-          );
+          });
 
           addMessageToBottom(id, userMessage);
         }
 
-        const messagesRef = collection(
-          db,
-          "users",
-          user.uid,
-          "threads",
-          id,
-          "messages"
-        );
-        await addDoc(messagesRef, {
-          ...userMessage,
-          createdAt: now,
-        });
-
+        await saveMessage(user.id, id, userMessage);
         fetchBotResponse(userMessage, id);
       } catch (error) {
         console.error("Error sending message:", error);
