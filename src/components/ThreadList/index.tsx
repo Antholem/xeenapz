@@ -108,9 +108,9 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
         .from("threads")
         .select("*")
         .eq("user_id", user.id)
-        .eq("isDeleted", false)
-        .eq("isArchived", false)
-        .order("isPinned", { ascending: false })
+        .eq("is_deleted", false)
+        .eq("is_archived", false)
+        .order("is_pinned", { ascending: false })
         .order("updated_at", { ascending: false })
         .range(loadedThreads.length, loadedThreads.length + 19);
 

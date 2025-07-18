@@ -195,9 +195,9 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
       .from("threads")
       .select("*")
       .eq("user_id", user.id)
-      .eq("isDeleted", false)
-      .eq("isArchived", false)
-      .order("isPinned", { ascending: false })
+      .eq("is_deleted", false)
+      .eq("is_archived", false)
+      .order("is_pinned", { ascending: false })
       .order("updated_at", { ascending: false });
 
     if (error) {
