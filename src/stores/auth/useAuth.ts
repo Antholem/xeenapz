@@ -15,10 +15,8 @@ const useAuth = create<AuthState>((set) => ({
   setUser: (user) => set({ user }),
   setLoading: (loading) => set({ loading }),
   initializeAuth: () => {
-    if (!auth) return () => {};
-
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      set({ user: firebaseUser, loading: false });
+    const unsubscribe = onAuthStateChanged((authUser) => {
+      set({ user: authUser, loading: false });
     });
 
     return unsubscribe;

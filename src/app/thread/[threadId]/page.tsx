@@ -5,25 +5,8 @@ import { notFound, useParams, useRouter } from "next/navigation";
 import { useSpeechRecognition } from "react-speech-recognition";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
 import { MessageInput } from "@/components";
-import {
-  db,
-  doc,
-  collection,
-  query,
-  orderBy,
-  addDoc,
-  serverTimestamp,
-  updateDoc,
-  getDocs,
-  onSnapshot,
-  DocumentReference,
-  DocumentData,
-  endBefore,
-  limit,
-  QueryDocumentSnapshot,
-  speakText,
-} from "@/lib";
-import { useAuth, useThreadInput, useThreadMessages, Message } from "@/stores";
+import { supabase, speakText } from "@/lib";
+import { useAuth, useThreadInput, Message } from "@/stores";
 
 interface ThreadParams {
   [key: string]: string | undefined;
@@ -38,14 +21,7 @@ const Thread: FC = () => {
   const { getInput, setInput } = useThreadInput();
   const input = getInput(threadId || "home");
 
-  const {
-    messagesByThread,
-    setMessages,
-    addMessagesToTop,
-    addMessageToBottom,
-  } = useThreadMessages();
-
-  const storedMessages = messagesByThread[threadId || ""] || [];
+  const [messages, setMessages] = useState<Message[]>([]);
 
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
   const [isListening, setIsListening] = useState(false);
@@ -56,8 +32,7 @@ const Thread: FC = () => {
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  const [oldestDoc, setOldestDoc] =
-    useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [oldestDoc, setOldestDoc] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
@@ -65,7 +40,7 @@ const Thread: FC = () => {
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (!threadId || !user || storedMessages.length > 0) {
+    if (!threadId || !user || messages.length > 0) {
       setLoadingMessages(false);
       return;
     }
@@ -74,61 +49,38 @@ const Thread: FC = () => {
     setOldestDoc(null);
     setHasMore(true);
 
-    const threadDocRef: DocumentReference = doc(
-      db,
-      "users",
-      user.uid,
-      "threads",
-      threadId
-    );
+    const fetchData = async () => {
+      const { data: threadData, error: threadError } = await supabase
+        .from("threads")
+        .select("id")
+        .eq("id", threadId)
+        .eq("user_id", user.uid)
+        .single();
 
-    const unsubscribeThread = onSnapshot(
-      threadDocRef,
-      (docSnap) => {
-        if (!docSnap.exists()) {
-          notFound();
-        }
-        setLoadingMessages(false);
-      },
-      (error) => {
-        console.error("Error fetching thread:", error);
-        setLoadingMessages(false);
+      if (threadError || !threadData) {
+        notFound();
+        return;
       }
-    );
 
-    const messagesCollectionRef = collection(
-      db,
-      "users",
-      user.uid,
-      "threads",
-      threadId,
-      "messages"
-    );
+      const { data: messageData } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("user_id", user.uid)
+        .eq("thread_id", threadId)
+        .order("created_at");
 
-    const messagesQuery = query(messagesCollectionRef, orderBy("createdAt"));
-
-    const unsubscribeMessages = onSnapshot(
-      messagesQuery,
-      (snapshot) => {
-        const messagesList: Message[] = snapshot.docs.map(
-          (doc) => ({ ...doc.data() } as Message)
-        );
-
-        setMessages(threadId, messagesList);
-        if (snapshot.docs.length > 0) {
-          setOldestDoc(snapshot.docs[0]);
+      if (messageData) {
+        setMessages(messageData as Message[]);
+        if (messageData.length > 0) {
+          setOldestDoc(messageData[0].created_at);
         }
-      },
-      (error) => {
-        console.error("Error listening for messages:", error);
       }
-    );
 
-    return () => {
-      unsubscribeThread();
-      unsubscribeMessages();
+      setLoadingMessages(false);
     };
-  }, [threadId, user, storedMessages.length, setMessages]);
+
+    fetchData();
+  }, [threadId, user, messages.length]);
 
   useEffect(() => {
     if (transcript && transcript !== prevTranscriptRef.current) {
@@ -148,35 +100,22 @@ const Thread: FC = () => {
     if (!threadId || !hasMore || !oldestDoc || !user) return [];
 
     try {
-      const messagesRef = collection(
-        db,
-        "users",
-        user.uid,
-        "threads",
-        threadId,
-        "messages"
-      );
+      const { data, error } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("user_id", user.uid)
+        .eq("thread_id", threadId)
+        .lt("created_at", oldestDoc)
+        .order("created_at", { ascending: true })
+        .limit(20);
 
-      const baseQuery = query(
-        messagesRef,
-        orderBy("createdAt", "asc"),
-        endBefore(oldestDoc),
-        limit(20)
-      );
-
-      const snapshot = await getDocs(baseQuery);
-
-      if (snapshot.empty) {
+      if (error || !data || data.length === 0) {
         setHasMore(false);
         return [];
       }
 
-      const olderMessages: Message[] = snapshot.docs.map(
-        (doc) => doc.data() as Message
-      );
-
-      setOldestDoc(snapshot.docs[0]);
-      return olderMessages;
+      setOldestDoc(data[0].created_at);
+      return data as Message[];
     } catch (err) {
       console.error("Error fetching older messages:", err);
       return [];
@@ -185,7 +124,7 @@ const Thread: FC = () => {
 
   const handleLoadMessages = async () => {
     const olderMessages = await fetchOlderMessages();
-    addMessagesToTop(threadId!, olderMessages);
+    setMessages((prev) => [...olderMessages, ...prev]);
   };
 
   const fetchBotResponse = async (userMessage: Message, id: string) => {
@@ -211,29 +150,29 @@ const Thread: FC = () => {
         createdAt: new Date().toISOString(),
       };
 
-      addMessageToBottom(id, botMessage);
+      setMessages((prev) => [...prev, botMessage]);
 
-      const messagesRef = collection(
-        db,
-        "users",
-        user.uid,
-        "threads",
-        id,
-        "messages"
-      );
-      await addDoc(messagesRef, {
-        ...botMessage,
-        isGenerated: true,
-      });
+      await supabase
+        .from("messages")
+        .insert({
+          ...botMessage,
+          is_generated: true,
+          user_id: user.uid,
+          thread_id: id,
+        });
 
-      await updateDoc(doc(db, "users", user.uid, "threads", id), {
-        updatedAt: serverTimestamp(),
-        lastMessage: {
-          text: botMessage.text,
-          sender: botMessage.sender,
-          createdAt: botMessage.createdAt,
-        },
-      });
+      await supabase
+        .from("threads")
+        .update({
+          updated_at: new Date().toISOString(),
+          last_message: {
+            text: botMessage.text,
+            sender: botMessage.sender,
+            created_at: botMessage.createdAt,
+          },
+        })
+        .eq("id", id)
+        .eq("user_id", user.uid);
     } catch (error) {
       console.error("Error fetching bot response:", error);
     } finally {
@@ -253,27 +192,29 @@ const Thread: FC = () => {
     };
 
     setInput(threadId, "");
-    addMessageToBottom(threadId, userMessage);
+    setMessages((prev) => [...prev, userMessage]);
 
     try {
-      const messagesRef = collection(
-        db,
-        "users",
-        user.uid,
-        "threads",
-        threadId,
-        "messages"
-      );
-      await addDoc(messagesRef, userMessage);
+      await supabase
+        .from("messages")
+        .insert({
+          ...userMessage,
+          user_id: user.uid,
+          thread_id: threadId,
+        });
 
-      await updateDoc(doc(db, "users", user.uid, "threads", threadId), {
-        updatedAt: serverTimestamp(),
-        lastMessage: {
-          text: userMessage.text,
-          sender: userMessage.sender,
-          createdAt: userMessage.createdAt,
-        },
-      });
+      await supabase
+        .from("threads")
+        .update({
+          updated_at: new Date().toISOString(),
+          last_message: {
+            text: userMessage.text,
+            sender: userMessage.sender,
+            created_at: userMessage.createdAt,
+          },
+        })
+        .eq("id", threadId)
+        .eq("user_id", user.uid);
 
       fetchBotResponse(userMessage, threadId);
     } catch (error) {
@@ -286,7 +227,7 @@ const Thread: FC = () => {
   return (
     <ThreadLayout>
       <MessagesLayout
-        messages={user ? storedMessages : []}
+        messages={user ? messages : []}
         isFetchingResponse={user ? isFetchingResponse : false}
         user={user}
         speakText={speakText}

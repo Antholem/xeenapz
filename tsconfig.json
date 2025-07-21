@@ -21,7 +21,8 @@
     "baseUrl": "src",
     "paths": {
       "@/*": ["./*"],
-      "@themed-components": ["components/ui/index"]
+      "@themed-components": ["components/ui/index"],
+      "@supabase/supabase-js": ["lib/supabaseClient"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

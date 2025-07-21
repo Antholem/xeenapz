@@ -22,7 +22,7 @@ import {
   MenuDivider,
 } from "@chakra-ui/react";
 import { HiOutlineDotsVertical, HiPencil, HiTrash } from "react-icons/hi";
-import { db, collection, getDocs, deleteDoc, doc, updateDoc } from "@/lib";
+import { supabase } from "@/lib";
 import {
   Button,
   Input,
@@ -86,27 +86,22 @@ const ThreadItem: FC<ThreadItemProps> = ({
     try {
       setIsDeleting(true);
 
-      const threadRef = doc(db, "users", user.uid, "threads", thread.id);
-      const messagesRef = collection(
-        db,
-        "users",
-        user.uid,
-        "threads",
-        thread.id,
-        "messages"
-      );
-
-      const messagesSnap = await getDocs(messagesRef);
-      await Promise.all(
-        messagesSnap.docs.map((msgDoc) => deleteDoc(msgDoc.ref))
-      );
+      await supabase
+        .from("messages")
+        .delete()
+        .eq("thread_id", thread.id)
+        .eq("user_id", user.uid);
 
       if (pathname === `/thread/${thread.id}`) {
         router.push("/");
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
-      await deleteDoc(threadRef);
+      await supabase
+        .from("threads")
+        .delete()
+        .eq("id", thread.id)
+        .eq("user_id", user.uid);
       onDeleteThread?.(thread.id);
       onClose();
 
@@ -133,8 +128,11 @@ const ThreadItem: FC<ThreadItemProps> = ({
 
     try {
       setIsRenaming(true);
-      const threadRef = doc(db, "users", user.uid, "threads", thread.id);
-      await updateDoc(threadRef, { title: newTitle.trim() });
+      await supabase
+        .from("threads")
+        .update({ title: newTitle.trim() })
+        .eq("id", thread.id)
+        .eq("user_id", user.uid);
       onRenameClose();
       showToast({
         id: `rename-${thread.id}`,
@@ -158,8 +156,11 @@ const ThreadItem: FC<ThreadItemProps> = ({
     if (!user) return;
 
     try {
-      const threadRef = doc(db, "users", user.uid, "threads", thread.id);
-      await updateDoc(threadRef, { isPinned: true });
+      await supabase
+        .from("threads")
+        .update({ is_pinned: true })
+        .eq("id", thread.id)
+        .eq("user_id", user.uid);
 
       showToast({
         id: `pin-${thread.id}`,
@@ -181,8 +182,11 @@ const ThreadItem: FC<ThreadItemProps> = ({
     if (!user) return;
 
     try {
-      const threadRef = doc(db, "users", user.uid, "threads", thread.id);
-      await updateDoc(threadRef, { isPinned: false });
+      await supabase
+        .from("threads")
+        .update({ is_pinned: false })
+        .eq("id", thread.id)
+        .eq("user_id", user.uid);
 
       showToast({
         id: `unpin-${thread.id}`,
@@ -204,14 +208,16 @@ const ThreadItem: FC<ThreadItemProps> = ({
     if (!user) return;
 
     try {
-      const threadRef = doc(db, "users", user.uid, "threads", thread.id);
-
       if (pathname === `/thread/${thread.id}`) {
         router.push("/");
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
-      await updateDoc(threadRef, { isArchived: true });
+      await supabase
+        .from("threads")
+        .update({ is_archived: true })
+        .eq("id", thread.id)
+        .eq("user_id", user.uid);
       showToast({
         id: `archive-${thread.id}`,
         title: "Thread archived",

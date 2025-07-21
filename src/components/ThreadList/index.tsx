@@ -15,14 +15,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import type { Thread, Message } from "@/types/thread";
 import { Box, Text, Flex } from "@chakra-ui/react";
-import { db, collection, query, orderBy, getDocs } from "@/lib";
-import {
-  DocumentData,
-  limit,
-  QueryDocumentSnapshot,
-  startAfter,
-  where,
-} from "firebase/firestore";
+import { supabase } from "@/lib";
 import { formatNormalTime } from "@/utils/dateFormatter";
 import { Progress } from "@themed-components";
 import { useAuth, useTheme } from "@/stores";
@@ -59,8 +52,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
 
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [loadedThreads, setLoadedThreads] = useState<Thread[]>([]);
-  const [lastDoc, setLastDoc] =
-    useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [lastDoc, setLastDoc] = useState<number>(0);
   const [isLoadingMoreThreads, setIsLoadingMoreThreads] = useState(false);
   const [hasMoreThreads, setHasMoreThreads] = useState(true);
   const [readyToRender, setReadyToRender] = useState(false);
@@ -114,43 +106,28 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
     setIsLoadingMoreThreads(true);
 
     try {
-      const baseRef = collection(db, "users", user.uid, "threads");
+      const from = lastDoc;
 
-      const threadQuery = lastDoc
-        ? query(
-            baseRef,
-            where("isDeleted", "==", false),
-            where("isArchived", "==", false),
-            orderBy("isPinned", "desc"),
-            orderBy("updatedAt", "desc"),
-            startAfter(lastDoc),
-            limit(20)
-          )
-        : query(
-            baseRef,
-            where("isDeleted", "==", false),
-            where("isArchived", "==", false),
-            orderBy("isPinned", "desc"),
-            orderBy("updatedAt", "desc"),
-            limit(20)
-          );
+      const { data, error } = await supabase
+        .from("threads")
+        .select("*")
+        .eq("user_id", user.uid)
+        .eq("is_deleted", false)
+        .eq("is_archived", false)
+        .order("is_pinned", { ascending: false })
+        .order("updated_at", { ascending: false })
+        .range(from, from + 19);
 
-      const snap = await getDocs(threadQuery);
+      if (error) throw error;
 
-      if (!snap.empty) {
-        const newThreads = snap.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Thread[];
-
+      if (data && data.length > 0) {
+        const newThreads = data as Thread[];
         const newUniqueThreads = newThreads.filter(
           (t) => !loadedThreads.some((loaded) => loaded.id === t.id)
         );
-
         setLoadedThreads((prev) => [...prev, ...newUniqueThreads]);
-        setLastDoc(snap.docs[snap.docs.length - 1]);
-
-        if (newUniqueThreads.length < 20) setHasMoreThreads(false);
+        setLastDoc(from + newThreads.length);
+        if (newThreads.length < 20) setHasMoreThreads(false);
       } else {
         setHasMoreThreads(false);
       }

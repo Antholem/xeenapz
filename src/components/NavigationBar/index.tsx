@@ -27,8 +27,7 @@ import {
   db,
   doc,
   onSnapshot,
-  provider,
-  signInWithPopup,
+  signInWithGoogle,
   Unsubscribe,
 } from "@/lib";
 
@@ -101,10 +100,10 @@ const NavigationBar: FC = () => {
 
   const handleGoogleSignIn = async () => {
     try {
-      await signInWithPopup(auth!, provider);
+      await signInWithGoogle();
       showToast({
         id: `login-${Date.now()}`,
-        title: `Welcome, ${auth?.currentUser?.displayName || "User"}!`,
+        title: `Welcome!`,
         status: "success",
       });
     } catch (error: any) {

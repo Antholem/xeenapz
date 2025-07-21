@@ -36,20 +36,7 @@ import {
 import { FiLogOut, FiUserCheck } from "react-icons/fi";
 import { IoAdd, IoSearch, IoSettingsSharp } from "react-icons/io5";
 
-import {
-  auth,
-  collection,
-  db,
-  getDocs,
-  onSnapshot,
-  orderBy,
-  provider,
-  query,
-  signInWithPopup,
-  signOut,
-  User,
-  where,
-} from "@/lib";
+import { auth, supabase, signInWithGoogle, signOut, User } from "@/lib";
 import { Spinner, Input, MenuList, MenuItem } from "@themed-components";
 import { useAuth, useToastStore } from "@/stores";
 import { ThreadList } from "@/components";
@@ -189,14 +176,14 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
     async (threadId: string): Promise<Message[]> => {
       if (!user) return [];
 
-      const q = query(
-        collection(db, "users", user.uid, "threads", threadId, "messages"),
-        orderBy("timestamp", "asc")
-      );
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map(
-        (doc) => ({ id: doc.id, ...doc.data() } as Message)
-      );
+      const { data } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("user_id", user.uid)
+        .eq("thread_id", threadId)
+        .order("timestamp", { ascending: true });
+
+      return (data as Message[]) || [];
     },
     [user]
   );
@@ -205,40 +192,43 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
     if (!user) return;
 
     setLoading(true);
-    const q = query(
-      collection(db, "users", user.uid, "threads"),
-      where("isDeleted", "==", false),
-      where("isArchived", "==", false),
-      orderBy("isPinned", "desc"),
-      orderBy("updatedAt", "desc")
-    );
 
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const threadList = await Promise.all(
-        snapshot.docs.map(async (doc) => {
-          const thread = { id: doc.id, ...doc.data() } as Thread;
-          const messages = await fetchMessages(doc.id);
-          return { ...thread, messages };
-        })
-      );
-      setThreads(threadList);
+    const fetchThreads = async () => {
+      const { data, error } = await supabase
+        .from("threads")
+        .select("*")
+        .eq("user_id", user.uid)
+        .eq("is_deleted", false)
+        .eq("is_archived", false)
+        .order("is_pinned", { ascending: false })
+        .order("updated_at", { ascending: false });
+
+      if (!error && data) {
+        const threadList = await Promise.all(
+          data.map(async (row) => {
+            const messages = await fetchMessages(row.id);
+            return { ...(row as Thread), messages };
+          })
+        );
+        setThreads(threadList);
+      }
       setLoading(false);
-    });
+    };
 
-    return () => unsubscribe();
+    fetchThreads();
   }, [user, fetchMessages]);
 
   const handleSearch = (term: string) => setSearchTerm(term);
 
   const handleGoogleSignIn = async () => {
     try {
-      await signInWithPopup(auth!, provider);
+      await signInWithGoogle();
       router.push("/");
       setAuthLoading(true);
 
       showToast({
         id: `login-${Date.now()}`,
-        title: `Welcome, ${auth?.currentUser?.displayName || "User"}!`,
+        title: "Welcome!",
         status: "success",
       });
     } catch (error) {
@@ -258,7 +248,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
 
   const handleSignOut = async () => {
     try {
-      await signOut(auth!);
+      await signOut();
       router.push("/");
       setAuthLoading(true);
 

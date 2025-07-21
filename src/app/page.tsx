@@ -5,22 +5,8 @@ import { usePathname } from "next/navigation";
 import { useSpeechRecognition } from "react-speech-recognition";
 import { v4 as uuidv4 } from "uuid";
 
-import {
-  db,
-  collection,
-  doc,
-  setDoc,
-  addDoc,
-  serverTimestamp,
-  speakText,
-  type User,
-} from "@/lib";
-import {
-  useAuth,
-  useTempThread,
-  useThreadInput,
-  useThreadMessages,
-} from "@/stores";
+import { supabase, speakText, type User } from "@/lib";
+import { useAuth, useTempThread, useThreadInput } from "@/stores";
 import { MessageInput } from "@/components";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
 
@@ -36,8 +22,6 @@ const Home: FC = () => {
   const { user } = useAuth();
   const { isMessageTemporary } = useTempThread();
   const { getInput, setInput } = useThreadInput();
-  const { setMessages: setGlobalMessages, addMessageToBottom } =
-    useThreadMessages();
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
 
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -115,37 +99,31 @@ const Home: FC = () => {
       setMessages((prev) => [...prev, botMessage]);
 
       if (user && threadId && !isMessageTemporary) {
-        addMessageToBottom(threadId, botMessage);
+        await supabase
+          .from("messages")
+          .insert({
+            ...botMessage,
+            is_generated: true,
+            user_id: user.uid,
+            thread_id: threadId,
+          });
 
-        const messagesRef = collection(
-          db,
-          "users",
-          user.uid,
-          "threads",
-          threadId,
-          "messages"
-        );
-        await addDoc(messagesRef, {
-          ...botMessage,
-          isGenerated: true,
-        });
-
-        await setDoc(
-          doc(db, "users", user.uid, "threads", threadId),
-          {
-            isArchived: false,
-            isDeleted: false,
-            isPinned: false,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-            lastMessage: {
+        await supabase
+          .from("threads")
+          .update({
+            is_archived: false,
+            is_deleted: false,
+            is_pinned: false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            last_message: {
               text: botMessage.text,
               sender: botMessage.sender,
-              createdAt: botMessage.createdAt,
+              created_at: botMessage.createdAt,
             },
-          },
-          { merge: true }
-        );
+          })
+          .eq("id", threadId)
+          .eq("user_id", user.uid);
       }
     } catch (error) {
       console.error("Error fetching bot response:", error);
@@ -185,19 +163,19 @@ const Home: FC = () => {
       const newTitle =
         data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || threadId;
 
-      await setDoc(
-        doc(db, "users", user.uid, "threads", threadId),
-        { title: newTitle },
-        { merge: true }
-      );
+      await supabase
+        .from("threads")
+        .update({ title: newTitle })
+        .eq("id", threadId)
+        .eq("user_id", user.uid);
     } catch (error) {
       console.error("Error setting title:", error);
 
-      await setDoc(
-        doc(db, "users", user.uid, "threads", threadId),
-        { title: threadId },
-        { merge: true }
-      );
+      await supabase
+        .from("threads")
+        .update({ title: threadId })
+        .eq("id", threadId)
+        .eq("user_id", user.uid);
     }
   };
 
@@ -225,44 +203,39 @@ const Home: FC = () => {
           id = uuidv4();
           setThreadId(id);
 
-          await setDoc(
-            doc(db, "users", user.uid),
-            { userId: user.uid },
-            { merge: true }
-          );
+
+          await supabase.from("threads").insert({
+            id,
+            user_id: user.uid,
+            created_at: now,
+            updated_at: now,
+          });
 
           await fetchBotSetTitle(userMessage.text, id, user);
           window.history.pushState({}, "", `/thread/${id}`);
-          setGlobalMessages(id, [userMessage]);
         } else {
-          await setDoc(
-            doc(db, "users", user.uid, "threads", id),
-            {
-              updatedAt: serverTimestamp(),
-              lastMessage: {
-                text: userMessage.text,
-                sender: userMessage.sender,
-                createdAt: now,
-              },
+        await supabase
+          .from("threads")
+          .update({
+            updated_at: new Date().toISOString(),
+            last_message: {
+              text: userMessage.text,
+              sender: userMessage.sender,
+              created_at: now,
             },
-            { merge: true }
-          );
-
-          addMessageToBottom(id, userMessage);
+          })
+          .eq("id", id)
+          .eq("user_id", user.uid);
         }
 
-        const messagesRef = collection(
-          db,
-          "users",
-          user.uid,
-          "threads",
-          id,
-          "messages"
-        );
-        await addDoc(messagesRef, {
-          ...userMessage,
-          createdAt: now,
-        });
+        await supabase
+          .from("messages")
+          .insert({
+            ...userMessage,
+            user_id: user.uid,
+            thread_id: id,
+            created_at: now,
+          });
 
         fetchBotResponse(userMessage, id);
       } catch (error) {
