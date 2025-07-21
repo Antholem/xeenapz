@@ -23,9 +23,19 @@ export interface SupabaseClient {
 export function createClient(_url: string, _key: string): SupabaseClient {
   return {
     auth: {
-      onAuthStateChange: () => ({
-        data: { subscription: { unsubscribe: () => {} } },
-      }),
+      onAuthStateChange: (callback) => {
+        // Immediately invoke the callback with a signed-out session so
+        // consumers relying on the auth listener can update their state.
+        setTimeout(() => callback("SIGNED_OUT", null), 0);
+
+        return {
+          data: {
+            subscription: {
+              unsubscribe: () => {},
+            },
+          },
+        };
+      },
       signInWithOAuth: async () => {},
       signOut: async () => {},
     },
