@@ -36,7 +36,7 @@ import {
 import { FiLogOut, FiUserCheck } from "react-icons/fi";
 import { IoAdd, IoSearch, IoSettingsSharp } from "react-icons/io5";
 
-import { auth, supabase, signInWithGoogle, signOut, User } from "@/lib";
+import { supabase, signInWithGoogle, signOut, User } from "@/lib";
 import { Spinner, Input, MenuList, MenuItem } from "@themed-components";
 import { useAuth, useToastStore } from "@/stores";
 import { ThreadList } from "@/components";

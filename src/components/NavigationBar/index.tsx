@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, Fragment, memo, useEffect, useRef, useState } from "react";
+import { FC, Fragment, memo, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { IoAdd } from "react-icons/io5";
@@ -22,14 +22,7 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 
-import {
-  auth,
-  db,
-  doc,
-  onSnapshot,
-  signInWithGoogle,
-  Unsubscribe,
-} from "@/lib";
+import { supabase, signInWithGoogle } from "@/lib";
 
 import { useAuth } from "@/stores";
 import { SideBar } from "@/components";
@@ -51,8 +44,6 @@ const NavigationBar: FC = () => {
   const [currentThreadTitle, setCurrentThreadTitle] = useState<string | null>(
     null
   );
-  const unsubscribeRef = useRef<Unsubscribe | undefined>(undefined);
-
   useEffect(() => {
     const fetchThreadTitle = async () => {
       if (
@@ -61,41 +52,25 @@ const NavigationBar: FC = () => {
         !pathname?.startsWith("/thread/")
       ) {
         setCurrentThreadTitle(null);
-        if (unsubscribeRef.current) {
-          unsubscribeRef.current();
-          unsubscribeRef.current = undefined;
-        }
         return;
       }
 
       const threadId = pathname.split("/")[2];
-      const docRef = doc(db, "users", user.uid, "threads", threadId);
+      const { data, error } = await supabase
+        .from("threads")
+        .select("title")
+        .eq("id", threadId)
+        .eq("user_id", user.uid)
+        .single();
 
-      unsubscribeRef.current = onSnapshot(
-        docRef,
-        (docSnap) => {
-          if (docSnap.exists()) {
-            const data = docSnap.data() as Thread;
-            setCurrentThreadTitle(data.title || null);
-          } else {
-            setCurrentThreadTitle(null);
-          }
-        },
-        (error) => {
-          console.error("Error listening for thread updates:", error);
-          setCurrentThreadTitle(null);
-        }
-      );
+      if (!error && data) {
+        setCurrentThreadTitle((data as Thread).title || null);
+      } else {
+        setCurrentThreadTitle(null);
+      }
     };
 
     fetchThreadTitle();
-
-    return () => {
-      if (unsubscribeRef.current) {
-        unsubscribeRef.current();
-        unsubscribeRef.current = undefined;
-      }
-    };
   }, [pathname, user]);
 
   const handleGoogleSignIn = async () => {
