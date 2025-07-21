@@ -205,7 +205,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
 
       if (!error && data) {
         const threadList = await Promise.all(
-          data.map(async (row) => {
+          data.map(async (row: any) => {
             const messages = await fetchMessages(row.id);
             return { ...(row as Thread), messages };
           })

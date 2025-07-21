@@ -19,6 +19,7 @@ export interface SupabaseClient {
   from: (table: string) => any;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function createClient(_url: string, _key: string): SupabaseClient {
   return {
     auth: {

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { auth, onAuthStateChanged, type User } from "@/lib";
+import { onAuthStateChanged, type User } from "@/lib";
 
 interface AuthState {
   user: User | null;
