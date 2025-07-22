@@ -21,8 +21,6 @@ import {
   Tooltip,
   MenuDivider,
 } from "@chakra-ui/react";
-import { HiOutlineDotsVertical, HiPencil, HiTrash } from "react-icons/hi";
-import { db, collection, getDocs, deleteDoc, doc, updateDoc } from "@/lib";
 import {
   Button,
   Input,
@@ -30,9 +28,11 @@ import {
   MenuItem,
   MenuList,
 } from "@themed-components";
-import { useAuth, useTheme, useToastStore } from "@/stores";
+import { HiOutlineDotsVertical, HiPencil, HiTrash } from "react-icons/hi";
 import { RiArchive2Fill, RiPushpinFill, RiUnpinFill } from "react-icons/ri";
+import { useAuth, useTheme, useToastStore } from "@/stores";
 import { ThreadWrapper } from "@/components";
+import { supabase } from "@/lib";
 
 interface Thread {
   id: string;
@@ -48,6 +48,8 @@ interface ThreadItemProps extends Omit<ButtonProps, "onClick"> {
   isMessageMatch?: boolean;
   highlightedText?: ReactNode;
   isSearchActive: boolean;
+  mt?: number;
+  mb?: number;
 }
 
 const ThreadItem: FC<ThreadItemProps> = ({
@@ -58,6 +60,8 @@ const ThreadItem: FC<ThreadItemProps> = ({
   isMessageMatch = false,
   highlightedText,
   isSearchActive,
+  mt,
+  mb,
 }) => {
   const { colorMode } = useColorMode();
   const { user } = useAuth();
@@ -86,27 +90,23 @@ const ThreadItem: FC<ThreadItemProps> = ({
     try {
       setIsDeleting(true);
 
-      const threadRef = doc(db, "users", user.uid, "threads", thread.id);
-      const messagesRef = collection(
-        db,
-        "users",
-        user.uid,
-        "threads",
-        thread.id,
-        "messages"
-      );
+      await supabase
+        .from("messages")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("thread_id", thread.id);
 
-      const messagesSnap = await getDocs(messagesRef);
-      await Promise.all(
-        messagesSnap.docs.map((msgDoc) => deleteDoc(msgDoc.ref))
-      );
+      await supabase
+        .from("threads")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("id", thread.id);
 
       if (pathname === `/thread/${thread.id}`) {
         router.push("/");
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
-      await deleteDoc(threadRef);
       onDeleteThread?.(thread.id);
       onClose();
 
@@ -133,8 +133,13 @@ const ThreadItem: FC<ThreadItemProps> = ({
 
     try {
       setIsRenaming(true);
-      const threadRef = doc(db, "users", user.uid, "threads", thread.id);
-      await updateDoc(threadRef, { title: newTitle.trim() });
+
+      await supabase
+        .from("threads")
+        .update({ title: newTitle.trim() })
+        .eq("user_id", user.id)
+        .eq("id", thread.id);
+
       onRenameClose();
       showToast({
         id: `rename-${thread.id}`,
@@ -158,8 +163,11 @@ const ThreadItem: FC<ThreadItemProps> = ({
     if (!user) return;
 
     try {
-      const threadRef = doc(db, "users", user.uid, "threads", thread.id);
-      await updateDoc(threadRef, { isPinned: true });
+      await supabase
+        .from("threads")
+        .update({ is_pinned: true })
+        .eq("user_id", user.id)
+        .eq("id", thread.id);
 
       showToast({
         id: `pin-${thread.id}`,
@@ -181,8 +189,11 @@ const ThreadItem: FC<ThreadItemProps> = ({
     if (!user) return;
 
     try {
-      const threadRef = doc(db, "users", user.uid, "threads", thread.id);
-      await updateDoc(threadRef, { isPinned: false });
+      await supabase
+        .from("threads")
+        .update({ is_pinned: false })
+        .eq("user_id", user.id)
+        .eq("id", thread.id);
 
       showToast({
         id: `unpin-${thread.id}`,
@@ -204,14 +215,17 @@ const ThreadItem: FC<ThreadItemProps> = ({
     if (!user) return;
 
     try {
-      const threadRef = doc(db, "users", user.uid, "threads", thread.id);
+      await supabase
+        .from("threads")
+        .update({ is_archived: true })
+        .eq("user_id", user.id)
+        .eq("id", thread.id);
 
       if (pathname === `/thread/${thread.id}`) {
         router.push("/");
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
-      await updateDoc(threadRef, { isArchived: true });
       showToast({
         id: `archive-${thread.id}`,
         title: "Thread archived",
@@ -234,6 +248,8 @@ const ThreadItem: FC<ThreadItemProps> = ({
       isSearchActive={isSearchActive}
       onMouseEnter={() => setIsHover(true)}
       onMouseLeave={() => setIsHover(false)}
+      mt={mt}
+      mb={mb}
     >
       <Button
         variant="ghost"

@@ -9,6 +9,7 @@ import {
   useState,
   ChangeEvent,
   MouseEvent as ReactMouseEvent,
+  useRef,
 } from "react";
 import { useRouter } from "next/navigation";
 import type { Thread, Message } from "@/types/thread";
@@ -36,20 +37,7 @@ import {
 import { FiLogOut, FiUserCheck } from "react-icons/fi";
 import { IoAdd, IoSearch, IoSettingsSharp } from "react-icons/io5";
 
-import {
-  auth,
-  collection,
-  db,
-  getDocs,
-  onSnapshot,
-  orderBy,
-  provider,
-  query,
-  signInWithPopup,
-  signOut,
-  User,
-  where,
-} from "@/lib";
+import { supabase } from "@/lib";
 import { Spinner, Input, MenuList, MenuItem } from "@themed-components";
 import { useAuth, useToastStore } from "@/stores";
 import { ThreadList } from "@/components";
@@ -62,7 +50,7 @@ interface SideBarProps {
 }
 
 interface MenuItemsProps {
-  user: User | null;
+  user: any;
   switchAccount: () => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -125,8 +113,8 @@ const MenuItems: FC<MenuItemsProps> = ({ user, switchAccount, signOut }) => (
     >
       <Avatar
         size="sm"
-        src={user?.photoURL ?? "/default-avatar.png"}
-        name={user?.displayName ?? "User"}
+        src={user?.user_metadata?.avatar_url ?? "/default-avatar.png"}
+        name={user?.user_metadata?.name ?? "User"}
       />
     </MenuButton>
     <MenuList>
@@ -153,6 +141,8 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
   const [isResizing, setIsResizing] = useState(false);
 
   const { showToast } = useToastStore();
+
+  const hasFetchedRef = useRef(false);
 
   const startResizing = (e: ReactMouseEvent) => {
     setIsResizing(true);
@@ -189,56 +179,107 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
     async (threadId: string): Promise<Message[]> => {
       if (!user) return [];
 
-      const q = query(
-        collection(db, "users", user.uid, "threads", threadId, "messages"),
-        orderBy("timestamp", "asc")
-      );
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map(
-        (doc) => ({ id: doc.id, ...doc.data() } as Message)
-      );
+      const { data } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("thread_id", threadId)
+        .order("timestamp", { ascending: true });
+
+      return (data as Message[]) || [];
     },
     [user]
   );
 
   useEffect(() => {
+    if (!user || hasFetchedRef.current) return;
+
+    const fetchThreads = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("threads")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("is_deleted", false)
+        .eq("is_archived", false)
+        .order("is_pinned", { ascending: false })
+        .order("updated_at", { ascending: false });
+
+      if (!error && data) {
+        const threadList = await Promise.all(
+          data.map(async (row) => {
+            const messages = await fetchMessages(row.id);
+            return { ...(row as Thread), messages };
+          })
+        );
+        setThreads(threadList);
+      }
+
+      setLoading(false);
+      hasFetchedRef.current = true;
+    };
+
+    fetchThreads();
+  }, [user, fetchMessages]);
+
+  useEffect(() => {
     if (!user) return;
 
-    setLoading(true);
-    const q = query(
-      collection(db, "users", user.uid, "threads"),
-      where("isDeleted", "==", false),
-      where("isArchived", "==", false),
-      orderBy("isPinned", "desc"),
-      orderBy("updatedAt", "desc")
-    );
+    const channel = supabase
+      .channel(`threads-realtime-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "threads",
+          filter: `user_id=eq.${user.id}`,
+        },
+        async (payload) => {
+          const updatedThread = payload.new as Thread;
 
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const threadList = await Promise.all(
-        snapshot.docs.map(async (doc) => {
-          const thread = { id: doc.id, ...doc.data() } as Thread;
-          const messages = await fetchMessages(doc.id);
-          return { ...thread, messages };
-        })
-      );
-      setThreads(threadList);
-      setLoading(false);
-    });
+          if (payload.eventType === "INSERT") {
+            const messages = await fetchMessages(updatedThread.id);
+            setThreads((prev) => [
+              { ...updatedThread, messages },
+              ...prev.filter((t) => t.id !== updatedThread.id),
+            ]);
+          }
 
-    return () => unsubscribe();
+          if (payload.eventType === "UPDATE") {
+            setThreads((prev) =>
+              prev.map((t) =>
+                t.id === updatedThread.id ? { ...t, ...updatedThread } : t
+              )
+            );
+          }
+
+          if (payload.eventType === "DELETE") {
+            const deletedId = payload.old.id;
+            setThreads((prev) => prev.filter((t) => t.id !== deletedId));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user, fetchMessages]);
 
   const handleSearch = (term: string) => setSearchTerm(term);
 
   const handleGoogleSignIn = async () => {
     try {
-      await signInWithPopup(auth!, provider);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+      });
+      if (error) throw error;
       router.push("/");
       setAuthLoading(true);
-
       showToast({
         id: `login-${Date.now()}`,
-        title: `Welcome, ${auth?.currentUser?.displayName || "User"}!`,
+        title: "Welcome!",
         status: "success",
       });
     } catch (error) {
@@ -258,16 +299,15 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
 
   const handleSignOut = async () => {
     try {
-      await signOut(auth!);
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
       router.push("/");
       setAuthLoading(true);
-
       showToast({
         id: `logout-${Date.now()}`,
         title: "Signed out successfully",
         status: "info",
       });
-
       if (onClose) onClose();
     } catch (error) {
       showToast({
@@ -312,7 +352,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
                 minW={0}
               >
                 <Text fontWeight="bold" fontSize="sm" isTruncated maxW="100%">
-                  {user?.displayName}
+                  {user?.user_metadata?.name}
                 </Text>
                 <Text
                   fontSize="xs"
@@ -391,7 +431,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
                 textOverflow="ellipsis"
               >
                 <Text fontWeight="bold" fontSize="sm" isTruncated>
-                  {user?.displayName}
+                  {user?.user_metadata?.name}
                 </Text>
                 <Text fontSize="xs" color="gray.400" isTruncated>
                   {user?.email}

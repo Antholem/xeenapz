@@ -15,7 +15,6 @@ import {
   IconButton,
   BoxProps,
 } from "@chakra-ui/react";
-import { User } from "@/lib";
 import { useTheme } from "@/stores";
 
 interface Message {
@@ -26,7 +25,7 @@ interface Message {
 
 interface MessageItemProps extends BoxProps {
   message: Message;
-  user: User | null;
+  user: { id: string } | null; // Supabase-style user object
   speakText: (
     text: string,
     playingMessage: string | null,
