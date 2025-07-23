@@ -1,5 +1,7 @@
+// stores/auth/useAuth.ts
 import { create } from "zustand";
-import { auth, onAuthStateChanged, type User } from "@/lib";
+import { supabase } from "@/lib";
+import type { User } from "@supabase/supabase-js";
 
 interface AuthState {
   user: User | null;
@@ -15,13 +17,25 @@ const useAuth = create<AuthState>((set) => ({
   setUser: (user) => set({ user }),
   setLoading: (loading) => set({ loading }),
   initializeAuth: () => {
-    if (!auth) return () => {};
+    const fetchUser = async () => {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
 
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      set({ user: firebaseUser, loading: false });
+      if (error) console.error("Error getting user:", error);
+      set({ user, loading: false });
+    };
+
+    fetchUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      set({ user: session?.user ?? null, loading: false });
     });
 
-    return unsubscribe;
+    return () => subscription.unsubscribe();
   },
 }));
 

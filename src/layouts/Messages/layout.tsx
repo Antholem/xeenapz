@@ -24,7 +24,6 @@ import { useAuth } from "@/stores";
 import { MessageItem } from "@/components";
 import { formatDateGrouping } from "@/utils/dateFormatter";
 import { Spinner, Progress } from "@themed-components";
-import { User } from "@/lib";
 
 interface Message {
   id?: string;
@@ -37,7 +36,7 @@ interface Message {
 interface MessagesLayoutProps {
   messages: Message[];
   isFetchingResponse: boolean;
-  user: User | null;
+  user: { id: string } | null;
   speakText: (
     text: string,
     playingMessage: string | null,

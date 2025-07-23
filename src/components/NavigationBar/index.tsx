@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, Fragment, memo, useEffect, useRef, useState } from "react";
+import { FC, Fragment, memo, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { IoAdd } from "react-icons/io5";
@@ -22,20 +22,11 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 
-import {
-  auth,
-  db,
-  doc,
-  onSnapshot,
-  provider,
-  signInWithPopup,
-  Unsubscribe,
-} from "@/lib";
-
+import { supabase } from "@/lib";
 import { useAuth } from "@/stores";
-import { SideBar } from "@/components";
 import { Button } from "@themed-components";
 import { useToastStore } from "@/stores";
+import { SideBar } from "@/components";
 
 interface Thread {
   title?: string;
@@ -52,7 +43,6 @@ const NavigationBar: FC = () => {
   const [currentThreadTitle, setCurrentThreadTitle] = useState<string | null>(
     null
   );
-  const unsubscribeRef = useRef<Unsubscribe | undefined>(undefined);
 
   useEffect(() => {
     const fetchThreadTitle = async () => {
@@ -62,51 +52,52 @@ const NavigationBar: FC = () => {
         !pathname?.startsWith("/thread/")
       ) {
         setCurrentThreadTitle(null);
-        if (unsubscribeRef.current) {
-          unsubscribeRef.current();
-          unsubscribeRef.current = undefined;
-        }
         return;
       }
 
       const threadId = pathname.split("/")[2];
-      const docRef = doc(db, "users", user.uid, "threads", threadId);
+      const { data, error } = await supabase
+        .from("threads")
+        .select("title")
+        .eq("id", threadId)
+        .single();
 
-      unsubscribeRef.current = onSnapshot(
-        docRef,
-        (docSnap) => {
-          if (docSnap.exists()) {
-            const data = docSnap.data() as Thread;
-            setCurrentThreadTitle(data.title || null);
-          } else {
-            setCurrentThreadTitle(null);
+      if (error) {
+        console.error("Error fetching thread title:", error.message);
+        setCurrentThreadTitle(null);
+      } else {
+        setCurrentThreadTitle(data?.title ?? null);
+      }
+
+      // Subscribe to real-time updates
+      const channel = supabase
+        .channel(`realtime:threads:id=eq.${threadId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "threads",
+            filter: `id=eq.${threadId}`,
+          },
+          (payload) => {
+            const updated = payload.new as Thread;
+            setCurrentThreadTitle(updated?.title || null);
           }
-        },
-        (error) => {
-          console.error("Error listening for thread updates:", error);
-          setCurrentThreadTitle(null);
-        }
-      );
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     };
 
     fetchThreadTitle();
-
-    return () => {
-      if (unsubscribeRef.current) {
-        unsubscribeRef.current();
-        unsubscribeRef.current = undefined;
-      }
-    };
   }, [pathname, user]);
 
   const handleGoogleSignIn = async () => {
     try {
-      await signInWithPopup(auth!, provider);
-      showToast({
-        id: `login-${Date.now()}`,
-        title: `Welcome, ${auth?.currentUser?.displayName || "User"}!`,
-        status: "success",
-      });
+      await supabase.auth.signInWithOAuth({ provider: "google" });
     } catch (error: any) {
       console.error("Google Sign-In Error:", error);
       showToast({
@@ -186,7 +177,6 @@ const NavigationBar: FC = () => {
       </Card>
 
       <Divider orientation="horizontal" />
-
       <SideBar
         type="temporary"
         isOpen={isOpen}

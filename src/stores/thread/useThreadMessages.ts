@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
 export interface Message {
+  id?: string; // ⬅️ Was: id: any;
   text: string;
   sender: "user" | "bot";
   timestamp: number;
@@ -12,6 +13,12 @@ interface ThreadMessageStore {
   setMessages: (threadId: string, messages: Message[]) => void;
   addMessagesToTop: (threadId: string, newMessages: Message[]) => void;
   addMessageToBottom: (threadId: string, message: Message) => void;
+  updateMessage: (
+    threadId: string,
+    messageId: string,
+    updatedData: Partial<Message>
+  ) => void;
+  deleteMessage: (threadId: string, messageId: string) => void;
 }
 
 const useThreadMessages = create<ThreadMessageStore>((set) => ({
@@ -54,6 +61,34 @@ const useThreadMessages = create<ThreadMessageStore>((set) => ({
         messagesByThread: {
           ...state.messagesByThread,
           [threadId]: [...existing, message],
+        },
+      };
+    }),
+
+  updateMessage: (threadId, messageId, updatedData) =>
+    set((state) => {
+      const existing = state.messagesByThread[threadId] || [];
+      const updated = existing.map((msg) =>
+        msg.id === messageId ? { ...msg, ...updatedData } : msg
+      );
+
+      return {
+        messagesByThread: {
+          ...state.messagesByThread,
+          [threadId]: updated,
+        },
+      };
+    }),
+
+  deleteMessage: (threadId, messageId) =>
+    set((state) => {
+      const existing = state.messagesByThread[threadId] || [];
+      const filtered = existing.filter((msg) => msg.id !== messageId);
+
+      return {
+        messagesByThread: {
+          ...state.messagesByThread,
+          [threadId]: filtered,
         },
       };
     }),
