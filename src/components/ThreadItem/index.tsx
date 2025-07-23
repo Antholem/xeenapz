@@ -248,8 +248,6 @@ const ThreadItem: FC<ThreadItemProps> = ({
       isSearchActive={isSearchActive}
       onMouseEnter={() => setIsHover(true)}
       onMouseLeave={() => setIsHover(false)}
-      mt={mt}
-      mb={mb}
     >
       <Button
         variant="ghost"

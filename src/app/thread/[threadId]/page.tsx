@@ -7,15 +7,12 @@ import { useSpeechRecognition } from "react-speech-recognition";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
 import { MessageInput } from "@/components";
 import { supabase, speakText } from "@/lib";
-import { useAuth, useThreadInput } from "@/stores";
-
-interface Message {
-  id?: string;
-  text: string;
-  sender: "user" | "bot";
-  timestamp: number;
-  createdAt?: string;
-}
+import {
+  useAuth,
+  useThreadInput,
+  useThreadMessages,
+  type Message,
+} from "@/stores";
 
 const Thread: FC = () => {
   const { threadId } = useParams<{ threadId: string }>();
@@ -25,24 +22,34 @@ const Thread: FC = () => {
   const { getInput, setInput } = useThreadInput();
   const input = getInput(threadId || "home");
 
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [loadingMessages, setLoadingMessages] = useState(true);
+  const {
+    messagesByThread,
+    setMessages,
+    addMessageToBottom,
+    addMessagesToTop,
+    updateMessage,
+    deleteMessage,
+  } = useThreadMessages();
+
+  const messages = messagesByThread[threadId] || [];
+
+  const [loadingMessages, setLoadingMessages] = useState(messages.length === 0);
   const [isFetchingResponse, setIsFetchingResponse] = useState(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const oldestTimestampRef = useRef<number | null>(null);
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
   const prevTranscriptRef = useRef("");
-  const oldestTimestampRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!loading && !user) router.replace("/");
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (!threadId || !user) return;
+    if (!threadId || !user || messages.length > 0) return;
 
     const fetchMessages = async () => {
       setLoadingMessages(true);
@@ -54,32 +61,26 @@ const Thread: FC = () => {
         .order("created_at", { ascending: true })
         .limit(30);
 
-      if (error) {
-        console.error("Error fetching thread:", error);
+      if (error || !data) {
+        console.error("Error fetching messages:", error);
         notFound();
         return;
       }
 
-      if (data.length > 0) {
-        setMessages(data as Message[]);
-        oldestTimestampRef.current = data[0].timestamp ?? null;
-        setHasMore(true);
-      } else {
-        setMessages([]);
-        setHasMore(false);
-      }
-
+      setMessages(threadId, data);
+      oldestTimestampRef.current = data[0]?.timestamp ?? null;
+      setHasMore(data.length === 30);
       setLoadingMessages(false);
     };
 
     fetchMessages();
-  }, [threadId, user]);
+  }, [threadId, user, messages.length, setMessages]);
 
   useEffect(() => {
     if (!user || !threadId) return;
 
     const channel = supabase
-      .channel(`messages-realtime-${threadId}`)
+      .channel(`messages-thread-${threadId}`)
       .on(
         "postgres_changes",
         {
@@ -93,22 +94,11 @@ const Thread: FC = () => {
           const oldMsg = payload.old as Message;
 
           if (payload.eventType === "INSERT") {
-            setMessages((prev) => {
-              const exists = prev.some((msg) => msg.id === newMsg.id);
-              return exists ? prev : [...prev, newMsg];
-            });
-          }
-
-          if (payload.eventType === "UPDATE") {
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === newMsg.id ? { ...msg, ...newMsg } : msg
-              )
-            );
-          }
-
-          if (payload.eventType === "DELETE") {
-            setMessages((prev) => prev.filter((msg) => msg.id !== oldMsg.id));
+            addMessageToBottom(threadId, newMsg);
+          } else if (payload.eventType === "UPDATE") {
+            updateMessage(threadId, newMsg.id!, newMsg);
+          } else if (payload.eventType === "DELETE") {
+            deleteMessage(threadId, oldMsg.id!);
           }
         }
       )
@@ -117,7 +107,7 @@ const Thread: FC = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, threadId]);
+  }, [user, threadId, addMessageToBottom, updateMessage, deleteMessage]);
 
   useEffect(() => {
     if (transcript && transcript !== prevTranscriptRef.current) {
@@ -144,19 +134,14 @@ const Thread: FC = () => {
       .order("created_at", { ascending: true })
       .limit(20);
 
-    if (error) {
-      console.error("Error loading older messages:", error);
-      return;
-    }
-
-    if (!data || data.length === 0) {
+    if (error || !data || data.length === 0) {
       setHasMore(false);
       return;
     }
 
-    setMessages((prev) => [...data, ...prev]);
     oldestTimestampRef.current =
       data[0].timestamp ?? oldestTimestampRef.current;
+    addMessagesToTop(threadId, data);
   };
 
   const fetchBotResponse = async (userMessage: Message) => {
@@ -182,7 +167,7 @@ const Thread: FC = () => {
         createdAt: new Date().toISOString(),
       };
 
-      setMessages((prev) => [...prev, botMessage]);
+      addMessageToBottom(threadId, botMessage);
 
       await supabase.from("messages").insert({
         user_id: user.id,
@@ -205,8 +190,8 @@ const Thread: FC = () => {
           },
         })
         .eq("id", threadId);
-    } catch (error) {
-      console.error("Error fetching bot response:", error);
+    } catch (err) {
+      console.error("Error fetching bot response:", err);
     } finally {
       setIsFetchingResponse(false);
     }
@@ -226,7 +211,7 @@ const Thread: FC = () => {
     };
 
     setInput(threadId, "");
-    setMessages((prev) => [...prev, userMessage]);
+    addMessageToBottom(threadId, userMessage);
 
     try {
       await supabase.from("messages").insert({

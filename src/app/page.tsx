@@ -5,11 +5,15 @@ import { usePathname, useRouter } from "next/navigation";
 import { useSpeechRecognition } from "react-speech-recognition";
 import { v4 as uuidv4 } from "uuid";
 
-import { supabase } from "@/lib";
-import { useAuth, useTempThread, useThreadInput } from "@/stores";
+import { supabase, speakText } from "@/lib";
+import {
+  useAuth,
+  useTempThread,
+  useThreadInput,
+  useThreadMessages,
+} from "@/stores";
 import { MessageInput } from "@/components";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
-import { speakText } from "@/lib";
 
 interface Message {
   text: string;
@@ -24,6 +28,8 @@ const Home: FC = () => {
   const { user } = useAuth();
   const { isMessageTemporary } = useTempThread();
   const { getInput, setInput } = useThreadInput();
+  const { setMessages: setGlobalMessages, addMessageToBottom } =
+    useThreadMessages();
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
 
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -101,6 +107,8 @@ const Home: FC = () => {
       setMessages((prev) => [...prev, botMessage]);
 
       if (user && threadId && !isMessageTemporary) {
+        addMessageToBottom(threadId, botMessage);
+
         await supabase.from("messages").insert({
           user_id: user.id,
           thread_id: threadId,
@@ -215,6 +223,7 @@ const Home: FC = () => {
 
           await fetchBotSetTitle(userMessage.text, id);
           router.push(`/thread/${id}`);
+          setGlobalMessages(id, [userMessage]);
         } else {
           await supabase
             .from("threads")
@@ -227,6 +236,8 @@ const Home: FC = () => {
               },
             })
             .eq("id", id);
+
+          addMessageToBottom(id, userMessage);
         }
 
         await supabase.from("messages").insert({

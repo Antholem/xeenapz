@@ -26,6 +26,7 @@ import { supabase } from "@/lib";
 import { useAuth } from "@/stores";
 import { Button } from "@themed-components";
 import { useToastStore } from "@/stores";
+import { SideBar } from "@/components";
 
 interface Thread {
   title?: string;
@@ -176,6 +177,12 @@ const NavigationBar: FC = () => {
       </Card>
 
       <Divider orientation="horizontal" />
+      <SideBar
+        type="temporary"
+        isOpen={isOpen}
+        placement="left"
+        onClose={onClose}
+      />
     </Fragment>
   );
 };
