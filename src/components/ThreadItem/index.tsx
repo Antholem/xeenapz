@@ -48,8 +48,6 @@ interface ThreadItemProps extends Omit<ButtonProps, "onClick"> {
   isMessageMatch?: boolean;
   highlightedText?: ReactNode;
   isSearchActive: boolean;
-  mt?: number;
-  mb?: number;
 }
 
 const ThreadItem: FC<ThreadItemProps> = ({
@@ -60,8 +58,6 @@ const ThreadItem: FC<ThreadItemProps> = ({
   isMessageMatch = false,
   highlightedText,
   isSearchActive,
-  mt,
-  mb,
 }) => {
   const { colorMode } = useColorMode();
   const { user } = useAuth();
