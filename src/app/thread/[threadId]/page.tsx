@@ -164,7 +164,7 @@ const Thread: FC = () => {
         text: botText,
         sender: "bot",
         timestamp: Date.now(),
-        createdAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
       };
 
       addMessageToBottom(threadId, botMessage);
@@ -174,7 +174,7 @@ const Thread: FC = () => {
         thread_id: threadId,
         text: botMessage.text,
         sender: botMessage.sender,
-        created_at: botMessage.createdAt,
+        created_at: botMessage.created_at,
         is_generated: true,
         timestamp: botMessage.timestamp,
       });
@@ -186,7 +186,7 @@ const Thread: FC = () => {
           last_message: {
             text: botMessage.text,
             sender: botMessage.sender,
-            created_at: botMessage.createdAt,
+            created_at: botMessage.created_at,
           },
         })
         .eq("id", threadId);
@@ -207,7 +207,7 @@ const Thread: FC = () => {
       text: input,
       sender: "user",
       timestamp,
-      createdAt: now,
+      created_at: now,
     };
 
     setInput(threadId, "");

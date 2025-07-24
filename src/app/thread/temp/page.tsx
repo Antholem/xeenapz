@@ -13,7 +13,7 @@ interface Message {
   text: string;
   sender: "user" | "bot";
   timestamp: number;
-  createdAt?: string;
+  created_at?: string;
 }
 
 const TempThread: FC = () => {
@@ -94,7 +94,7 @@ const TempThread: FC = () => {
         text: botResponse,
         sender: "bot",
         timestamp: Date.now(),
-        createdAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
       };
 
       setMessages((prev) => [...prev, botMessage]);
@@ -122,7 +122,7 @@ const TempThread: FC = () => {
       text: input,
       sender: "user",
       timestamp: timestamp,
-      createdAt: now,
+      created_at: now,
     };
 
     setInput("home", "");

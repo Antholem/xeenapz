@@ -5,7 +5,7 @@ export interface Message {
   text: string;
   sender: "user" | "bot";
   timestamp: number;
-  createdAt?: string;
+  created_at?: string;
 }
 
 interface ThreadMessageStore {

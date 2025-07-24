@@ -1,18 +1,18 @@
 export interface Message {
   id: string;
-  senderId?: string;
+  sender_id?: string;
   text: string;
   timestamp?: { seconds: number; nanoseconds: number };
-  createdAt?: string;
+  created_at?: string;
 }
 
 export interface Thread {
   id: string;
-  userId?: string;
-  updatedAt?: { seconds: number; nanoseconds: number } | null;
+  user_id?: string;
+  updated_at?: string | null;
   title?: string;
   messages?: Message[];
-  isArchived?: boolean;
-  isDeleted?: boolean;
+  is_archived?: boolean;
+  is_deleted?: boolean;
   [key: string]: any;
 }
