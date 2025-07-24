@@ -19,7 +19,7 @@ interface Message {
   text: string;
   sender: "user" | "bot";
   timestamp: number;
-  createdAt?: string;
+  created_at?: string;
 }
 
 const Home: FC = () => {
@@ -100,7 +100,7 @@ const Home: FC = () => {
         text: botResponse,
         sender: "bot",
         timestamp: Date.now(),
-        createdAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
       };
 
       setMessages((prev) => [...prev, botMessage]);
@@ -113,7 +113,7 @@ const Home: FC = () => {
           thread_id: threadId,
           text: botMessage.text,
           sender: botMessage.sender,
-          created_at: botMessage.createdAt,
+          created_at: botMessage.created_at,
           is_generated: true,
           timestamp: botMessage.timestamp,
         });
@@ -125,7 +125,7 @@ const Home: FC = () => {
             last_message: {
               text: botMessage.text,
               sender: botMessage.sender,
-              created_at: botMessage.createdAt,
+              created_at: botMessage.created_at,
             },
           })
           .eq("id", threadId);
@@ -187,7 +187,7 @@ const Home: FC = () => {
       text: input,
       sender: "user",
       timestamp,
-      createdAt: now,
+      created_at: now,
     };
 
     setInput("home", "");

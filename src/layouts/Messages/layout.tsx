@@ -30,7 +30,7 @@ interface Message {
   text: string;
   sender: "user" | "bot";
   timestamp: number;
-  createdAt?: string;
+  created_at?: string;
 }
 
 interface MessagesLayoutProps {
@@ -77,7 +77,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
     let lastDate: string | null = null;
 
     messages.forEach((msg) => {
-      const date = msg.createdAt ?? new Date(msg.timestamp).toISOString();
+      const date = msg.created_at ?? new Date(msg.timestamp).toISOString();
       const formatted = formatDateGrouping(date);
 
       if (authUser && formatted !== lastDate) {
