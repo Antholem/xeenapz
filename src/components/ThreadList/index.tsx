@@ -60,6 +60,22 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
 
   const { colorScheme } = useTheme();
 
+  const fetchMessages = useCallback(
+    async (threadId: string): Promise<Message[]> => {
+      if (!user) return [];
+
+      const { data } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("thread_id", threadId)
+        .order("timestamp", { ascending: true });
+
+      return (data as Message[]) || [];
+    },
+    [user]
+  );
+
   useEffect(() => {
     if (!isSearchActive) {
       setLoadedThreads(threads);
@@ -144,6 +160,61 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
     loadedThreads,
     user,
   ]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const sortThreads = (list: Thread[]) =>
+      list.sort((a, b) => {
+        if (a.is_pinned && !b.is_pinned) return -1;
+        if (!a.is_pinned && b.is_pinned) return 1;
+
+        const aTime = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+        const bTime = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+        return bTime - aTime;
+      });
+
+    const channel = supabase
+      .channel(`threads-list-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "threads",
+          filter: `user_id=eq.${user.id}`,
+        },
+        async (payload) => {
+          const newThread = payload.new as Thread;
+
+          if (payload.eventType === "INSERT") {
+            const messages = await fetchMessages(newThread.id);
+            setLoadedThreads((prev) =>
+              sortThreads([
+                { ...newThread, messages },
+                ...prev.filter((t) => t.id !== newThread.id),
+              ])
+            );
+          } else if (payload.eventType === "UPDATE") {
+            setLoadedThreads((prev) =>
+              sortThreads(
+                prev.map((t) =>
+                  t.id === newThread.id ? { ...t, ...newThread } : t
+                )
+              )
+            );
+          } else if (payload.eventType === "DELETE") {
+            const deletedId = payload.old.id;
+            setLoadedThreads((prev) => prev.filter((t) => t.id !== deletedId));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, fetchMessages]);
 
   const { titleResults, messageResults } = useMemo(() => {
     const lower = searchTerm.toLowerCase();
