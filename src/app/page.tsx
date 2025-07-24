@@ -1,7 +1,7 @@
 "use client";
 
 import { FC, useEffect, useRef, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useSpeechRecognition } from "react-speech-recognition";
 import { v4 as uuidv4 } from "uuid";
 
@@ -24,7 +24,6 @@ interface Message {
 
 const Home: FC = () => {
   const pathname = usePathname();
-  const router = useRouter();
   const { user } = useAuth();
   const { isMessageTemporary } = useTempThread();
   const { getInput, setInput } = useThreadInput();
@@ -222,7 +221,7 @@ const Home: FC = () => {
           });
 
           await fetchBotSetTitle(userMessage.text, id);
-          router.push(`/thread/${id}`);
+          window.history.pushState({}, "", `/thread/${id}`);
           setGlobalMessages(id, [userMessage]);
         } else {
           await supabase
