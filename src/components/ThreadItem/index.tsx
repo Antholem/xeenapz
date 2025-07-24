@@ -37,7 +37,7 @@ import { supabase } from "@/lib";
 interface Thread {
   id: string;
   title?: string;
-  isPinned?: boolean;
+  is_pinned?: boolean;
 }
 
 interface ThreadItemProps extends Omit<ButtonProps, "onClick"> {
@@ -294,7 +294,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
               size="sm"
               py={isMessageMatch ? 6 : 0}
               icon={
-                thread.isPinned ? (
+                thread.is_pinned ? (
                   isHover ? (
                     <HiOutlineDotsVertical />
                   ) : (
@@ -304,7 +304,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
                   <HiOutlineDotsVertical />
                 )
               }
-              opacity={thread.isPinned ? 1 : 0}
+              opacity={thread.is_pinned ? 1 : 0}
               _groupHover={{ opacity: 1 }}
               transition="opacity 0.2s ease-in-out"
               onClick={(e) => e.stopPropagation()}
@@ -312,7 +312,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
           </Tooltip>
           <Portal>
             <MenuList>
-              {!thread.isPinned ? (
+              {!thread.is_pinned ? (
                 <MenuItem
                   icon={<Icon as={RiPushpinFill} boxSize={4} />}
                   onClick={(e) => {
