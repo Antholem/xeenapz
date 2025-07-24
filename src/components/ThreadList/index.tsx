@@ -25,7 +25,7 @@ interface SearchResultItem {
   thread: Thread;
   message?: Message;
   highlightedText?: ReactNode;
-  createdAt?: number | null;
+  created_at?: number | null;
 }
 
 interface ThreadListProps {
@@ -232,8 +232,8 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
             const start = msg.text.toLowerCase().indexOf(lower);
             const end = start + searchTerm.length;
 
-            const createdAt = msg.createdAt
-              ? new Date(msg.createdAt).getTime() / 1000
+            const createdAt = msg.created_at
+              ? new Date(msg.created_at).getTime() / 1000
               : null;
 
             const formatted = createdAt
@@ -271,13 +271,13 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
               thread,
               message: msg,
               highlightedText: highlight,
-              createdAt,
+              created_at: createdAt,
             });
           }
         });
       });
 
-      messages.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      messages.sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
     }
 
     return { titleResults: titles, messageResults: messages };
@@ -287,7 +287,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
 
   const allItems: VirtuosoItem[] = useMemo(() => {
     const filteredThreads = loadedThreads.filter(
-      (t) => !t.isArchived && t.isDeleted !== true
+      (t) => !t.is_archived && t.is_deleted !== true
     );
 
     if (isSearchActive && hasResults) {
