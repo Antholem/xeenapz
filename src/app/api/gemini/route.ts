@@ -11,8 +11,8 @@ export async function OPTIONS() {
 
 export async function POST(req: Request) {
   try {
-    const { message } = await req.json();
-    if (!message)
+    const { text, imageUrl } = await req.json();
+    if (!text && !imageUrl)
       return NextResponse.json(
         { error: "Message is required" },
         { status: 400 }
@@ -22,14 +22,22 @@ export async function POST(req: Request) {
     if (!apiKey)
       return NextResponse.json({ error: "API key not found" }, { status: 500 });
 
+    const parts: any[] = [];
+    if (text) parts.push({ text });
+    if (imageUrl) {
+      const imgRes = await fetch(imageUrl);
+      const arrayBuffer = await imgRes.arrayBuffer();
+      const base64 = Buffer.from(arrayBuffer).toString("base64");
+      const contentType = imgRes.headers.get("content-type") || "image/png";
+      parts.push({ inline_data: { mime_type: contentType, data: base64 } });
+    }
+
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: message }] }],
-        }),
+        body: JSON.stringify({ contents: [{ parts }] }),
       }
     );
 

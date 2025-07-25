@@ -21,6 +21,7 @@ interface Message {
   text: string;
   sender: "user" | "bot";
   timestamp: number;
+  image_url?: string | null;
 }
 
 interface MessageItemProps extends BoxProps {
@@ -68,39 +69,49 @@ const MessageItem: FC<MessageItemProps> = ({
           alignItems={isUser ? "flex-end" : "flex-start"}
           gap={1}
         >
-          <Box
-            p={3}
-            borderRadius="lg"
-            color={isUser ? "white" : ""}
-            bg={isUser ? `${colorScheme}.400` : "mutedSurface"}
-            maxW="max-content"
-            whiteSpace="pre-wrap"
-            wordBreak="break-word"
-            overflowWrap="anywhere"
-          >
-            <ReactMarkdown
-              components={{
-                ul: ({ children }) => (
-                  <ul style={{ paddingLeft: "20px" }}>{children}</ul>
-                ),
-                a: ({ ...props }) => (
-                  <a
-                    {...props}
-                    style={{
-                      wordBreak: "break-all",
-                      overflowWrap: "break-word",
-                    }}
-                  />
-                ),
-              }}
+          {message.image_url && (
+            <Image
+              src={message.image_url}
+              alt="Message Image"
+              maxW="xs"
+              borderRadius="md"
+            />
+          )}
+          {message.text && (
+            <Box
+              p={3}
+              borderRadius="lg"
+              color={isUser ? "white" : ""}
+              bg={isUser ? `${colorScheme}.400` : "mutedSurface"}
+              maxW="max-content"
+              whiteSpace="pre-wrap"
+              wordBreak="break-word"
+              overflowWrap="anywhere"
             >
-              {message.text}
-            </ReactMarkdown>
-          </Box>
+              <ReactMarkdown
+                components={{
+                  ul: ({ children }) => (
+                    <ul style={{ paddingLeft: "20px" }}>{children}</ul>
+                  ),
+                  a: ({ ...props }) => (
+                    <a
+                      {...props}
+                      style={{
+                        wordBreak: "break-all",
+                        overflowWrap: "break-word",
+                      }}
+                    />
+                  ),
+                }}
+              >
+                {message.text}
+              </ReactMarkdown>
+            </Box>
+          )}
 
           <Flex align="center" justify="center" gap={1}>
             {user && <Text fontSize="xs">{formattedTime}</Text>}
-            {!isUser && (
+            {!isUser && message.text && (
               <Tooltip
                 label={playingMessage === message.text ? "Stop" : "Read aloud"}
               >

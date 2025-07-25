@@ -30,6 +30,7 @@ interface Message {
   text: string;
   sender: "user" | "bot";
   timestamp: number;
+  image_url?: string | null;
   created_at?: string;
 }
 

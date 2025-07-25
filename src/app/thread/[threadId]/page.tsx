@@ -38,11 +38,22 @@ const Thread: FC = () => {
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const oldestTimestampRef = useRef<number | null>(null);
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
   const prevTranscriptRef = useRef("");
+
+  useEffect(() => {
+    if (imageFile) {
+      const url = URL.createObjectURL(imageFile);
+      setImagePreview(url);
+      return () => URL.revokeObjectURL(url);
+    }
+    setImagePreview(null);
+  }, [imageFile]);
 
   useEffect(() => {
     if (!loading && !user) router.replace("/");
@@ -153,15 +164,38 @@ const Thread: FC = () => {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({ text: userMessage.text, imageUrl: userMessage.image_url }),
       });
 
       const data = await res.json();
-      const botText =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+      const parts = data?.candidates?.[0]?.content?.parts || [];
+      const textPart = parts.find((p: any) => p.text)?.text || "";
+      const imagePart = parts.find((p: any) => p.inline_data);
+      let botImageUrl: string | null = null;
+      if (imagePart?.inline_data?.data) {
+        const { data: base64, mime_type } = imagePart.inline_data;
+        const byteChars = atob(base64);
+        const byteNumbers = new Array(byteChars.length);
+        for (let i = 0; i < byteChars.length; i++) {
+          byteNumbers[i] = byteChars.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: mime_type });
+        const fileExt = mime_type.split("/")[1];
+        const fileName = `${Date.now()}.${fileExt}`;
+        const filePath = `${user.id}/messages/${threadId}/${fileName}`;
+        const { error } = await supabase.storage
+          .from("images")
+          .upload(filePath, blob, { upsert: true, contentType: mime_type });
+        if (!error) {
+          botImageUrl =
+            supabase.storage.from("images").getPublicUrl(filePath).data.publicUrl;
+        }
+      }
 
       const botMessage: Message = {
-        text: botText,
+        text: textPart,
+        image_url: botImageUrl ?? undefined,
         sender: "bot",
         timestamp: Date.now(),
         created_at: new Date().toISOString(),
@@ -198,19 +232,34 @@ const Thread: FC = () => {
   };
 
   const sendMessage = async () => {
-    if (!input.trim() || !user || !threadId) return;
+    if ((!input.trim() && !imageFile) || !user || !threadId) return;
 
     const now = new Date().toISOString();
     const timestamp = Date.now();
 
+    let imageUrl: string | null = null;
+    if (imageFile) {
+      const ext = imageFile.name.split(".").pop();
+      const fileName = `${Date.now()}.${ext}`;
+      const filePath = `${user.id}/messages/${threadId}/${fileName}`;
+      const { error } = await supabase.storage
+        .from("images")
+        .upload(filePath, imageFile, { upsert: true });
+      if (!error) {
+        imageUrl = supabase.storage.from("images").getPublicUrl(filePath).data.publicUrl;
+      }
+    }
+
     const userMessage: Message = {
       text: input,
+      image_url: imageUrl ?? undefined,
       sender: "user",
       timestamp,
       created_at: now,
     };
 
     setInput(threadId, "");
+    setImageFile(null);
     addMessageToBottom(threadId, userMessage);
 
     try {
@@ -218,6 +267,7 @@ const Thread: FC = () => {
         user_id: user.id,
         thread_id: threadId,
         text: userMessage.text,
+        image_url: imageUrl,
         sender: userMessage.sender,
         created_at: now,
         timestamp,
@@ -262,6 +312,9 @@ const Thread: FC = () => {
         isListening={isListening}
         resetTranscript={resetTranscript}
         isFetchingResponse={isFetchingResponse}
+        imageFile={imageFile}
+        setImageFile={setImageFile}
+        imagePreview={imagePreview}
         sendMessage={sendMessage}
       />
     </ThreadLayout>
