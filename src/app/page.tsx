@@ -20,6 +20,7 @@ interface Message {
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;
+  image_url?: string;
 }
 
 const Home: FC = () => {
@@ -36,6 +37,8 @@ const Home: FC = () => {
   const [isFetchingResponse, setIsFetchingResponse] = useState<boolean>(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const input = getInput("home");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -72,6 +75,16 @@ const Home: FC = () => {
   }, [listening]);
 
   useEffect(() => {
+    if (imageFile) {
+      const reader = new FileReader();
+      reader.onload = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(imageFile);
+    } else {
+      setImagePreview(null);
+    }
+  }, [imageFile]);
+
+  useEffect(() => {
     const handleBeforeUnload = () => speechSynthesis.cancel();
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => {
@@ -82,25 +95,38 @@ const Home: FC = () => {
 
   const fetchBotResponse = async (
     userMessage: Message,
-    threadId?: string | null
+    threadId?: string | null,
+    imageData?: { base64: string; mimeType: string }
   ) => {
     setIsFetchingResponse(true);
     try {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({
+          text: userMessage.text,
+          image: imageData?.base64,
+          mimeType: imageData?.mimeType,
+        }),
       });
 
       const data = await res.json();
-      const botResponse =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+      const parts = data?.candidates?.[0]?.content?.parts || [];
+      let botResponse = "";
+      let botImage: string | undefined;
+      parts.forEach((p: any) => {
+        if (p.text) botResponse += p.text;
+        if (p.inlineData) {
+          botImage = `data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
+        }
+      });
 
       const botMessage: Message = {
         text: botResponse,
         sender: "bot",
         timestamp: Date.now(),
         created_at: new Date().toISOString(),
+        image_url: botImage,
       };
 
       setMessages((prev) => [...prev, botMessage]);
@@ -116,6 +142,7 @@ const Home: FC = () => {
           created_at: botMessage.created_at,
           is_generated: true,
           timestamp: botMessage.timestamp,
+          image_url: botImage ?? null,
         });
 
         await supabase
@@ -178,19 +205,44 @@ const Home: FC = () => {
   };
 
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() && !imageFile) return;
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
+
+    let uploadedUrl: string | null = null;
+    let base64Image: string | undefined;
+    let mimeType: string | undefined;
+
+    if (imageFile) {
+      const path = `${user?.id ?? "temp"}/messages/${threadId ?? "temp"}/${Date.now()}-${imageFile.name}`;
+      const { error } = await supabase.storage
+        .from("images")
+        .upload(path, imageFile);
+      if (!error) {
+        const { data } = supabase.storage.from("images").getPublicUrl(path);
+        uploadedUrl = data.publicUrl;
+        mimeType = imageFile.type;
+        const reader = await new Promise<string>((res, rej) => {
+          const fr = new FileReader();
+          fr.onload = () => res((fr.result as string).split(",")[1]);
+          fr.onerror = () => rej(fr.error);
+          fr.readAsDataURL(imageFile);
+        });
+        base64Image = reader;
+      }
+    }
 
     const userMessage: Message = {
       text: input,
       sender: "user",
       timestamp,
       created_at: now,
+      image_url: uploadedUrl ?? undefined,
     };
 
     setInput("home", "");
+    setImageFile(null);
     setMessages((prev) => [...prev, userMessage]);
 
     if (user && !isMessageTemporary) {
@@ -246,14 +298,23 @@ const Home: FC = () => {
           sender: userMessage.sender,
           created_at: now,
           timestamp,
+          image_url: uploadedUrl,
         });
 
-        fetchBotResponse(userMessage, id);
+        fetchBotResponse(
+          userMessage,
+          id,
+          base64Image && mimeType ? { base64: base64Image, mimeType } : undefined
+        );
       } catch (error) {
         console.error("Error sending message:", error);
       }
     } else {
-      fetchBotResponse(userMessage);
+      fetchBotResponse(
+        userMessage,
+        undefined,
+        base64Image && mimeType ? { base64: base64Image, mimeType } : undefined
+      );
     }
   };
 
@@ -275,6 +336,8 @@ const Home: FC = () => {
         resetTranscript={resetTranscript}
         isFetchingResponse={isFetchingResponse}
         sendMessage={sendMessage}
+        imagePreview={imagePreview}
+        onSelectImage={setImageFile}
       />
     </ThreadLayout>
   );

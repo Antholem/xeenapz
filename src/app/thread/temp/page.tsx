@@ -14,6 +14,7 @@ interface Message {
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;
+  image_url?: string;
 }
 
 const TempThread: FC = () => {
@@ -25,6 +26,8 @@ const TempThread: FC = () => {
   const [isFetchingResponse, setIsFetchingResponse] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const { getInput, setInput } = useThreadInput();
   const input = getInput("home");
@@ -69,6 +72,16 @@ const TempThread: FC = () => {
   }, [listening]);
 
   useEffect(() => {
+    if (imageFile) {
+      const reader = new FileReader();
+      reader.onload = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(imageFile);
+    } else {
+      setImagePreview(null);
+    }
+  }, [imageFile]);
+
+  useEffect(() => {
     const handleBeforeUnload = () => speechSynthesis.cancel();
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => {
@@ -77,24 +90,39 @@ const TempThread: FC = () => {
     };
   }, []);
 
-  const fetchBotResponse = async (userMessage: Message) => {
+  const fetchBotResponse = async (
+    userMessage: Message,
+    imageData?: { base64: string; mimeType: string }
+  ) => {
     setIsFetchingResponse(true);
     try {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({
+          text: userMessage.text,
+          image: imageData?.base64,
+          mimeType: imageData?.mimeType,
+        }),
       });
 
       const data = await res.json();
-      const botResponse =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+      const parts = data?.candidates?.[0]?.content?.parts || [];
+      let botResponse = "";
+      let botImage: string | undefined;
+      parts.forEach((p: any) => {
+        if (p.text) botResponse += p.text;
+        if (p.inlineData) {
+          botImage = `data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
+        }
+      });
 
       const botMessage: Message = {
         text: botResponse,
         sender: "bot",
         timestamp: Date.now(),
         created_at: new Date().toISOString(),
+        image_url: botImage,
       };
 
       setMessages((prev) => [...prev, botMessage]);
@@ -114,20 +142,39 @@ const TempThread: FC = () => {
   };
 
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() && !imageFile) return;
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
+
+    let base64Image: string | undefined;
+    let mimeType: string | undefined;
+
+    if (imageFile) {
+      mimeType = imageFile.type;
+      base64Image = await new Promise<string>((res, rej) => {
+        const fr = new FileReader();
+        fr.onload = () => res((fr.result as string).split(",")[1]);
+        fr.onerror = () => rej(fr.error);
+        fr.readAsDataURL(imageFile);
+      });
+    }
+
     const userMessage: Message = {
       text: input,
       sender: "user",
       timestamp: timestamp,
       created_at: now,
+      image_url: imagePreview ?? undefined,
     };
 
     setInput("home", "");
+    setImageFile(null);
     setMessages((prev) => [...prev, userMessage]);
-    fetchBotResponse(userMessage);
+    fetchBotResponse(
+      userMessage,
+      base64Image && mimeType ? { base64: base64Image, mimeType } : undefined
+    );
   };
 
   const isBlocked = !user && !loading;
@@ -151,6 +198,8 @@ const TempThread: FC = () => {
         resetTranscript={resetTranscript}
         isFetchingResponse={isFetchingResponse}
         sendMessage={sendMessage}
+        imagePreview={imagePreview}
+        onSelectImage={isBlocked ? () => {} : setImageFile}
       />
     </ThreadLayout>
   );

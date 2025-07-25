@@ -43,6 +43,8 @@ const NotFound = () => {
         resetTranscript={noop}
         isFetchingResponse={false}
         sendMessage={noop}
+        imagePreview={null}
+        onSelectImage={noop}
       />
     </ThreadLayout>
   );

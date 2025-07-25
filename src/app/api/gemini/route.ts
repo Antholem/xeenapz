@@ -11,8 +11,8 @@ export async function OPTIONS() {
 
 export async function POST(req: Request) {
   try {
-    const { message } = await req.json();
-    if (!message)
+    const { text, image, mimeType } = await req.json();
+    if (!text && !image)
       return NextResponse.json(
         { error: "Message is required" },
         { status: 400 }
@@ -28,7 +28,16 @@ export async function POST(req: Request) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: message }] }],
+          contents: [
+            {
+              parts: [
+                ...(text ? [{ text }] : []),
+                ...(image
+                  ? [{ inlineData: { data: image, mimeType: mimeType || "image/png" } }]
+                  : []),
+              ],
+            },
+          ],
         }),
       }
     );

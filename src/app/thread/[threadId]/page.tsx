@@ -38,6 +38,8 @@ const Thread: FC = () => {
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const oldestTimestampRef = useRef<number | null>(null);
@@ -123,6 +125,16 @@ const Thread: FC = () => {
     setIsListening(listening);
   }, [listening]);
 
+  useEffect(() => {
+    if (imageFile) {
+      const reader = new FileReader();
+      reader.onload = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(imageFile);
+    } else {
+      setImagePreview(null);
+    }
+  }, [imageFile]);
+
   const handleLoadMessages = async () => {
     if (!threadId || !user || !hasMore || !oldestTimestampRef.current) return;
 
@@ -144,7 +156,10 @@ const Thread: FC = () => {
     addMessagesToTop(threadId, data);
   };
 
-  const fetchBotResponse = async (userMessage: Message) => {
+  const fetchBotResponse = async (
+    userMessage: Message,
+    imageData?: { base64: string; mimeType: string }
+  ) => {
     if (!user || !threadId) return;
 
     setIsFetchingResponse(true);
@@ -153,18 +168,30 @@ const Thread: FC = () => {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({
+          text: userMessage.text,
+          image: imageData?.base64,
+          mimeType: imageData?.mimeType,
+        }),
       });
 
       const data = await res.json();
-      const botText =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+      const parts = data?.candidates?.[0]?.content?.parts || [];
+      let botText = "";
+      let botImage: string | undefined;
+      parts.forEach((p: any) => {
+        if (p.text) botText += p.text;
+        if (p.inlineData) {
+          botImage = `data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
+        }
+      });
 
       const botMessage: Message = {
         text: botText,
         sender: "bot",
         timestamp: Date.now(),
         created_at: new Date().toISOString(),
+        image_url: botImage,
       };
 
       addMessageToBottom(threadId, botMessage);
@@ -177,6 +204,7 @@ const Thread: FC = () => {
         created_at: botMessage.created_at,
         is_generated: true,
         timestamp: botMessage.timestamp,
+        image_url: botImage ?? null,
       });
 
       await supabase
@@ -198,19 +226,44 @@ const Thread: FC = () => {
   };
 
   const sendMessage = async () => {
-    if (!input.trim() || !user || !threadId) return;
+    if ((!input.trim() && !imageFile) || !user || !threadId) return;
 
     const now = new Date().toISOString();
     const timestamp = Date.now();
+
+    let uploadedUrl: string | null = null;
+    let base64Image: string | undefined;
+    let mimeType: string | undefined;
+
+    if (imageFile) {
+      const path = `${user.id}/messages/${threadId}/${Date.now()}-${imageFile.name}`;
+      const { error } = await supabase.storage
+        .from("images")
+        .upload(path, imageFile);
+      if (!error) {
+        const { data } = supabase.storage.from("images").getPublicUrl(path);
+        uploadedUrl = data.publicUrl;
+        mimeType = imageFile.type;
+        const reader = await new Promise<string>((res, rej) => {
+          const fr = new FileReader();
+          fr.onload = () => res((fr.result as string).split(",")[1]);
+          fr.onerror = () => rej(fr.error);
+          fr.readAsDataURL(imageFile);
+        });
+        base64Image = reader;
+      }
+    }
 
     const userMessage: Message = {
       text: input,
       sender: "user",
       timestamp,
       created_at: now,
+      image_url: uploadedUrl ?? undefined,
     };
 
     setInput(threadId, "");
+    setImageFile(null);
     addMessageToBottom(threadId, userMessage);
 
     try {
@@ -221,6 +274,7 @@ const Thread: FC = () => {
         sender: userMessage.sender,
         created_at: now,
         timestamp,
+        image_url: uploadedUrl,
       });
 
       await supabase
@@ -235,7 +289,7 @@ const Thread: FC = () => {
         })
         .eq("id", threadId);
 
-      fetchBotResponse(userMessage);
+      fetchBotResponse(userMessage, base64Image && mimeType ? { base64: base64Image, mimeType } : undefined);
     } catch (error) {
       console.error("Error sending message:", error);
     }
@@ -263,6 +317,8 @@ const Thread: FC = () => {
         resetTranscript={resetTranscript}
         isFetchingResponse={isFetchingResponse}
         sendMessage={sendMessage}
+        imagePreview={imagePreview}
+        onSelectImage={setImageFile}
       />
     </ThreadLayout>
   );
