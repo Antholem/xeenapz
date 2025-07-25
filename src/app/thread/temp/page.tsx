@@ -14,6 +14,7 @@ interface Message {
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;
+  imageUrl?: string;
 }
 
 const TempThread: FC = () => {
@@ -83,18 +84,23 @@ const TempThread: FC = () => {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({ message: userMessage.text, image: userMessage.imageUrl }),
       });
 
       const data = await res.json();
       const botResponse =
         data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
-
+      const imagePart = data?.candidates?.[0]?.content?.parts?.find(
+        (p: any) => p.inline_data
+      );
       const botMessage: Message = {
         text: botResponse,
         sender: "bot",
         timestamp: Date.now(),
         created_at: new Date().toISOString(),
+        imageUrl: imagePart?.inline_data?.data
+          ? `data:${imagePart.inline_data.mime_type};base64,${imagePart.inline_data.data}`
+          : undefined,
       };
 
       setMessages((prev) => [...prev, botMessage]);
@@ -113,8 +119,8 @@ const TempThread: FC = () => {
     }
   };
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
+  const sendMessage = async (imageUrl?: string | null) => {
+    if (!input.trim() && !imageUrl) return;
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
@@ -123,6 +129,7 @@ const TempThread: FC = () => {
       sender: "user",
       timestamp: timestamp,
       created_at: now,
+      imageUrl: imageUrl || undefined,
     };
 
     setInput("home", "");
