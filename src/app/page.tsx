@@ -43,7 +43,13 @@ const Home: FC = () => {
   const hasMounted = useRef(false);
 
   useEffect(() => {
-    if (!user || isMessageTemporary) return;
+    if (!user) {
+      setMessages([]);
+      setThreadId(null);
+      return;
+    }
+
+    if (isMessageTemporary) return;
 
     if (!hasMounted.current) {
       hasMounted.current = true;
@@ -145,10 +151,11 @@ const Home: FC = () => {
     }
   };
 
-  const fetchBotSetTitle = async (
-    userMessageText: string,
-    threadId: string
-  ) => {
+const fetchBotSetTitle = async (
+  userMessageText: string,
+  threadId: string
+) => {
+    if (!user) return;
     try {
       const prompt = `Generate a short, descriptive title/subject/topic (only the title, no extra words) for the following thread message: "${userMessageText}"`;
 
