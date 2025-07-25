@@ -19,12 +19,17 @@ const useAuth = create<AuthState>((set) => ({
   initializeAuth: () => {
     const fetchUser = async () => {
       const {
-        data: { user },
+        data: { session },
         error,
-      } = await supabase.auth.getUser();
+      } = await supabase.auth.getSession();
 
-      if (error) console.error("Error getting user:", error);
-      set({ user, loading: false });
+      if (error) {
+        console.error("Error getting session:", error);
+        set({ user: null, loading: false });
+        return;
+      }
+
+      set({ user: session?.user ?? null, loading: false });
     };
 
     fetchUser();
