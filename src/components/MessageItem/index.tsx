@@ -19,6 +19,7 @@ import { useTheme } from "@/stores";
 
 interface Message {
   text: string;
+  image_url?: string;
   sender: "user" | "bot";
   timestamp: number;
 }
@@ -68,21 +69,24 @@ const MessageItem: FC<MessageItemProps> = ({
           alignItems={isUser ? "flex-end" : "flex-start"}
           gap={1}
         >
-          <Box
-            p={3}
-            borderRadius="lg"
-            color={isUser ? "white" : ""}
-            bg={isUser ? `${colorScheme}.400` : "mutedSurface"}
-            maxW="max-content"
-            whiteSpace="pre-wrap"
-            wordBreak="break-word"
-            overflowWrap="anywhere"
-          >
-            <ReactMarkdown
-              components={{
-                ul: ({ children }) => (
-                  <ul style={{ paddingLeft: "20px" }}>{children}</ul>
-                ),
+        <Box
+          p={3}
+          borderRadius="lg"
+          color={isUser ? "white" : ""}
+          bg={isUser ? `${colorScheme}.400` : "mutedSurface"}
+          maxW="max-content"
+          whiteSpace="pre-wrap"
+          wordBreak="break-word"
+          overflowWrap="anywhere"
+        >
+          {message.image_url && (
+            <Image src={message.image_url} maxH="200px" mb={2} alt="uploaded" />
+          )}
+          <ReactMarkdown
+            components={{
+              ul: ({ children }) => (
+                <ul style={{ paddingLeft: "20px" }}>{children}</ul>
+              ),
                 a: ({ ...props }) => (
                   <a
                     {...props}

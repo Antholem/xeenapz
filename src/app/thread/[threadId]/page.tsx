@@ -37,6 +37,7 @@ const Thread: FC = () => {
   const [isFetchingResponse, setIsFetchingResponse] = useState(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
+  const [image, setImage] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -153,15 +154,21 @@ const Thread: FC = () => {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({ message: userMessage.text, image }),
       });
 
       const data = await res.json();
-      const botText =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+      const parts = data?.candidates?.[0]?.content?.parts || [];
+      const textPart = parts.find((p: any) => p.text)?.text || "";
+      const imagePart = parts.find((p: any) => p.inlineData);
+      const imageUrl = imagePart
+        ? `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`
+        : undefined;
+      const botText = textPart || "";
 
       const botMessage: Message = {
         text: botText,
+        image_url: imageUrl,
         sender: "bot",
         timestamp: Date.now(),
         created_at: new Date().toISOString(),
@@ -173,6 +180,7 @@ const Thread: FC = () => {
         user_id: user.id,
         thread_id: threadId,
         text: botMessage.text,
+        image_url: botMessage.image_url,
         sender: botMessage.sender,
         created_at: botMessage.created_at,
         is_generated: true,
@@ -194,17 +202,19 @@ const Thread: FC = () => {
       console.error("Error fetching bot response:", err);
     } finally {
       setIsFetchingResponse(false);
+      setImage(null);
     }
   };
 
   const sendMessage = async () => {
-    if (!input.trim() || !user || !threadId) return;
+    if ((!input.trim() && !image) || !user || !threadId) return;
 
     const now = new Date().toISOString();
     const timestamp = Date.now();
 
     const userMessage: Message = {
       text: input,
+      image_url: image || undefined,
       sender: "user",
       timestamp,
       created_at: now,
@@ -218,6 +228,7 @@ const Thread: FC = () => {
         user_id: user.id,
         thread_id: threadId,
         text: userMessage.text,
+        image_url: userMessage.image_url,
         sender: userMessage.sender,
         created_at: now,
         timestamp,
@@ -259,6 +270,8 @@ const Thread: FC = () => {
       <MessageInput
         input={input}
         setInput={(val) => setInput(threadId || "home", val)}
+        image={image}
+        setImage={setImage}
         isListening={isListening}
         resetTranscript={resetTranscript}
         isFetchingResponse={isFetchingResponse}

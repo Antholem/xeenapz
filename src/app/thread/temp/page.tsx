@@ -11,6 +11,7 @@ import { useAuth, useThreadInput } from "@/stores";
 
 interface Message {
   text: string;
+  image_url?: string;
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;
@@ -25,6 +26,7 @@ const TempThread: FC = () => {
   const [isFetchingResponse, setIsFetchingResponse] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
+  const [image, setImage] = useState<string | null>(null);
 
   const { getInput, setInput } = useThreadInput();
   const input = getInput("home");
@@ -83,15 +85,21 @@ const TempThread: FC = () => {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({ message: userMessage.text, image }),
       });
 
       const data = await res.json();
-      const botResponse =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+      const parts = data?.candidates?.[0]?.content?.parts || [];
+      const textPart = parts.find((p: any) => p.text)?.text || "";
+      const imagePart = parts.find((p: any) => p.inlineData);
+      const imageUrl = imagePart
+        ? `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`
+        : undefined;
+      const botResponse = textPart || "";
 
       const botMessage: Message = {
         text: botResponse,
+        image_url: imageUrl,
         sender: "bot",
         timestamp: Date.now(),
         created_at: new Date().toISOString(),
@@ -110,16 +118,18 @@ const TempThread: FC = () => {
       ]);
     } finally {
       setIsFetchingResponse(false);
+      setImage(null);
     }
   };
 
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() && !image) return;
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
     const userMessage: Message = {
       text: input,
+      image_url: image || undefined,
       sender: "user",
       timestamp: timestamp,
       created_at: now,
@@ -147,6 +157,8 @@ const TempThread: FC = () => {
       <MessageInput
         input={isBlocked ? "" : input}
         setInput={(val) => setInput("home", val)}
+        image={image}
+        setImage={setImage}
         isListening={isBlocked ? false : isListening}
         resetTranscript={resetTranscript}
         isFetchingResponse={isFetchingResponse}
