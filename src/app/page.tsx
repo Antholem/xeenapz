@@ -20,6 +20,7 @@ interface Message {
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;
+  image_url?: string;
 }
 
 const Home: FC = () => {
@@ -89,18 +90,30 @@ const Home: FC = () => {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({
+          message: userMessage.text,
+          image: userMessage.image_url,
+        }),
       });
 
       const data = await res.json();
-      const botResponse =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+      const parts = data?.candidates?.[0]?.content?.parts || [];
+      let botResponse = "";
+      let botImage: string | undefined;
+      for (const part of parts) {
+        if (part.text) botResponse += part.text;
+        if (part.inlineData) {
+          botImage = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        }
+      }
+      if (!botResponse && !botImage) botResponse = "No response";
 
       const botMessage: Message = {
         text: botResponse,
         sender: "bot",
         timestamp: Date.now(),
         created_at: new Date().toISOString(),
+        image_url: botImage,
       };
 
       setMessages((prev) => [...prev, botMessage]);
@@ -116,6 +129,7 @@ const Home: FC = () => {
           created_at: botMessage.created_at,
           is_generated: true,
           timestamp: botMessage.timestamp,
+          image_url: botMessage.image_url,
         });
 
         await supabase
@@ -126,6 +140,7 @@ const Home: FC = () => {
               text: botMessage.text,
               sender: botMessage.sender,
               created_at: botMessage.created_at,
+              image_url: botMessage.image_url,
             },
           })
           .eq("id", threadId);
@@ -177,8 +192,8 @@ const Home: FC = () => {
     }
   };
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
+  const sendMessage = async (image?: string | null) => {
+    if (!input.trim() && !image) return;
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
@@ -188,6 +203,7 @@ const Home: FC = () => {
       sender: "user",
       timestamp,
       created_at: now,
+      image_url: image || undefined,
     };
 
     setInput("home", "");
@@ -246,6 +262,7 @@ const Home: FC = () => {
           sender: userMessage.sender,
           created_at: now,
           timestamp,
+          image_url: image,
         });
 
         fetchBotResponse(userMessage, id);

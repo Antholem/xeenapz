@@ -153,18 +153,30 @@ const Thread: FC = () => {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({
+          message: userMessage.text,
+          image: userMessage.image_url,
+        }),
       });
 
       const data = await res.json();
-      const botText =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+      const parts = data?.candidates?.[0]?.content?.parts || [];
+      let botText = "";
+      let botImage: string | undefined;
+      for (const part of parts) {
+        if (part.text) botText += part.text;
+        if (part.inlineData) {
+          botImage = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        }
+      }
+      if (!botText && !botImage) botText = "No response";
 
       const botMessage: Message = {
         text: botText,
         sender: "bot",
         timestamp: Date.now(),
         created_at: new Date().toISOString(),
+        image_url: botImage,
       };
 
       addMessageToBottom(threadId, botMessage);
@@ -187,6 +199,7 @@ const Thread: FC = () => {
             text: botMessage.text,
             sender: botMessage.sender,
             created_at: botMessage.created_at,
+            image_url: botMessage.image_url,
           },
         })
         .eq("id", threadId);
@@ -197,8 +210,9 @@ const Thread: FC = () => {
     }
   };
 
-  const sendMessage = async () => {
-    if (!input.trim() || !user || !threadId) return;
+  const sendMessage = async (image?: string | null) => {
+    if (!input.trim() && !image) return;
+    if (!user || !threadId) return;
 
     const now = new Date().toISOString();
     const timestamp = Date.now();
@@ -208,6 +222,7 @@ const Thread: FC = () => {
       sender: "user",
       timestamp,
       created_at: now,
+      image_url: image || undefined,
     };
 
     setInput(threadId, "");
@@ -221,6 +236,7 @@ const Thread: FC = () => {
         sender: userMessage.sender,
         created_at: now,
         timestamp,
+        image_url: image,
       });
 
       await supabase
@@ -231,6 +247,7 @@ const Thread: FC = () => {
             text: userMessage.text,
             sender: userMessage.sender,
             created_at: now,
+            image_url: image,
           },
         })
         .eq("id", threadId);
