@@ -2,6 +2,7 @@ export interface Message {
   id: string;
   sender_id?: string;
   text: string;
+  image_url?: string;
   timestamp?: { seconds: number; nanoseconds: number };
   created_at?: string;
 }

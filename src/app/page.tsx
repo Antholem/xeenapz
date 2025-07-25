@@ -17,6 +17,7 @@ import { ThreadLayout, MessagesLayout } from "@/layouts";
 
 interface Message {
   text: string;
+  image_url?: string;
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;
@@ -36,6 +37,8 @@ const Home: FC = () => {
   const [isFetchingResponse, setIsFetchingResponse] = useState<boolean>(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const input = getInput("home");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -86,10 +89,10 @@ const Home: FC = () => {
   ) => {
     setIsFetchingResponse(true);
     try {
-      const res = await fetch("/api/gemini", {
+    const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({ message: userMessage.text, image: userMessage.image_url }),
       });
 
       const data = await res.json();
@@ -177,20 +180,39 @@ const Home: FC = () => {
     }
   };
 
+  const handleImageChange = (file: File | null) => {
+    if (!file) {
+      setImage(null);
+      setImagePreview(null);
+      return;
+    }
+    setImage(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const clearImage = () => {
+    setImage(null);
+    setImagePreview(null);
+  };
+
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() && !imagePreview) return;
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
 
     const userMessage: Message = {
       text: input,
+      image_url: imagePreview || undefined,
       sender: "user",
       timestamp,
       created_at: now,
     };
 
     setInput("home", "");
+    clearImage();
     setMessages((prev) => [...prev, userMessage]);
 
     if (user && !isMessageTemporary) {
@@ -220,7 +242,7 @@ const Home: FC = () => {
             },
           });
 
-          await fetchBotSetTitle(userMessage.text, id);
+          await fetchBotSetTitle(userMessage.text || "Image message", id);
           window.history.pushState({}, "", `/thread/${id}`);
           setGlobalMessages(id, [userMessage]);
         } else {
@@ -274,6 +296,9 @@ const Home: FC = () => {
         isListening={isListening}
         resetTranscript={resetTranscript}
         isFetchingResponse={isFetchingResponse}
+        imagePreview={imagePreview}
+        onImageChange={handleImageChange}
+        clearImage={clearImage}
         sendMessage={sendMessage}
       />
     </ThreadLayout>

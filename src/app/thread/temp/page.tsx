@@ -11,6 +11,7 @@ import { useAuth, useThreadInput } from "@/stores";
 
 interface Message {
   text: string;
+  image_url?: string;
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;
@@ -25,6 +26,8 @@ const TempThread: FC = () => {
   const [isFetchingResponse, setIsFetchingResponse] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const { getInput, setInput } = useThreadInput();
   const input = getInput("home");
@@ -83,7 +86,7 @@ const TempThread: FC = () => {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({ message: userMessage.text, image: userMessage.image_url }),
       });
 
       const data = await res.json();
@@ -113,19 +116,38 @@ const TempThread: FC = () => {
     }
   };
 
+  const handleImageChange = (file: File | null) => {
+    if (!file) {
+      setImage(null);
+      setImagePreview(null);
+      return;
+    }
+    setImage(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const clearImage = () => {
+    setImage(null);
+    setImagePreview(null);
+  };
+
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() && !imagePreview) return;
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
     const userMessage: Message = {
       text: input,
+      image_url: imagePreview || undefined,
       sender: "user",
       timestamp: timestamp,
       created_at: now,
     };
 
     setInput("home", "");
+    clearImage();
     setMessages((prev) => [...prev, userMessage]);
     fetchBotResponse(userMessage);
   };
@@ -150,6 +172,9 @@ const TempThread: FC = () => {
         isListening={isBlocked ? false : isListening}
         resetTranscript={resetTranscript}
         isFetchingResponse={isFetchingResponse}
+        imagePreview={imagePreview}
+        onImageChange={handleImageChange}
+        clearImage={clearImage}
         sendMessage={sendMessage}
       />
     </ThreadLayout>

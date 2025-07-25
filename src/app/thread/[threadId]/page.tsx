@@ -38,6 +38,8 @@ const Thread: FC = () => {
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const oldestTimestampRef = useRef<number | null>(null);
@@ -153,7 +155,7 @@ const Thread: FC = () => {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({ message: userMessage.text, image: userMessage.image_url }),
       });
 
       const data = await res.json();
@@ -197,20 +199,39 @@ const Thread: FC = () => {
     }
   };
 
+  const handleImageChange = (file: File | null) => {
+    if (!file) {
+      setImage(null);
+      setImagePreview(null);
+      return;
+    }
+    setImage(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const clearImage = () => {
+    setImage(null);
+    setImagePreview(null);
+  };
+
   const sendMessage = async () => {
-    if (!input.trim() || !user || !threadId) return;
+    if ((!input.trim() && !imagePreview) || !user || !threadId) return;
 
     const now = new Date().toISOString();
     const timestamp = Date.now();
 
     const userMessage: Message = {
       text: input,
+      image_url: imagePreview || undefined,
       sender: "user",
       timestamp,
       created_at: now,
     };
 
     setInput(threadId, "");
+    clearImage();
     addMessageToBottom(threadId, userMessage);
 
     try {
@@ -262,6 +283,9 @@ const Thread: FC = () => {
         isListening={isListening}
         resetTranscript={resetTranscript}
         isFetchingResponse={isFetchingResponse}
+        imagePreview={imagePreview}
+        onImageChange={handleImageChange}
+        clearImage={clearImage}
         sendMessage={sendMessage}
       />
     </ThreadLayout>

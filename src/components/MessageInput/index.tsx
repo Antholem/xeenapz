@@ -1,6 +1,6 @@
 import { FC, Fragment } from "react";
 import { Flex, IconButton, Card, Tooltip, Divider } from "@chakra-ui/react";
-import { IoStop } from "react-icons/io5";
+import { IoStop, IoClose, IoImageOutline } from "react-icons/io5";
 import { IoIosMic, IoMdSend } from "react-icons/io";
 import { SpeechRecognize } from "@/lib";
 import { Input } from "@themed-components";
@@ -13,6 +13,9 @@ interface MessageInputProps {
   isFetchingResponse: boolean;
   isDisabled?: boolean;
   sendMessage: () => void;
+  imagePreview?: string | null;
+  onImageChange?: (file: File | null) => void;
+  clearImage?: () => void;
 }
 
 const MessageInput: FC<MessageInputProps> = ({
@@ -23,6 +26,9 @@ const MessageInput: FC<MessageInputProps> = ({
   isFetchingResponse,
   isDisabled,
   sendMessage,
+  imagePreview,
+  onImageChange,
+  clearImage,
 }) => {
   const toggleSpeechRecognition = () => {
     SpeechRecognize(isListening, resetTranscript);
@@ -32,6 +38,24 @@ const MessageInput: FC<MessageInputProps> = ({
     <Fragment>
       <Divider orientation="horizontal" />
       <Card p={3} borderRadius={0} variant="surface">
+        {imagePreview && (
+          <Flex mb={2} align="center" gap={2}>
+            <img
+              src={imagePreview}
+              style={{ maxHeight: "100px", borderRadius: "8px" }}
+              alt="preview"
+            />
+            {clearImage && (
+              <IconButton
+                aria-label="Remove image"
+                icon={<IoClose />}
+                size="sm"
+                variant="ghost"
+                onClick={clearImage}
+              />
+            )}
+          </Flex>
+        )}
         <Flex gap={2} justify="center" align="center">
           <Input
             value={input}
@@ -47,6 +71,29 @@ const MessageInput: FC<MessageInputProps> = ({
             variant="filled"
             isDisabled={isDisabled}
           />
+          {onImageChange && (
+            <>
+              <input
+                id="image-input"
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={(e) =>
+                  onImageChange(e.target.files?.[0] ?? null)
+                }
+              />
+              <Tooltip label="Upload image">
+                <IconButton
+                  as="label"
+                  htmlFor="image-input"
+                  aria-label="Upload image"
+                  icon={<IoImageOutline />}
+                  variant="ghost"
+                  isDisabled={isDisabled}
+                />
+              </Tooltip>
+            </>
+          )}
           <Tooltip label={isListening ? "Stop" : "Type by voice"}>
             <IconButton
               aria-label="Speech Recognition"
@@ -61,7 +108,11 @@ const MessageInput: FC<MessageInputProps> = ({
               aria-label="Send Message"
               variant="ghost"
               icon={<IoMdSend />}
-              isDisabled={isFetchingResponse || !input.trim() || isListening}
+              isDisabled={
+                isFetchingResponse ||
+                (!input.trim() && !imagePreview) ||
+                isListening
+              }
               onClick={sendMessage}
             />
           </Tooltip>
