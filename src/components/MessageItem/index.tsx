@@ -21,6 +21,7 @@ interface Message {
   text: string;
   sender: "user" | "bot";
   timestamp: number;
+  imageUrl?: string;
 }
 
 interface MessageItemProps extends BoxProps {
@@ -68,21 +69,29 @@ const MessageItem: FC<MessageItemProps> = ({
           alignItems={isUser ? "flex-end" : "flex-start"}
           gap={1}
         >
-          <Box
-            p={3}
-            borderRadius="lg"
-            color={isUser ? "white" : ""}
-            bg={isUser ? `${colorScheme}.400` : "mutedSurface"}
-            maxW="max-content"
-            whiteSpace="pre-wrap"
-            wordBreak="break-word"
-            overflowWrap="anywhere"
-          >
-            <ReactMarkdown
-              components={{
-                ul: ({ children }) => (
-                  <ul style={{ paddingLeft: "20px" }}>{children}</ul>
-                ),
+        <Box
+          p={3}
+          borderRadius="lg"
+          color={isUser ? "white" : ""}
+          bg={isUser ? `${colorScheme}.400` : "mutedSurface"}
+          maxW="max-content"
+          whiteSpace="pre-wrap"
+          wordBreak="break-word"
+          overflowWrap="anywhere"
+        >
+          {message.imageUrl && (
+            <Image
+              src={message.imageUrl}
+              maxW="200px"
+              mb={message.text ? 2 : 0}
+              alt="user upload"
+            />
+          )}
+          <ReactMarkdown
+            components={{
+              ul: ({ children }) => (
+                <ul style={{ paddingLeft: "20px" }}>{children}</ul>
+              ),
                 a: ({ ...props }) => (
                   <a
                     {...props}
@@ -92,11 +101,11 @@ const MessageItem: FC<MessageItemProps> = ({
                     }}
                   />
                 ),
-              }}
-            >
-              {message.text}
-            </ReactMarkdown>
-          </Box>
+            }}
+          >
+            {message.text}
+          </ReactMarkdown>
+        </Box>
 
           <Flex align="center" justify="center" gap={1}>
             {user && <Text fontSize="xs">{formattedTime}</Text>}
