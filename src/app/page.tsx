@@ -17,6 +17,7 @@ import { ThreadLayout, MessagesLayout } from "@/layouts";
 
 interface Message {
   text: string;
+  image_url?: string;
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;
@@ -89,15 +90,26 @@ const Home: FC = () => {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({
+          message: userMessage.text,
+          image: userMessage.image_url,
+        }),
       });
 
       const data = await res.json();
-      const botResponse =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+      const parts = data?.candidates?.[0]?.content?.parts || [];
+      const botText = parts
+        .filter((p: any) => p.text)
+        .map((p: any) => p.text)
+        .join("");
+      const imgPart = parts.find((p: any) => p.inline_data);
+      const botImage = imgPart
+        ? `data:${imgPart.inline_data.mime_type};base64,${imgPart.inline_data.data}`
+        : undefined;
 
       const botMessage: Message = {
-        text: botResponse,
+        text: botText,
+        image_url: botImage,
         sender: "bot",
         timestamp: Date.now(),
         created_at: new Date().toISOString(),
@@ -177,14 +189,15 @@ const Home: FC = () => {
     }
   };
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
+  const sendMessage = async (img?: string | null) => {
+    if (!input.trim() && !img) return;
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
 
     const userMessage: Message = {
       text: input,
+      image_url: img || undefined,
       sender: "user",
       timestamp,
       created_at: now,
