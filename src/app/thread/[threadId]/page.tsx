@@ -197,14 +197,15 @@ const Thread: FC = () => {
     }
   };
 
-  const sendMessage = async () => {
-    if (!input.trim() || !user || !threadId) return;
+  const sendMessage = async (image?: string | null) => {
+    if ((!input.trim() && !image) || !user || !threadId) return;
 
     const now = new Date().toISOString();
     const timestamp = Date.now();
 
     const userMessage: Message = {
       text: input,
+      image: image || undefined,
       sender: "user",
       timestamp,
       created_at: now,

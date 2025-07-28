@@ -11,6 +11,7 @@ import { useAuth, useThreadInput } from "@/stores";
 
 interface Message {
   text: string;
+  image?: string;
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;
@@ -92,6 +93,7 @@ const TempThread: FC = () => {
 
       const botMessage: Message = {
         text: botResponse,
+        image: "/vercel.svg",
         sender: "bot",
         timestamp: Date.now(),
         created_at: new Date().toISOString(),
@@ -113,13 +115,14 @@ const TempThread: FC = () => {
     }
   };
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
+  const sendMessage = async (image?: string | null) => {
+    if (!input.trim() && !image) return;
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
     const userMessage: Message = {
       text: input,
+      image: image || undefined,
       sender: "user",
       timestamp: timestamp,
       created_at: now,

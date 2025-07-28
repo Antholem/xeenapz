@@ -19,6 +19,7 @@ import { useTheme } from "@/stores";
 
 interface Message {
   text: string;
+  image?: string;
   sender: "user" | "bot";
   timestamp: number;
 }
@@ -96,6 +97,15 @@ const MessageItem: FC<MessageItemProps> = ({
             >
               {message.text}
             </ReactMarkdown>
+            {message.image && (
+              <Image
+                src={message.image}
+                alt="Attached image"
+                mt={2}
+                borderRadius="md"
+                maxW="200px"
+              />
+            )}
           </Box>
 
           <Flex align="center" justify="center" gap={1}>
