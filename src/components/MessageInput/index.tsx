@@ -20,7 +20,7 @@ interface MessageInputProps {
   resetTranscript: () => void;
   isFetchingResponse: boolean;
   isDisabled?: boolean;
-  sendMessage: () => void;
+  sendMessage: (imageFile?: File | null) => void;
 }
 
 const MessageInput: FC<MessageInputProps> = ({
@@ -37,6 +37,7 @@ const MessageInput: FC<MessageInputProps> = ({
   };
 
   const [preview, setPreview] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,6 +45,7 @@ const MessageInput: FC<MessageInputProps> = ({
     if (!file) return;
     const url = URL.createObjectURL(file);
     setPreview(url);
+    setFile(file);
   };
 
   const discardImage = () => {
@@ -51,6 +53,7 @@ const MessageInput: FC<MessageInputProps> = ({
       URL.revokeObjectURL(preview);
     }
     setPreview(null);
+    setFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -112,7 +115,8 @@ const MessageInput: FC<MessageInputProps> = ({
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                sendMessage();
+                sendMessage(file);
+                discardImage();
               }
             }}
             placeholder="Write a message..."
@@ -138,15 +142,20 @@ const MessageInput: FC<MessageInputProps> = ({
               isDisabled={isDisabled}
             />
           </Tooltip>
-          <Tooltip label="Send message">
-            <IconButton
-              aria-label="Send Message"
-              variant="ghost"
-              icon={<IoMdSend />}
-              isDisabled={isFetchingResponse || !input.trim() || isListening}
-              onClick={sendMessage}
-            />
-          </Tooltip>
+            <Tooltip label="Send message">
+              <IconButton
+                aria-label="Send Message"
+                variant="ghost"
+                icon={<IoMdSend />}
+                isDisabled={
+                  isFetchingResponse || (!input.trim() && !file) || isListening
+                }
+                onClick={() => {
+                  sendMessage(file);
+                  discardImage();
+                }}
+              />
+            </Tooltip>
         </Flex>
       </Card>
     </Fragment>

@@ -11,6 +11,7 @@ import { useAuth, useThreadInput } from "@/stores";
 
 interface Message {
   text: string;
+  image?: string;
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;
@@ -83,15 +84,22 @@ const TempThread: FC = () => {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({
+          message: userMessage.text,
+          image: userMessage.image,
+        }),
       });
 
       const data = await res.json();
-      const botResponse =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+      const parts = data?.candidates?.[0]?.content?.parts || [];
+      const textPart = parts.find((p: any) => p.text)?.text || "";
+      const imagePart = parts.find((p: any) => p.inline_data);
 
       const botMessage: Message = {
-        text: botResponse,
+        text: textPart,
+        image: imagePart
+          ? `data:${imagePart.inline_data.mime_type};base64,${imagePart.inline_data.data}`
+          : undefined,
         sender: "bot",
         timestamp: Date.now(),
         created_at: new Date().toISOString(),
@@ -113,13 +121,24 @@ const TempThread: FC = () => {
     }
   };
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
+  const sendMessage = async (imageFile?: File | null) => {
+    if (!input.trim() && !imageFile) return;
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
+    let base64: string | undefined;
+    if (imageFile) {
+      base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(imageFile);
+      });
+    }
+
     const userMessage: Message = {
       text: input,
+      image: base64,
       sender: "user",
       timestamp: timestamp,
       created_at: now,

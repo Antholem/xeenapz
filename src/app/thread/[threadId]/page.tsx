@@ -197,8 +197,9 @@ const Thread: FC = () => {
     }
   };
 
-  const sendMessage = async () => {
-    if (!input.trim() || !user || !threadId) return;
+  const sendMessage = async (_imageFile?: File | null) => {
+    if (!input.trim() && !_imageFile) return;
+    if (!user || !threadId) return;
 
     const now = new Date().toISOString();
     const timestamp = Date.now();
