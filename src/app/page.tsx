@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useSpeechRecognition } from "react-speech-recognition";
 import { v4 as uuidv4 } from "uuid";
 
-import { supabase, speakText } from "@/lib";
+import { supabase, speakText, uploadChatImage } from "@/lib";
 import {
   useAuth,
   useTempThread,
@@ -181,7 +181,10 @@ const Home: FC = () => {
     }
   };
 
-  const sendMessage = async (imageBase64?: string | null) => {
+  const sendMessage = async (
+    imageBase64?: string | null,
+    imageFile?: File | null
+  ) => {
     if (!input.trim() && !imageBase64) return;
 
     const timestamp = Date.now();
@@ -252,6 +255,10 @@ const Home: FC = () => {
           created_at: now,
           timestamp,
         });
+
+        if (imageFile) {
+          await uploadChatImage(imageFile, user.id, id);
+        }
 
         fetchBotResponse(userMessage, id, imageBase64);
       } catch (error) {

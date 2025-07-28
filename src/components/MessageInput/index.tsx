@@ -20,7 +20,7 @@ interface MessageInputProps {
   resetTranscript: () => void;
   isFetchingResponse: boolean;
   isDisabled?: boolean;
-  sendMessage: (imageBase64?: string | null) => void;
+  sendMessage: (imageBase64?: string | null, imageFile?: File | null) => void;
 }
 
 const MessageInput: FC<MessageInputProps> = ({
@@ -37,6 +37,7 @@ const MessageInput: FC<MessageInputProps> = ({
   };
 
   const [preview, setPreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,6 +45,7 @@ const MessageInput: FC<MessageInputProps> = ({
     if (!file) return;
     const url = URL.createObjectURL(file);
     setPreview(url);
+    setImageFile(file);
   };
 
   const discardImage = () => {
@@ -51,13 +53,14 @@ const MessageInput: FC<MessageInputProps> = ({
       URL.revokeObjectURL(preview);
     }
     setPreview(null);
+    setImageFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
   const getImageBase64 = async (): Promise<string | null> => {
-    const file = fileInputRef.current?.files?.[0];
+    const file = imageFile || fileInputRef.current?.files?.[0];
     if (!file) return null;
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -80,7 +83,7 @@ const MessageInput: FC<MessageInputProps> = ({
 
   const handleSend = async () => {
     const imageBase64 = await getImageBase64();
-    sendMessage(imageBase64);
+    sendMessage(imageBase64, imageFile);
     discardImage();
   };
 
