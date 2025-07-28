@@ -197,7 +197,7 @@ const Thread: FC = () => {
     }
   };
 
-  const sendMessage = async () => {
+  const sendMessage = async (file?: File | null) => {
     if (!input.trim() || !user || !threadId) return;
 
     const now = new Date().toISOString();

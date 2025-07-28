@@ -11,6 +11,7 @@ import { useAuth, useThreadInput } from "@/stores";
 
 interface Message {
   text: string;
+  image?: string;
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;
@@ -83,7 +84,10 @@ const TempThread: FC = () => {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({
+          message: userMessage.text,
+          image: userMessage.image,
+        }),
       });
 
       const data = await res.json();
@@ -113,16 +117,31 @@ const TempThread: FC = () => {
     }
   };
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
+  const fileToDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+  const sendMessage = async (file?: File | null) => {
+    if (!input.trim() && !file) return;
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
+
+    let image: string | undefined = undefined;
+    if (file) {
+      image = await fileToDataUrl(file);
+    }
+
     const userMessage: Message = {
       text: input,
       sender: "user",
-      timestamp: timestamp,
+      timestamp,
       created_at: now,
+      image,
     };
 
     setInput("home", "");
