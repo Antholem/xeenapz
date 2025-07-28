@@ -21,6 +21,7 @@ interface MessageInputProps {
   isFetchingResponse: boolean;
   isDisabled?: boolean;
   sendMessage: () => void;
+  onImageChange?: (image: string | null) => void;
 }
 
 const MessageInput: FC<MessageInputProps> = ({
@@ -31,6 +32,7 @@ const MessageInput: FC<MessageInputProps> = ({
   isFetchingResponse,
   isDisabled,
   sendMessage,
+  onImageChange,
 }) => {
   const toggleSpeechRecognition = () => {
     SpeechRecognize(isListening, resetTranscript);
@@ -44,6 +46,13 @@ const MessageInput: FC<MessageInputProps> = ({
     if (!file) return;
     const url = URL.createObjectURL(file);
     setPreview(url);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === "string") {
+        onImageChange?.(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const discardImage = () => {
@@ -51,6 +60,7 @@ const MessageInput: FC<MessageInputProps> = ({
       URL.revokeObjectURL(preview);
     }
     setPreview(null);
+    onImageChange?.(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -143,7 +153,9 @@ const MessageInput: FC<MessageInputProps> = ({
               aria-label="Send Message"
               variant="ghost"
               icon={<IoMdSend />}
-              isDisabled={isFetchingResponse || !input.trim() || isListening}
+              isDisabled={
+                isFetchingResponse || (!input.trim() && !preview) || isListening
+              }
               onClick={sendMessage}
             />
           </Tooltip>
