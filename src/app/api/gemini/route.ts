@@ -11,10 +11,10 @@ export async function OPTIONS() {
 
 export async function POST(req: Request) {
   try {
-    const { message } = await req.json();
-    if (!message)
+    const { message, image } = await req.json();
+    if (!message && !image)
       return NextResponse.json(
-        { error: "Message is required" },
+        { error: "Message or image is required" },
         { status: 400 }
       );
 
@@ -22,14 +22,27 @@ export async function POST(req: Request) {
     if (!apiKey)
       return NextResponse.json({ error: "API key not found" }, { status: 500 });
 
+    const parts: any[] = [];
+    if (message) parts.push({ text: message });
+    if (image) {
+      const base64 = image.startsWith("data:")
+        ? image.split(",")[1]
+        : image;
+      const mimeMatch = image.match(/data:(.*?);base64/);
+      const mimeType = mimeMatch ? mimeMatch[1] : "image/png";
+      parts.push({ inlineData: { data: base64, mimeType } });
+    }
+
+    const model = image
+      ? "gemini-pro-vision"
+      : "gemini-1.5-flash";
+
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: message }] }],
-        }),
+        body: JSON.stringify({ contents: [{ parts }] }),
       }
     );
 
