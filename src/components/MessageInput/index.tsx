@@ -16,6 +16,8 @@ import { Input } from "@themed-components";
 interface MessageInputProps {
   input: string;
   setInput: (value: string) => void;
+  image?: File | null;
+  setImage?: (file: File | null) => void;
   isListening: boolean;
   resetTranscript: () => void;
   isFetchingResponse: boolean;
@@ -26,6 +28,8 @@ interface MessageInputProps {
 const MessageInput: FC<MessageInputProps> = ({
   input,
   setInput,
+  image,
+  setImage,
   isListening,
   resetTranscript,
   isFetchingResponse,
@@ -40,29 +44,32 @@ const MessageInput: FC<MessageInputProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    setPreview(url);
+    const file = e.target.files?.[0] ?? null;
+    setImage && setImage(file);
   };
 
   const discardImage = () => {
-    if (preview) {
-      URL.revokeObjectURL(preview);
-    }
-    setPreview(null);
+    setImage && setImage(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
   useEffect(() => {
-    return () => {
-      if (preview) {
-        URL.revokeObjectURL(preview);
-      }
-    };
-  }, [preview]);
+    if (image) {
+      const url = URL.createObjectURL(image);
+      setPreview(url);
+      return () => {
+        URL.revokeObjectURL(url);
+        setPreview(null);
+      };
+    }
+
+    if (preview) {
+      URL.revokeObjectURL(preview);
+      setPreview(null);
+    }
+  }, [image]);
 
   return (
     <Fragment>
@@ -143,7 +150,9 @@ const MessageInput: FC<MessageInputProps> = ({
               aria-label="Send Message"
               variant="ghost"
               icon={<IoMdSend />}
-              isDisabled={isFetchingResponse || !input.trim() || isListening}
+              isDisabled={
+                isFetchingResponse || (!input.trim() && !image) || isListening
+              }
               onClick={sendMessage}
             />
           </Tooltip>

@@ -17,6 +17,7 @@ import { ThreadLayout, MessagesLayout } from "@/layouts";
 
 interface Message {
   text: string;
+  image?: string;
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;
