@@ -144,7 +144,10 @@ const Thread: FC = () => {
     addMessagesToTop(threadId, data);
   };
 
-  const fetchBotResponse = async (userMessage: Message) => {
+  const fetchBotResponse = async (
+    userMessage: Message,
+    imageBase64?: string | null
+  ) => {
     if (!user || !threadId) return;
 
     setIsFetchingResponse(true);
@@ -153,7 +156,10 @@ const Thread: FC = () => {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({
+          message: userMessage.text || null,
+          image: imageBase64 || null,
+        }),
       });
 
       const data = await res.json();
@@ -197,14 +203,14 @@ const Thread: FC = () => {
     }
   };
 
-  const sendMessage = async () => {
-    if (!input.trim() || !user || !threadId) return;
+  const sendMessage = async (imageBase64?: string | null) => {
+    if (!user || !threadId || (!input.trim() && !imageBase64)) return;
 
     const now = new Date().toISOString();
     const timestamp = Date.now();
 
     const userMessage: Message = {
-      text: input,
+      text: input.trim() || "[Image sent]",
       sender: "user",
       timestamp,
       created_at: now,
@@ -235,7 +241,7 @@ const Thread: FC = () => {
         })
         .eq("id", threadId);
 
-      fetchBotResponse(userMessage);
+      await fetchBotResponse(userMessage, imageBase64);
     } catch (error) {
       console.error("Error sending message:", error);
     }

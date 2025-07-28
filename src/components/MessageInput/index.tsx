@@ -20,7 +20,7 @@ interface MessageInputProps {
   resetTranscript: () => void;
   isFetchingResponse: boolean;
   isDisabled?: boolean;
-  sendMessage: () => void;
+  sendMessage: (imageBase64?: string | null) => void;
 }
 
 const MessageInput: FC<MessageInputProps> = ({
@@ -56,6 +56,20 @@ const MessageInput: FC<MessageInputProps> = ({
     }
   };
 
+  const getImageBase64 = async (): Promise<string | null> => {
+    const file = fileInputRef.current?.files?.[0];
+    if (!file) return null;
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = (reader.result as string).split(",")[1]; // Strip prefix
+        resolve(result);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   useEffect(() => {
     return () => {
       if (preview) {
@@ -63,6 +77,12 @@ const MessageInput: FC<MessageInputProps> = ({
       }
     };
   }, [preview]);
+
+  const handleSend = async () => {
+    const imageBase64 = await getImageBase64();
+    sendMessage(imageBase64);
+    discardImage();
+  };
 
   return (
     <Fragment>
@@ -76,18 +96,9 @@ const MessageInput: FC<MessageInputProps> = ({
               size="xs"
               bg="Background"
               color="primaryText"
-              _hover={{
-                bg: "Background",
-                color: "primaryText",
-              }}
-              _active={{
-                bg: "Background",
-                color: "primaryText",
-              }}
-              _focus={{
-                bg: "Background",
-                color: "primaryText",
-              }}
+              _hover={{ bg: "Background", color: "primaryText" }}
+              _active={{ bg: "Background", color: "primaryText" }}
+              _focus={{ bg: "Background", color: "primaryText" }}
               icon={<IoMdClose />}
               variant="solid"
               position="absolute"
@@ -109,10 +120,10 @@ const MessageInput: FC<MessageInputProps> = ({
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
+            onKeyDown={async (e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                sendMessage();
+                await handleSend();
               }
             }}
             placeholder="Write a message..."
@@ -143,8 +154,10 @@ const MessageInput: FC<MessageInputProps> = ({
               aria-label="Send Message"
               variant="ghost"
               icon={<IoMdSend />}
-              isDisabled={isFetchingResponse || !input.trim() || isListening}
-              onClick={sendMessage}
+              isDisabled={
+                isFetchingResponse || (!input.trim() && !preview) || isListening
+              }
+              onClick={handleSend}
             />
           </Tooltip>
         </Flex>

@@ -82,14 +82,18 @@ const Home: FC = () => {
 
   const fetchBotResponse = async (
     userMessage: Message,
-    threadId?: string | null
+    threadId?: string | null,
+    imageBase64?: string | null
   ) => {
     setIsFetchingResponse(true);
     try {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({
+          message: userMessage.text || null,
+          image: imageBase64 || null,
+        }),
       });
 
       const data = await res.json();
@@ -150,7 +154,7 @@ const Home: FC = () => {
     threadId: string
   ) => {
     try {
-      const prompt = `Generate a short, descriptive title/subject/topic (only the title, no extra words) for the following thread message: "${userMessageText}"`;
+      const prompt = `Generate a short, descriptive title (only the title) for the following message: "${userMessageText}"`;
 
       const res = await fetch("/api/gemini", {
         method: "POST",
@@ -177,14 +181,15 @@ const Home: FC = () => {
     }
   };
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
+  const sendMessage = async (imageBase64?: string | null) => {
+    if (!input.trim() && !imageBase64) return;
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
 
+    const textToSend = input.trim() || "[Image sent]";
     const userMessage: Message = {
-      text: input,
+      text: textToSend,
       sender: "user",
       timestamp,
       created_at: now,
@@ -248,12 +253,12 @@ const Home: FC = () => {
           timestamp,
         });
 
-        fetchBotResponse(userMessage, id);
+        fetchBotResponse(userMessage, id, imageBase64);
       } catch (error) {
         console.error("Error sending message:", error);
       }
     } else {
-      fetchBotResponse(userMessage);
+      fetchBotResponse(userMessage, null, imageBase64);
     }
   };
 

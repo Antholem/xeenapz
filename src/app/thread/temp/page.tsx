@@ -77,13 +77,43 @@ const TempThread: FC = () => {
     };
   }, []);
 
-  const fetchBotResponse = async (userMessage: Message) => {
+  const sendMessage = async (imageBase64?: string | null) => {
+    if (!input.trim() && !imageBase64) return;
+
+    const timestamp = Date.now();
+    const now = new Date().toISOString();
+
+    if (input.trim()) {
+      const userMessage: Message = {
+        text: input,
+        sender: "user",
+        timestamp,
+        created_at: now,
+      };
+      setMessages((prev) => [...prev, userMessage]);
+    }
+
+    if (!input.trim()) {
+      const userImageMessage: Message = {
+        text: "[Image sent]",
+        sender: "user",
+        timestamp,
+        created_at: now,
+      };
+      setMessages((prev) => [...prev, userImageMessage]);
+    }
+
+    setInput("home", "");
     setIsFetchingResponse(true);
+
     try {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({
+          message: input.trim() || null,
+          image: imageBase64 || null,
+        }),
       });
 
       const data = await res.json();
@@ -111,23 +141,6 @@ const TempThread: FC = () => {
     } finally {
       setIsFetchingResponse(false);
     }
-  };
-
-  const sendMessage = async () => {
-    if (!input.trim()) return;
-
-    const timestamp = Date.now();
-    const now = new Date().toISOString();
-    const userMessage: Message = {
-      text: input,
-      sender: "user",
-      timestamp: timestamp,
-      created_at: now,
-    };
-
-    setInput("home", "");
-    setMessages((prev) => [...prev, userMessage]);
-    fetchBotResponse(userMessage);
   };
 
   const isBlocked = !user && !loading;
