@@ -9,8 +9,7 @@ import {
   Image,
 } from "@chakra-ui/react";
 import { IoStop } from "react-icons/io5";
-import { IoIosMic, IoMdSend } from "react-icons/io";
-import { FiImage, FiX } from "react-icons/fi";
+import { IoIosMic, IoMdImage, IoMdSend, IoMdClose } from "react-icons/io";
 import { SpeechRecognize } from "@/lib";
 import { Input } from "@themed-components";
 
@@ -70,16 +69,31 @@ const MessageInput: FC<MessageInputProps> = ({
       <Divider orientation="horizontal" />
       <Card p={3} borderRadius={0} variant="surface">
         {preview && (
-          <Box position="relative" maxW="200px" mb={3}>
+          <Box position="relative" maxW="100px" mb={3}>
             <Image src={preview} alt="Preview" borderRadius="md" />
             <IconButton
               aria-label="Discard image"
-              size="sm"
-              icon={<FiX />}
-              variant="ghost"
+              size="xs"
+              bg="Background"
+              color="primaryText"
+              _hover={{
+                bg: "Background",
+                color: "primaryText",
+              }}
+              _active={{
+                bg: "Background",
+                color: "primaryText",
+              }}
+              _focus={{
+                bg: "Background",
+                color: "primaryText",
+              }}
+              icon={<IoMdClose />}
+              variant="solid"
               position="absolute"
               top={1}
               right={1}
+              isRound={true}
               onClick={discardImage}
             />
           </Box>
@@ -106,6 +120,15 @@ const MessageInput: FC<MessageInputProps> = ({
             variant="filled"
             isDisabled={isDisabled}
           />
+          <Tooltip label="Upload image">
+            <IconButton
+              aria-label="Upload image"
+              variant="ghost"
+              icon={<IoMdImage />}
+              onClick={() => fileInputRef.current?.click()}
+              isDisabled={isDisabled}
+            />
+          </Tooltip>
           <Tooltip label={isListening ? "Stop" : "Type by voice"}>
             <IconButton
               aria-label="Speech Recognition"
@@ -122,15 +145,6 @@ const MessageInput: FC<MessageInputProps> = ({
               icon={<IoMdSend />}
               isDisabled={isFetchingResponse || !input.trim() || isListening}
               onClick={sendMessage}
-            />
-          </Tooltip>
-          <Tooltip label="Upload image">
-            <IconButton
-              aria-label="Upload image"
-              variant="ghost"
-              icon={<FiImage />}
-              onClick={() => fileInputRef.current?.click()}
-              isDisabled={isDisabled}
             />
           </Tooltip>
         </Flex>
