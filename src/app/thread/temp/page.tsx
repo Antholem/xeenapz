@@ -11,10 +11,19 @@ import { useAuth, useThreadInput } from "@/stores";
 
 interface Message {
   text: string;
+  image?: string;
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;
 }
+
+const fileToDataURL = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 
 const TempThread: FC = () => {
   const { user, loading } = useAuth();
@@ -83,15 +92,24 @@ const TempThread: FC = () => {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({ message: userMessage.text, image: userMessage.image }),
       });
 
       const data = await res.json();
-      const botResponse =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+      const parts = data?.candidates?.[0]?.content?.parts || [];
+      let botText = "";
+      let botImage: string | undefined = undefined;
+      for (const part of parts) {
+        if (part.text) botText += part.text;
+        if (part.inlineData) {
+          botImage = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        }
+      }
+      if (!botText && !botImage) botText = "No response";
 
       const botMessage: Message = {
-        text: botResponse,
+        text: botText,
+        image: botImage,
         sender: "bot",
         timestamp: Date.now(),
         created_at: new Date().toISOString(),
@@ -113,13 +131,15 @@ const TempThread: FC = () => {
     }
   };
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
+  const sendMessage = async (file?: File | null) => {
+    if (!input.trim() && !file) return;
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
+    const imageData = file ? await fileToDataURL(file) : undefined;
     const userMessage: Message = {
       text: input,
+      image: imageData,
       sender: "user",
       timestamp: timestamp,
       created_at: now,

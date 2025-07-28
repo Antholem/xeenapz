@@ -20,7 +20,7 @@ interface MessageInputProps {
   resetTranscript: () => void;
   isFetchingResponse: boolean;
   isDisabled?: boolean;
-  sendMessage: () => void;
+  sendMessage: (file?: File | null) => void;
 }
 
 const MessageInput: FC<MessageInputProps> = ({
@@ -37,13 +37,15 @@ const MessageInput: FC<MessageInputProps> = ({
   };
 
   const [preview, setPreview] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const url = URL.createObjectURL(file);
+    const selected = e.target.files?.[0];
+    if (!selected) return;
+    const url = URL.createObjectURL(selected);
     setPreview(url);
+    setFile(selected);
   };
 
   const discardImage = () => {
@@ -51,6 +53,7 @@ const MessageInput: FC<MessageInputProps> = ({
       URL.revokeObjectURL(preview);
     }
     setPreview(null);
+    setFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -112,7 +115,8 @@ const MessageInput: FC<MessageInputProps> = ({
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                sendMessage();
+                sendMessage(file);
+                discardImage();
               }
             }}
             placeholder="Write a message..."
@@ -143,8 +147,11 @@ const MessageInput: FC<MessageInputProps> = ({
               aria-label="Send Message"
               variant="ghost"
               icon={<IoMdSend />}
-              isDisabled={isFetchingResponse || !input.trim() || isListening}
-              onClick={sendMessage}
+              isDisabled={isFetchingResponse || (!input.trim() && !file) || isListening}
+              onClick={() => {
+                sendMessage(file);
+                discardImage();
+              }}
             />
           </Tooltip>
         </Flex>

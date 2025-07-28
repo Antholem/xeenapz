@@ -19,6 +19,7 @@ import { useTheme } from "@/stores";
 
 interface Message {
   text: string;
+  image?: string;
   sender: "user" | "bot";
   timestamp: number;
 }
@@ -78,24 +79,35 @@ const MessageItem: FC<MessageItemProps> = ({
             wordBreak="break-word"
             overflowWrap="anywhere"
           >
-            <ReactMarkdown
-              components={{
-                ul: ({ children }) => (
-                  <ul style={{ paddingLeft: "20px" }}>{children}</ul>
-                ),
-                a: ({ ...props }) => (
-                  <a
-                    {...props}
-                    style={{
-                      wordBreak: "break-all",
-                      overflowWrap: "break-word",
-                    }}
-                  />
-                ),
-              }}
-            >
-              {message.text}
-            </ReactMarkdown>
+            {message.image && (
+              <Image
+                src={message.image}
+                alt="message image"
+                maxH="200px"
+                mb={message.text ? 2 : 0}
+                borderRadius="md"
+              />
+            )}
+            {message.text && (
+              <ReactMarkdown
+                components={{
+                  ul: ({ children }) => (
+                    <ul style={{ paddingLeft: "20px" }}>{children}</ul>
+                  ),
+                  a: ({ ...props }) => (
+                    <a
+                      {...props}
+                      style={{
+                        wordBreak: "break-all",
+                        overflowWrap: "break-word",
+                      }}
+                    />
+                  ),
+                }}
+              >
+                {message.text}
+              </ReactMarkdown>
+            )}
           </Box>
 
           <Flex align="center" justify="center" gap={1}>

@@ -17,6 +17,7 @@ import { ThreadLayout, MessagesLayout } from "@/layouts";
 
 interface Message {
   text: string;
+  image?: string;
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;
@@ -177,7 +178,7 @@ const Home: FC = () => {
     }
   };
 
-  const sendMessage = async () => {
+  const sendMessage = async (_file?: File | null) => {
     if (!input.trim()) return;
 
     const timestamp = Date.now();
