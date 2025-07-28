@@ -10,7 +10,7 @@ import { IoAdd } from "react-icons/io5";
 
 const NotFound = () => {
   const router = useRouter();
-  const noop = () => {};
+  const noop = (_?: any) => {};
 
   return (
     <ThreadLayout>

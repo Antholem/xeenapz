@@ -3,6 +3,7 @@ import { create } from "zustand";
 export interface Message {
   id?: string; // ⬅️ Was: id: any;
   text: string;
+  image?: string;
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;
@@ -52,7 +53,8 @@ const useThreadMessages = create<ThreadMessageStore>((set) => ({
         (msg) =>
           msg.timestamp === message.timestamp &&
           msg.sender === message.sender &&
-          msg.text === message.text
+          msg.text === message.text &&
+          msg.image === message.image
       );
 
       if (isDuplicate) return state;
