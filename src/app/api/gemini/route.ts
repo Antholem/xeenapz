@@ -11,10 +11,10 @@ export async function OPTIONS() {
 
 export async function POST(req: Request) {
   try {
-    const { message } = await req.json();
-    if (!message)
+    const { message, image } = await req.json();
+    if (!message && !image)
       return NextResponse.json(
-        { error: "Message is required" },
+        { error: "Message or image is required" },
         { status: 400 }
       );
 
@@ -28,7 +28,14 @@ export async function POST(req: Request) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: message }] }],
+          contents: [
+            {
+              parts: [
+                ...(message ? [{ text: message }] : []),
+                ...(image ? [{ inlineData: { mimeType: image.type, data: image.data } }] : []),
+              ],
+            },
+          ],
         }),
       }
     );

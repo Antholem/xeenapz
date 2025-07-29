@@ -1,7 +1,14 @@
-import { FC, Fragment } from "react";
-import { Flex, IconButton, Card, Tooltip, Divider } from "@chakra-ui/react";
+import { FC, Fragment, useRef, useState } from "react";
+import {
+  Flex,
+  IconButton,
+  Card,
+  Tooltip,
+  Divider,
+  Image,
+} from "@chakra-ui/react";
 import { IoStop } from "react-icons/io5";
-import { IoIosMic, IoMdSend } from "react-icons/io";
+import { IoIosMic, IoMdSend, IoMdImage } from "react-icons/io";
 import { SpeechRecognize } from "@/lib";
 import { Input } from "@themed-components";
 
@@ -12,7 +19,7 @@ interface MessageInputProps {
   resetTranscript: () => void;
   isFetchingResponse: boolean;
   isDisabled?: boolean;
-  sendMessage: () => void;
+  sendMessage: (file?: File | null) => void;
 }
 
 const MessageInput: FC<MessageInputProps> = ({
@@ -26,6 +33,15 @@ const MessageInput: FC<MessageInputProps> = ({
 }) => {
   const toggleSpeechRecognition = () => {
     SpeechRecognize(isListening, resetTranscript);
+  };
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+
+  const handleSend = () => {
+    sendMessage(file);
+    setFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   return (
@@ -56,13 +72,39 @@ const MessageInput: FC<MessageInputProps> = ({
               isDisabled={isDisabled}
             />
           </Tooltip>
+          <Tooltip label="Attach image">
+            <IconButton
+              aria-label="Attach image"
+              variant="ghost"
+              icon={<IoMdImage />}
+              onClick={() => fileInputRef.current?.click()}
+              isDisabled={isDisabled}
+            />
+          </Tooltip>
+          <input
+            type="file"
+            accept="image/*"
+            ref={fileInputRef}
+            style={{ display: "none" }}
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+          />
+          {file && (
+            <Image
+              src={URL.createObjectURL(file)}
+              alt="preview"
+              boxSize="40px"
+              objectFit="cover"
+            />
+          )}
           <Tooltip label="Send message">
             <IconButton
               aria-label="Send Message"
               variant="ghost"
               icon={<IoMdSend />}
-              isDisabled={isFetchingResponse || !input.trim() || isListening}
-              onClick={sendMessage}
+              isDisabled={
+                isFetchingResponse || (!input.trim() && !file) || isListening
+              }
+              onClick={handleSend}
             />
           </Tooltip>
         </Flex>

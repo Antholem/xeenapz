@@ -144,7 +144,10 @@ const Thread: FC = () => {
     addMessagesToTop(threadId, data);
   };
 
-  const fetchBotResponse = async (userMessage: Message) => {
+  const fetchBotResponse = async (
+    userMessage: Message,
+    imageData?: { data: string; type: string } | null
+  ) => {
     if (!user || !threadId) return;
 
     setIsFetchingResponse(true);
@@ -153,7 +156,10 @@ const Thread: FC = () => {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({
+          message: userMessage.text,
+          image: imageData,
+        }),
       });
 
       const data = await res.json();
@@ -197,8 +203,8 @@ const Thread: FC = () => {
     }
   };
 
-  const sendMessage = async () => {
-    if (!input.trim() || !user || !threadId) return;
+  const sendMessage = async (file?: File | null) => {
+    if ((!input.trim() && !file) || !user || !threadId) return;
 
     const now = new Date().toISOString();
     const timestamp = Date.now();
@@ -209,6 +215,32 @@ const Thread: FC = () => {
       timestamp,
       created_at: now,
     };
+
+    if (file) {
+      const filePath = `${user.id}/${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("images")
+        .upload(filePath, file);
+      if (!uploadError) {
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("images").getPublicUrl(filePath);
+        userMessage.image_url = publicUrl;
+      }
+    }
+
+    let imageData: { data: string; type: string } | null = null;
+    if (file) {
+      imageData = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve({ data: result.split(",")[1], type: file.type });
+        };
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
+    }
 
     setInput(threadId, "");
     addMessageToBottom(threadId, userMessage);
@@ -221,6 +253,7 @@ const Thread: FC = () => {
         sender: userMessage.sender,
         created_at: now,
         timestamp,
+        image_url: userMessage.image_url,
       });
 
       await supabase
@@ -235,7 +268,7 @@ const Thread: FC = () => {
         })
         .eq("id", threadId);
 
-      fetchBotResponse(userMessage);
+      fetchBotResponse(userMessage, imageData);
     } catch (error) {
       console.error("Error sending message:", error);
     }

@@ -20,6 +20,7 @@ interface Message {
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;
+  image_url?: string;
 }
 
 const Home: FC = () => {
@@ -82,14 +83,18 @@ const Home: FC = () => {
 
   const fetchBotResponse = async (
     userMessage: Message,
-    threadId?: string | null
+    threadId?: string | null,
+    imageData?: { data: string; type: string } | null
   ) => {
     setIsFetchingResponse(true);
     try {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({
+          message: userMessage.text,
+          image: imageData,
+        }),
       });
 
       const data = await res.json();
@@ -177,8 +182,8 @@ const Home: FC = () => {
     }
   };
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
+  const sendMessage = async (file?: File | null) => {
+    if (!input.trim() && !file) return;
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
@@ -189,6 +194,32 @@ const Home: FC = () => {
       timestamp,
       created_at: now,
     };
+
+    if (file) {
+      const filePath = `${user?.id || "anonymous"}/${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("images")
+        .upload(filePath, file);
+      if (!uploadError) {
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("images").getPublicUrl(filePath);
+        userMessage.image_url = publicUrl;
+      }
+    }
+
+    let imageData: { data: string; type: string } | null = null;
+    if (file) {
+      imageData = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve({ data: result.split(",")[1], type: file.type });
+        };
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
+    }
 
     setInput("home", "");
     setMessages((prev) => [...prev, userMessage]);
@@ -246,14 +277,15 @@ const Home: FC = () => {
           sender: userMessage.sender,
           created_at: now,
           timestamp,
+          image_url: userMessage.image_url,
         });
 
-        fetchBotResponse(userMessage, id);
+        fetchBotResponse(userMessage, id, imageData);
       } catch (error) {
         console.error("Error sending message:", error);
       }
     } else {
-      fetchBotResponse(userMessage);
+      fetchBotResponse(userMessage, undefined, imageData);
     }
   };
 

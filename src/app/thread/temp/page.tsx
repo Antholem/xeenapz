@@ -14,6 +14,7 @@ interface Message {
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;
+  image_url?: string;
 }
 
 const TempThread: FC = () => {
@@ -77,13 +78,19 @@ const TempThread: FC = () => {
     };
   }, []);
 
-  const fetchBotResponse = async (userMessage: Message) => {
+  const fetchBotResponse = async (
+    userMessage: Message,
+    imageData?: { data: string; type: string } | null
+  ) => {
     setIsFetchingResponse(true);
     try {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({
+          message: userMessage.text,
+          image: imageData,
+        }),
       });
 
       const data = await res.json();
@@ -113,8 +120,8 @@ const TempThread: FC = () => {
     }
   };
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
+  const sendMessage = async (file?: File | null) => {
+    if (!input.trim() && !file) return;
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
@@ -125,9 +132,22 @@ const TempThread: FC = () => {
       created_at: now,
     };
 
+    let imageData: { data: string; type: string } | null = null;
+    if (file) {
+      imageData = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve({ data: result.split(",")[1], type: file.type });
+        };
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
+    }
+
     setInput("home", "");
     setMessages((prev) => [...prev, userMessage]);
-    fetchBotResponse(userMessage);
+    fetchBotResponse(userMessage, imageData);
   };
 
   const isBlocked = !user && !loading;
