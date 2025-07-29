@@ -7,6 +7,7 @@ import { useSpeechRecognition } from "react-speech-recognition";
 import { MessageInput } from "@/components";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
 import { speakText } from "@/lib";
+import { fileToBase64 } from "@/utils/file";
 import { useAuth, useThreadInput } from "@/stores";
 
 interface Message {
@@ -14,6 +15,7 @@ interface Message {
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;
+  image_url?: string;
 }
 
 const TempThread: FC = () => {
@@ -24,6 +26,7 @@ const TempThread: FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isFetchingResponse, setIsFetchingResponse] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
 
   const { getInput, setInput } = useThreadInput();
@@ -77,13 +80,16 @@ const TempThread: FC = () => {
     };
   }, []);
 
-  const fetchBotResponse = async (userMessage: Message) => {
+  const fetchBotResponse = async (
+    userMessage: Message,
+    imageData?: { base64: string; type: string }
+  ) => {
     setIsFetchingResponse(true);
     try {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({ message: userMessage.text, image: imageData }),
       });
 
       const data = await res.json();
@@ -114,10 +120,16 @@ const TempThread: FC = () => {
   };
 
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() && !imageFile) return;
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
+    let imageData: { base64: string; type: string } | undefined;
+    if (imageFile) {
+      imageData = await fileToBase64(imageFile);
+      setImageFile(null);
+    }
+
     const userMessage: Message = {
       text: input,
       sender: "user",
@@ -127,7 +139,7 @@ const TempThread: FC = () => {
 
     setInput("home", "");
     setMessages((prev) => [...prev, userMessage]);
-    fetchBotResponse(userMessage);
+    fetchBotResponse(userMessage, imageData);
   };
 
   const isBlocked = !user && !loading;
@@ -151,6 +163,8 @@ const TempThread: FC = () => {
         resetTranscript={resetTranscript}
         isFetchingResponse={isFetchingResponse}
         sendMessage={sendMessage}
+        imageFile={imageFile}
+        setImageFile={setImageFile}
       />
     </ThreadLayout>
   );

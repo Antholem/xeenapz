@@ -1,7 +1,8 @@
-import { FC, Fragment } from "react";
+import { FC, Fragment, useRef } from "react";
 import { Flex, IconButton, Card, Tooltip, Divider } from "@chakra-ui/react";
 import { IoStop } from "react-icons/io5";
 import { IoIosMic, IoMdSend } from "react-icons/io";
+import { FiImage } from "react-icons/fi";
 import { SpeechRecognize } from "@/lib";
 import { Input } from "@themed-components";
 
@@ -13,6 +14,8 @@ interface MessageInputProps {
   isFetchingResponse: boolean;
   isDisabled?: boolean;
   sendMessage: () => void;
+  imageFile: File | null;
+  setImageFile: (file: File | null) => void;
 }
 
 const MessageInput: FC<MessageInputProps> = ({
@@ -23,7 +26,10 @@ const MessageInput: FC<MessageInputProps> = ({
   isFetchingResponse,
   isDisabled,
   sendMessage,
+  imageFile,
+  setImageFile,
 }) => {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const toggleSpeechRecognition = () => {
     SpeechRecognize(isListening, resetTranscript);
   };
@@ -47,6 +53,22 @@ const MessageInput: FC<MessageInputProps> = ({
             variant="filled"
             isDisabled={isDisabled}
           />
+          <input
+            type="file"
+            accept="image/*"
+            style={{ display: "none" }}
+            ref={fileInputRef}
+            onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+          />
+          <Tooltip label="Upload image">
+            <IconButton
+              aria-label="Upload image"
+              variant="ghost"
+              icon={<FiImage />}
+              onClick={() => fileInputRef.current?.click()}
+              isDisabled={isDisabled}
+            />
+          </Tooltip>
           <Tooltip label={isListening ? "Stop" : "Type by voice"}>
             <IconButton
               aria-label="Speech Recognition"
@@ -61,7 +83,9 @@ const MessageInput: FC<MessageInputProps> = ({
               aria-label="Send Message"
               variant="ghost"
               icon={<IoMdSend />}
-              isDisabled={isFetchingResponse || !input.trim() || isListening}
+              isDisabled={
+                isFetchingResponse || (!input.trim() && !imageFile) || isListening
+              }
               onClick={sendMessage}
             />
           </Tooltip>

@@ -7,6 +7,7 @@ import { useSpeechRecognition } from "react-speech-recognition";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
 import { MessageInput } from "@/components";
 import { supabase, speakText } from "@/lib";
+import { fileToBase64 } from "@/utils/file";
 import {
   useAuth,
   useThreadInput,
@@ -37,6 +38,7 @@ const Thread: FC = () => {
   const [isFetchingResponse, setIsFetchingResponse] = useState(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -144,7 +146,10 @@ const Thread: FC = () => {
     addMessagesToTop(threadId, data);
   };
 
-  const fetchBotResponse = async (userMessage: Message) => {
+  const fetchBotResponse = async (
+    userMessage: Message,
+    imageData?: { base64: string; type: string }
+  ) => {
     if (!user || !threadId) return;
 
     setIsFetchingResponse(true);
@@ -153,7 +158,7 @@ const Thread: FC = () => {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({ message: userMessage.text, image: imageData }),
       });
 
       const data = await res.json();
@@ -198,16 +203,33 @@ const Thread: FC = () => {
   };
 
   const sendMessage = async () => {
-    if (!input.trim() || !user || !threadId) return;
+    if ((!input.trim() && !imageFile) || !user || !threadId) return;
 
     const now = new Date().toISOString();
     const timestamp = Date.now();
+
+    let imageUrl: string | undefined;
+    let imageData: { base64: string; type: string } | undefined;
+    if (imageFile) {
+      imageData = await fileToBase64(imageFile);
+      const filePath = `${user.id}/${timestamp}-${imageFile.name}`;
+      const { error } = await supabase.storage
+        .from("images")
+        .upload(filePath, imageFile);
+      if (!error) {
+        imageUrl = supabase.storage
+          .from("images")
+          .getPublicUrl(filePath).data.publicUrl;
+      }
+      setImageFile(null);
+    }
 
     const userMessage: Message = {
       text: input,
       sender: "user",
       timestamp,
       created_at: now,
+      image_url: imageUrl,
     };
 
     setInput(threadId, "");
@@ -221,6 +243,7 @@ const Thread: FC = () => {
         sender: userMessage.sender,
         created_at: now,
         timestamp,
+        image_url: imageUrl,
       });
 
       await supabase
@@ -235,7 +258,7 @@ const Thread: FC = () => {
         })
         .eq("id", threadId);
 
-      fetchBotResponse(userMessage);
+      fetchBotResponse(userMessage, imageData);
     } catch (error) {
       console.error("Error sending message:", error);
     }
@@ -263,6 +286,8 @@ const Thread: FC = () => {
         resetTranscript={resetTranscript}
         isFetchingResponse={isFetchingResponse}
         sendMessage={sendMessage}
+        imageFile={imageFile}
+        setImageFile={setImageFile}
       />
     </ThreadLayout>
   );
