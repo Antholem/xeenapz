@@ -20,7 +20,7 @@ interface MessageInputProps {
   resetTranscript: () => void;
   isFetchingResponse: boolean;
   isDisabled?: boolean;
-  sendMessage: (imageBase64?: string | null) => void;
+  sendMessage: (imageBase64?: string | null, file?: File | null) => void;
 }
 
 const MessageInput: FC<MessageInputProps> = ({
@@ -80,7 +80,8 @@ const MessageInput: FC<MessageInputProps> = ({
 
   const handleSend = async () => {
     const imageBase64 = await getImageBase64();
-    sendMessage(imageBase64);
+    const file = fileInputRef.current?.files?.[0] || null;
+    sendMessage(imageBase64, file);
     discardImage();
   };
 

@@ -6,6 +6,7 @@ import { useSpeechRecognition } from "react-speech-recognition";
 import { v4 as uuidv4 } from "uuid";
 
 import { supabase, speakText } from "@/lib";
+import { uploadImage } from "@/lib/supabase/uploadImage";
 import {
   useAuth,
   useTempThread,
@@ -181,13 +182,25 @@ const Home: FC = () => {
     }
   };
 
-  const sendMessage = async (imageBase64?: string | null) => {
+  const sendMessage = async (
+    imageBase64?: string | null,
+    file?: File | null
+  ) => {
     if (!input.trim() && !imageBase64) return;
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
 
     const textToSend = input.trim() || "[Image sent]";
+
+    let imagePath: string | null = null;
+    if (file && user) {
+      try {
+        imagePath = await uploadImage(file, user.id);
+      } catch (e) {
+        console.error("Error uploading image:", e);
+      }
+    }
     const userMessage: Message = {
       text: textToSend,
       sender: "user",
@@ -251,6 +264,7 @@ const Home: FC = () => {
           sender: userMessage.sender,
           created_at: now,
           timestamp,
+          image_path: imagePath,
         });
 
         fetchBotResponse(userMessage, id, imageBase64);

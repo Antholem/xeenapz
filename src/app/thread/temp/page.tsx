@@ -77,7 +77,10 @@ const TempThread: FC = () => {
     };
   }, []);
 
-  const sendMessage = async (imageBase64?: string | null) => {
+  const sendMessage = async (
+    imageBase64?: string | null,
+    _file?: File | null
+  ) => {
     if (!input.trim() && !imageBase64) return;
 
     const timestamp = Date.now();

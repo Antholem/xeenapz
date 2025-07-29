@@ -7,6 +7,7 @@ import { useSpeechRecognition } from "react-speech-recognition";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
 import { MessageInput } from "@/components";
 import { supabase, speakText } from "@/lib";
+import { uploadImage } from "@/lib/supabase/uploadImage";
 import {
   useAuth,
   useThreadInput,
@@ -203,7 +204,10 @@ const Thread: FC = () => {
     }
   };
 
-  const sendMessage = async (imageBase64?: string | null) => {
+  const sendMessage = async (
+    imageBase64?: string | null,
+    file?: File | null
+  ) => {
     if (!user || !threadId || (!input.trim() && !imageBase64)) return;
 
     const now = new Date().toISOString();
@@ -216,6 +220,15 @@ const Thread: FC = () => {
       created_at: now,
     };
 
+    let imagePath: string | null = null;
+    if (file) {
+      try {
+        imagePath = await uploadImage(file, user.id);
+      } catch (e) {
+        console.error("Error uploading image:", e);
+      }
+    }
+
     setInput(threadId, "");
     addMessageToBottom(threadId, userMessage);
 
@@ -227,6 +240,7 @@ const Thread: FC = () => {
         sender: userMessage.sender,
         created_at: now,
         timestamp,
+        image_path: imagePath,
       });
 
       await supabase
