@@ -21,6 +21,7 @@ interface Message {
   text: string;
   sender: "user" | "bot";
   timestamp: number;
+  image_path?: string | null;
 }
 
 interface MessageItemProps extends BoxProps {
