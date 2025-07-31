@@ -1,4 +1,4 @@
-import { FC, Fragment, useRef, useState, useEffect } from "react";
+import { FC, Fragment, useState, useEffect, RefObject } from "react";
 import {
   Flex,
   IconButton,
@@ -20,7 +20,9 @@ interface MessageInputProps {
   resetTranscript: () => void;
   isFetchingResponse: boolean;
   isDisabled?: boolean;
-  sendMessage: (imageBase64?: string | null) => void;
+  sendMessage: () => void;
+  fileInputRef: RefObject<HTMLInputElement | null>;
+  discardImage: () => void;
 }
 
 const MessageInput: FC<MessageInputProps> = ({
@@ -31,13 +33,14 @@ const MessageInput: FC<MessageInputProps> = ({
   isFetchingResponse,
   isDisabled,
   sendMessage,
+  fileInputRef,
+  discardImage,
 }) => {
   const toggleSpeechRecognition = () => {
     SpeechRecognize(isListening, resetTranscript);
   };
 
   const [preview, setPreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -46,28 +49,10 @@ const MessageInput: FC<MessageInputProps> = ({
     setPreview(url);
   };
 
-  const discardImage = () => {
-    if (preview) {
-      URL.revokeObjectURL(preview);
-    }
+  const handleDiscard = () => {
+    if (preview) URL.revokeObjectURL(preview);
     setPreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
-  const getImageBase64 = async (): Promise<string | null> => {
-    const file = fileInputRef.current?.files?.[0];
-    if (!file) return null;
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = (reader.result as string).split(",")[1]; // Strip prefix
-        resolve(result);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
+    discardImage();
   };
 
   useEffect(() => {
@@ -79,9 +64,8 @@ const MessageInput: FC<MessageInputProps> = ({
   }, [preview]);
 
   const handleSend = async () => {
-    const imageBase64 = await getImageBase64();
-    sendMessage(imageBase64);
-    discardImage();
+    await sendMessage();
+    handleDiscard();
   };
 
   return (
@@ -105,7 +89,7 @@ const MessageInput: FC<MessageInputProps> = ({
               top={1}
               right={1}
               isRound={true}
-              onClick={discardImage}
+              onClick={handleDiscard}
             />
           </Box>
         )}

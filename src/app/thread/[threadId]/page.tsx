@@ -3,6 +3,7 @@
 import { FC, useEffect, useRef, useState } from "react";
 import { notFound, useParams, useRouter } from "next/navigation";
 import { useSpeechRecognition } from "react-speech-recognition";
+import { v4 as uuidv4 } from "uuid";
 
 import { ThreadLayout, MessagesLayout } from "@/layouts";
 import { MessageInput } from "@/components";
@@ -43,6 +44,28 @@ const Thread: FC = () => {
   const oldestTimestampRef = useRef<number | null>(null);
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
   const prevTranscriptRef = useRef("");
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const discardImage = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const getImageBase64 = async (): Promise<string | null> => {
+    const file = fileInputRef.current?.files?.[0];
+    if (!file) return null;
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = (reader.result as string).split(",")[1];
+        resolve(result);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
 
   useEffect(() => {
     if (!loading && !user) router.replace("/");
@@ -203,11 +226,15 @@ const Thread: FC = () => {
     }
   };
 
-  const sendMessage = async (imageBase64?: string | null) => {
-    if (!user || !threadId || (!input.trim() && !imageBase64)) return;
+  const sendMessage = async () => {
+    if (!user || !threadId) return;
+
+    const base64Image = await getImageBase64();
+    if (!input.trim() && !base64Image) return;
 
     const now = new Date().toISOString();
     const timestamp = Date.now();
+    const fileId = uuidv4();
 
     const userMessage: Message = {
       text: input.trim() || "[Image sent]",
@@ -218,6 +245,27 @@ const Thread: FC = () => {
 
     setInput(threadId, "");
     addMessageToBottom(threadId, userMessage);
+    discardImage();
+
+    // upload image to storage
+    if (base64Image) {
+      try {
+        const binary = atob(base64Image);
+        const array = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          array[i] = binary.charCodeAt(i);
+        }
+
+        const file = new File([array], `${fileId}.png`, {
+          type: "image/png",
+        });
+
+        const path = `${user.id}/${threadId}/${fileId}.png`;
+        await supabase.storage.from("messages").upload(path, file);
+      } catch (err) {
+        console.error("Image upload failed:", err);
+      }
+    }
 
     try {
       await supabase.from("messages").insert({
@@ -241,7 +289,7 @@ const Thread: FC = () => {
         })
         .eq("id", threadId);
 
-      await fetchBotResponse(userMessage, imageBase64);
+      await fetchBotResponse(userMessage, base64Image);
     } catch (error) {
       console.error("Error sending message:", error);
     }
@@ -269,6 +317,8 @@ const Thread: FC = () => {
         resetTranscript={resetTranscript}
         isFetchingResponse={isFetchingResponse}
         sendMessage={sendMessage}
+        fileInputRef={fileInputRef}
+        discardImage={discardImage}
       />
     </ThreadLayout>
   );
