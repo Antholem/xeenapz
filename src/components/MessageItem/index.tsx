@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, memo } from "react";
+import { FC, memo, useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
@@ -15,13 +15,8 @@ import {
   IconButton,
   BoxProps,
 } from "@chakra-ui/react";
-import { useTheme } from "@/stores";
-
-interface Message {
-  text: string;
-  sender: "user" | "bot";
-  timestamp: number;
-}
+import { useTheme, type Message } from "@/stores";
+import { supabase } from "@/lib";
 
 interface MessageItemProps extends BoxProps {
   message: Message;
@@ -44,6 +39,17 @@ const MessageItem: FC<MessageItemProps> = ({
   ...props
 }) => {
   const isUser = message.sender === "user";
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (message.image_url) {
+      supabase.storage
+        .from("messages")
+        .createSignedUrl(message.image_url, 60)
+        .then(({ data }) => {
+          setImageUrl(data?.signedUrl ?? null);
+        });
+    }
+  }, [message.image_url]);
   const formattedTime =
     user &&
     format(new Date(message.timestamp), "hh:mm a", {
@@ -78,6 +84,9 @@ const MessageItem: FC<MessageItemProps> = ({
             wordBreak="break-word"
             overflowWrap="anywhere"
           >
+            {imageUrl && (
+              <Image src={imageUrl} alt="Sent image" mb={2} borderRadius="md" />
+            )}
             <ReactMarkdown
               components={{
                 ul: ({ children }) => (

@@ -203,17 +203,43 @@ const Thread: FC = () => {
     }
   };
 
-  const sendMessage = async (imageBase64?: string | null) => {
-    if (!user || !threadId || (!input.trim() && !imageBase64)) return;
+  const sendMessage = async (file?: File | null) => {
+    if (!user || !threadId || (!input.trim() && !file)) return;
 
     const now = new Date().toISOString();
     const timestamp = Date.now();
+
+    let imagePath: string | null = null;
+    let imageBase64: string | null = null;
+    if (file) {
+      const ext = file.name.split(".").pop();
+      const fileName = `${timestamp}.${ext}`;
+      const filePath = `${user.id}/${threadId}/${fileName}`;
+      const { error: uploadError } = await supabase.storage
+        .from("messages")
+        .upload(filePath, file);
+      if (uploadError) {
+        console.error("Error uploading image:", uploadError);
+      } else {
+        imagePath = filePath;
+        imageBase64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = (reader.result as string).split(",")[1];
+            resolve(result);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+    }
 
     const userMessage: Message = {
       text: input.trim() || "[Image sent]",
       sender: "user",
       timestamp,
       created_at: now,
+      ...(imagePath ? { image_url: imagePath } : {}),
     };
 
     setInput(threadId, "");
@@ -227,6 +253,7 @@ const Thread: FC = () => {
         sender: userMessage.sender,
         created_at: now,
         timestamp,
+        ...(imagePath ? { image_url: imagePath } : {}),
       });
 
       await supabase

@@ -20,18 +20,10 @@ import {
   Divider,
   SkeletonCircle,
 } from "@chakra-ui/react";
-import { useAuth } from "@/stores";
+import { useAuth, type Message } from "@/stores";
 import { MessageItem } from "@/components";
 import { formatDateGrouping } from "@/utils/dateFormatter";
 import { Spinner, Progress } from "@themed-components";
-
-interface Message {
-  id?: string;
-  text: string;
-  sender: "user" | "bot";
-  timestamp: number;
-  created_at?: string;
-}
 
 interface MessagesLayoutProps {
   messages: Message[];

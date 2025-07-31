@@ -77,11 +77,24 @@ const TempThread: FC = () => {
     };
   }, []);
 
-  const sendMessage = async (imageBase64?: string | null) => {
-    if (!input.trim() && !imageBase64) return;
+  const sendMessage = async (file?: File | null) => {
+    if (!input.trim() && !file) return;
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
+
+    let imageBase64: string | null = null;
+    if (file) {
+      imageBase64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = (reader.result as string).split(",")[1];
+          resolve(result);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
 
     if (input.trim()) {
       const userMessage: Message = {
