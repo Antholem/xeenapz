@@ -20,6 +20,7 @@ interface Message {
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;
+  image_url?: string;
 }
 
 const Home: FC = () => {
@@ -181,22 +182,31 @@ const Home: FC = () => {
     }
   };
 
-  const sendMessage = async (imageBase64?: string | null) => {
-    if (!input.trim() && !imageBase64) return;
+  const sendMessage = async (imageFile?: File | null) => {
+    if (!input.trim() && !imageFile) return;
+
+    const fileToBase64 = (file: File): Promise<string> =>
+      new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = (reader.result as string).split(",")[1];
+          resolve(result);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
+    let imageBase64: string | null = null;
+    let imageUrl: string | null = null;
+
+    if (imageFile) {
+      imageBase64 = await fileToBase64(imageFile);
+    }
 
     const textToSend = input.trim() || "[Image sent]";
-    const userMessage: Message = {
-      text: textToSend,
-      sender: "user",
-      timestamp,
-      created_at: now,
-    };
-
     setInput("home", "");
-    setMessages((prev) => [...prev, userMessage]);
 
     if (user && !isMessageTemporary) {
       try {
@@ -219,28 +229,57 @@ const Home: FC = () => {
             created_at: now,
             updated_at: now,
             last_message: {
-              text: userMessage.text,
-              sender: userMessage.sender,
+              text: textToSend,
+              sender: "user",
               created_at: now,
             },
           });
 
-          await fetchBotSetTitle(userMessage.text, id);
+          await fetchBotSetTitle(textToSend, id);
           window.history.pushState({}, "", `/thread/${id}`);
-          setGlobalMessages(id, [userMessage]);
         } else {
           await supabase
             .from("threads")
             .update({
               updated_at: now,
               last_message: {
-                text: userMessage.text,
-                sender: userMessage.sender,
+                text: textToSend,
+                sender: "user",
                 created_at: now,
               },
             })
             .eq("id", id);
+        }
 
+        if (imageFile) {
+          const ext = imageFile.name.split(".").pop();
+          const filePath = `${user.id}/${id}/${uuidv4()}.${ext}`;
+          const { error: uploadError } = await supabase.storage
+            .from("messages")
+            .upload(filePath, imageFile);
+          if (!uploadError) {
+            const { data } = supabase.storage
+              .from("messages")
+              .getPublicUrl(filePath);
+            imageUrl = data.publicUrl;
+          } else {
+            console.error("Error uploading image:", uploadError);
+          }
+        }
+
+        const userMessage: Message = {
+          text: textToSend,
+          sender: "user",
+          timestamp,
+          created_at: now,
+          ...(imageUrl ? { image_url: imageUrl } : {}),
+        };
+
+        setMessages((prev) => [...prev, userMessage]);
+
+        if (!threadId) {
+          setGlobalMessages(id, [userMessage]);
+        } else {
           addMessageToBottom(id, userMessage);
         }
 
@@ -251,6 +290,7 @@ const Home: FC = () => {
           sender: userMessage.sender,
           created_at: now,
           timestamp,
+          ...(imageUrl ? { image_url: imageUrl } : {}),
         });
 
         fetchBotResponse(userMessage, id, imageBase64);
@@ -258,6 +298,13 @@ const Home: FC = () => {
         console.error("Error sending message:", error);
       }
     } else {
+      const userMessage: Message = {
+        text: textToSend,
+        sender: "user",
+        timestamp,
+        created_at: now,
+      };
+      setMessages((prev) => [...prev, userMessage]);
       fetchBotResponse(userMessage, null, imageBase64);
     }
   };

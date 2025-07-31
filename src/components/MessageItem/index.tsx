@@ -21,6 +21,7 @@ interface Message {
   text: string;
   sender: "user" | "bot";
   timestamp: number;
+  image_url?: string;
 }
 
 interface MessageItemProps extends BoxProps {
@@ -78,24 +79,35 @@ const MessageItem: FC<MessageItemProps> = ({
             wordBreak="break-word"
             overflowWrap="anywhere"
           >
-            <ReactMarkdown
-              components={{
-                ul: ({ children }) => (
-                  <ul style={{ paddingLeft: "20px" }}>{children}</ul>
-                ),
-                a: ({ ...props }) => (
-                  <a
-                    {...props}
-                    style={{
-                      wordBreak: "break-all",
-                      overflowWrap: "break-word",
-                    }}
-                  />
-                ),
-              }}
-            >
-              {message.text}
-            </ReactMarkdown>
+            {message.image_url && (
+              <Image
+                src={message.image_url}
+                alt="Uploaded image"
+                borderRadius="md"
+                mb={message.text ? 2 : 0}
+                maxW="200px"
+              />
+            )}
+            {message.text && (
+              <ReactMarkdown
+                components={{
+                  ul: ({ children }) => (
+                    <ul style={{ paddingLeft: "20px" }}>{children}</ul>
+                  ),
+                  a: ({ ...props }) => (
+                    <a
+                      {...props}
+                      style={{
+                        wordBreak: "break-all",
+                        overflowWrap: "break-word",
+                      }}
+                    />
+                  ),
+                }}
+              >
+                {message.text}
+              </ReactMarkdown>
+            )}
           </Box>
 
           <Flex align="center" justify="center" gap={1}>
