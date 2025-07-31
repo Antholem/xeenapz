@@ -11,7 +11,7 @@ export async function OPTIONS() {
 
 export async function POST(req: Request) {
   try {
-    const { message, image } = await req.json();
+    const { message, image, mimeType } = await req.json();
     if (!message && !image)
       return NextResponse.json(
         { error: "Message or image is required" },
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     if (image) {
       parts.push({
         inlineData: {
-          mimeType: "image/jpeg",
+          mimeType: mimeType || "image/jpeg",
           data: image, // base64 string, no data:image/... prefix
         },
       });

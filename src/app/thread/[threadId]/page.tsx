@@ -7,6 +7,7 @@ import { useSpeechRecognition } from "react-speech-recognition";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
 import { MessageInput } from "@/components";
 import { supabase, speakText } from "@/lib";
+import { fileToBase64 } from "@/utils/file";
 import {
   useAuth,
   useThreadInput,
@@ -146,7 +147,8 @@ const Thread: FC = () => {
 
   const fetchBotResponse = async (
     userMessage: Message,
-    imageBase64?: string | null
+    imageBase64?: string | null,
+    mimeType?: string
   ) => {
     if (!user || !threadId) return;
 
@@ -159,6 +161,7 @@ const Thread: FC = () => {
         body: JSON.stringify({
           message: userMessage.text || null,
           image: imageBase64 || null,
+          mimeType,
         }),
       });
 
@@ -203,8 +206,8 @@ const Thread: FC = () => {
     }
   };
 
-  const sendMessage = async (imageBase64?: string | null) => {
-    if (!user || !threadId || (!input.trim() && !imageBase64)) return;
+  const sendMessage = async (imageFile?: File | null) => {
+    if (!user || !threadId || (!input.trim() && !imageFile)) return;
 
     const now = new Date().toISOString();
     const timestamp = Date.now();
@@ -219,6 +222,13 @@ const Thread: FC = () => {
     setInput(threadId, "");
     addMessageToBottom(threadId, userMessage);
 
+    let imageBase64: string | null = null;
+    let mimeType: string | undefined;
+    if (imageFile) {
+      imageBase64 = await fileToBase64(imageFile);
+      mimeType = imageFile.type;
+    }
+
     try {
       await supabase.from("messages").insert({
         user_id: user.id,
@@ -228,6 +238,17 @@ const Thread: FC = () => {
         created_at: now,
         timestamp,
       });
+
+      if (imageFile) {
+        const ext = imageFile.name.split(".").pop();
+        const path = `${user.id}/${threadId}/${timestamp}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from("messages")
+          .upload(path, imageFile);
+        if (uploadError) {
+          console.error("Error uploading image:", uploadError);
+        }
+      }
 
       await supabase
         .from("threads")
@@ -241,7 +262,7 @@ const Thread: FC = () => {
         })
         .eq("id", threadId);
 
-      await fetchBotResponse(userMessage, imageBase64);
+      await fetchBotResponse(userMessage, imageBase64, mimeType);
     } catch (error) {
       console.error("Error sending message:", error);
     }

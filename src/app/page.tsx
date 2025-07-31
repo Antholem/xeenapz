@@ -6,6 +6,7 @@ import { useSpeechRecognition } from "react-speech-recognition";
 import { v4 as uuidv4 } from "uuid";
 
 import { supabase, speakText } from "@/lib";
+import { fileToBase64 } from "@/utils/file";
 import {
   useAuth,
   useTempThread,
@@ -83,7 +84,8 @@ const Home: FC = () => {
   const fetchBotResponse = async (
     userMessage: Message,
     threadId?: string | null,
-    imageBase64?: string | null
+    imageBase64?: string | null,
+    mimeType?: string
   ) => {
     setIsFetchingResponse(true);
     try {
@@ -93,6 +95,7 @@ const Home: FC = () => {
         body: JSON.stringify({
           message: userMessage.text || null,
           image: imageBase64 || null,
+          mimeType,
         }),
       });
 
@@ -181,8 +184,8 @@ const Home: FC = () => {
     }
   };
 
-  const sendMessage = async (imageBase64?: string | null) => {
-    if (!input.trim() && !imageBase64) return;
+  const sendMessage = async (imageFile?: File | null) => {
+    if (!input.trim() && !imageFile) return;
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
@@ -197,6 +200,13 @@ const Home: FC = () => {
 
     setInput("home", "");
     setMessages((prev) => [...prev, userMessage]);
+
+    let imageBase64: string | null = null;
+    let mimeType: string | undefined;
+    if (imageFile) {
+      imageBase64 = await fileToBase64(imageFile);
+      mimeType = imageFile.type;
+    }
 
     if (user && !isMessageTemporary) {
       try {
@@ -253,12 +263,23 @@ const Home: FC = () => {
           timestamp,
         });
 
-        fetchBotResponse(userMessage, id, imageBase64);
+        if (imageFile && id) {
+          const fileExt = imageFile.name.split(".").pop();
+          const filePath = `${user.id}/${id}/${timestamp}.${fileExt}`;
+          const { error: uploadError } = await supabase.storage
+            .from("messages")
+            .upload(filePath, imageFile);
+          if (uploadError) {
+            console.error("Error uploading image:", uploadError);
+          }
+        }
+
+        fetchBotResponse(userMessage, id, imageBase64, mimeType);
       } catch (error) {
         console.error("Error sending message:", error);
       }
     } else {
-      fetchBotResponse(userMessage, null, imageBase64);
+      fetchBotResponse(userMessage, null, imageBase64, mimeType);
     }
   };
 

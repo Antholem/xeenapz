@@ -20,7 +20,7 @@ interface MessageInputProps {
   resetTranscript: () => void;
   isFetchingResponse: boolean;
   isDisabled?: boolean;
-  sendMessage: (imageBase64?: string | null) => void;
+  sendMessage: (imageFile?: File | null) => Promise<void> | void;
 }
 
 const MessageInput: FC<MessageInputProps> = ({
@@ -56,20 +56,6 @@ const MessageInput: FC<MessageInputProps> = ({
     }
   };
 
-  const getImageBase64 = async (): Promise<string | null> => {
-    const file = fileInputRef.current?.files?.[0];
-    if (!file) return null;
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = (reader.result as string).split(",")[1]; // Strip prefix
-        resolve(result);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  };
-
   useEffect(() => {
     return () => {
       if (preview) {
@@ -79,8 +65,8 @@ const MessageInput: FC<MessageInputProps> = ({
   }, [preview]);
 
   const handleSend = async () => {
-    const imageBase64 = await getImageBase64();
-    sendMessage(imageBase64);
+    const file = fileInputRef.current?.files?.[0] || null;
+    await sendMessage(file);
     discardImage();
   };
 

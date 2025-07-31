@@ -8,6 +8,7 @@ import { MessageInput } from "@/components";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
 import { speakText } from "@/lib";
 import { useAuth, useThreadInput } from "@/stores";
+import { fileToBase64 } from "@/utils/file";
 
 interface Message {
   text: string;
@@ -77,8 +78,8 @@ const TempThread: FC = () => {
     };
   }, []);
 
-  const sendMessage = async (imageBase64?: string | null) => {
-    if (!input.trim() && !imageBase64) return;
+  const sendMessage = async (imageFile?: File | null) => {
+    if (!input.trim() && !imageFile) return;
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
@@ -106,6 +107,13 @@ const TempThread: FC = () => {
     setInput("home", "");
     setIsFetchingResponse(true);
 
+    let imageBase64: string | null = null;
+    let mimeType: string | undefined;
+    if (imageFile) {
+      imageBase64 = await fileToBase64(imageFile);
+      mimeType = imageFile.type;
+    }
+
     try {
       const res = await fetch("/api/gemini", {
         method: "POST",
@@ -113,6 +121,7 @@ const TempThread: FC = () => {
         body: JSON.stringify({
           message: input.trim() || null,
           image: imageBase64 || null,
+          mimeType,
         }),
       });
 
