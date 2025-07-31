@@ -203,7 +203,10 @@ const Thread: FC = () => {
     }
   };
 
-  const sendMessage = async (imageBase64?: string | null) => {
+  const sendMessage = async (
+    imageBase64?: string | null,
+    imageFile?: File | null
+  ) => {
     if (!user || !threadId || (!input.trim() && !imageBase64)) return;
 
     const now = new Date().toISOString();
@@ -228,6 +231,18 @@ const Thread: FC = () => {
         created_at: now,
         timestamp,
       });
+
+      if (imageFile) {
+        const ext = imageFile.name.split(".").pop();
+        const fileName = `${timestamp}.${ext}`;
+        const filePath = `${user.id}/${threadId}/${fileName}`;
+        const { error: uploadError } = await supabase.storage
+          .from("messages")
+          .upload(filePath, imageFile, { upsert: false });
+        if (uploadError) {
+          console.error("Error uploading image:", uploadError);
+        }
+      }
 
       await supabase
         .from("threads")

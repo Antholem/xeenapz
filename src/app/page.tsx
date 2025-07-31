@@ -181,7 +181,10 @@ const Home: FC = () => {
     }
   };
 
-  const sendMessage = async (imageBase64?: string | null) => {
+  const sendMessage = async (
+    imageBase64?: string | null,
+    imageFile?: File | null
+  ) => {
     if (!input.trim() && !imageBase64) return;
 
     const timestamp = Date.now();
@@ -252,6 +255,18 @@ const Home: FC = () => {
           created_at: now,
           timestamp,
         });
+
+        if (imageFile) {
+          const ext = imageFile.name.split(".").pop();
+          const fileName = `${timestamp}.${ext}`;
+          const filePath = `${user.id}/${id}/${fileName}`;
+          const { error: uploadError } = await supabase.storage
+            .from("messages")
+            .upload(filePath, imageFile, { upsert: false });
+          if (uploadError) {
+            console.error("Error uploading image:", uploadError);
+          }
+        }
 
         fetchBotResponse(userMessage, id, imageBase64);
       } catch (error) {

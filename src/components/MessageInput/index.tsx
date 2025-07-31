@@ -20,7 +20,7 @@ interface MessageInputProps {
   resetTranscript: () => void;
   isFetchingResponse: boolean;
   isDisabled?: boolean;
-  sendMessage: (imageBase64?: string | null) => void;
+  sendMessage: (imageBase64?: string | null, file?: File | null) => void;
 }
 
 const MessageInput: FC<MessageInputProps> = ({
@@ -56,17 +56,17 @@ const MessageInput: FC<MessageInputProps> = ({
     }
   };
 
-  const getImageBase64 = async (): Promise<string | null> => {
-    const file = fileInputRef.current?.files?.[0];
-    if (!file) return null;
+  const getImageBase64 = async (file?: File): Promise<string | null> => {
+    const target = file ?? fileInputRef.current?.files?.[0];
+    if (!target) return null;
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
-        const result = (reader.result as string).split(",")[1]; // Strip prefix
+        const result = (reader.result as string).split(",")[1];
         resolve(result);
       };
       reader.onerror = reject;
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(target);
     });
   };
 
@@ -79,8 +79,9 @@ const MessageInput: FC<MessageInputProps> = ({
   }, [preview]);
 
   const handleSend = async () => {
-    const imageBase64 = await getImageBase64();
-    sendMessage(imageBase64);
+    const file = fileInputRef.current?.files?.[0] || null;
+    const imageBase64 = await getImageBase64(file);
+    sendMessage(imageBase64, file);
     discardImage();
   };
 
