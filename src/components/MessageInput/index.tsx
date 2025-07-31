@@ -66,7 +66,7 @@ const MessageInput: FC<MessageInputProps> = ({
 
   const handleSend = async () => {
     const file = fileInputRef.current?.files?.[0] || null;
-    sendMessage(file);
+    await sendMessage(file);
     discardImage();
   };
 

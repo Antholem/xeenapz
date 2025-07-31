@@ -236,7 +236,9 @@ const Home: FC = () => {
           const filePath = `${user.id}/${id}/${fileName}`;
           const { error: uploadError } = await supabase.storage
             .from("messages")
-            .upload(filePath, file);
+            .upload(filePath, file, {
+              contentType: file.type,
+            });
           if (uploadError) {
             console.error("Error uploading image:", uploadError);
           } else {
