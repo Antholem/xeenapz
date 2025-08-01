@@ -199,6 +199,7 @@ const Home: FC = () => {
     const timestamp = Date.now();
     const fileId = uuidv4();
     let id = threadId;
+    let isNewThread = false;
 
     const textToSend = input.trim() || "[Image sent]";
     const userMessage: Message = {
@@ -212,6 +213,7 @@ const Home: FC = () => {
     if (user && !id && !isMessageTemporary) {
       id = uuidv4();
       setThreadId(id);
+      isNewThread = true;
 
       await supabase.from("users").upsert({ id: user.id, user_id: user.id });
       await supabase.from("threads").insert({
@@ -226,11 +228,9 @@ const Home: FC = () => {
       });
 
       window.history.pushState({}, "", `/thread/${id}`);
-      setGlobalMessages(id, [userMessage]);
     }
 
     setInput("home", "");
-    setMessages((prev) => [...prev, userMessage]);
     discardImage();
 
     // Upload image and attach public URL
@@ -279,7 +279,13 @@ const Home: FC = () => {
           })
           .eq("id", id);
 
-        addMessageToBottom(id, { ...userMessage, image: imageData } as any);
+        if (isNewThread) {
+          setGlobalMessages(id, [
+            { ...userMessage, image: imageData } as any,
+          ]);
+        } else {
+          addMessageToBottom(id, { ...userMessage, image: imageData } as any);
+        }
 
         await supabase.from("messages").insert({
           user_id: user.id,
@@ -299,6 +305,11 @@ const Home: FC = () => {
     } else {
       fetchBotResponse(userMessage, null, base64Image);
     }
+
+    setMessages((prev) => [
+      ...prev,
+      { ...userMessage, image: imageData },
+    ]);
   };
 
   return (
