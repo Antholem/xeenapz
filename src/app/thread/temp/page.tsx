@@ -34,6 +34,11 @@ const TempThread: FC = () => {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasMounted = useRef(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const discardImage = () => {
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   useEffect(() => {
     if (!loading && !user) {
@@ -164,6 +169,8 @@ const TempThread: FC = () => {
         resetTranscript={resetTranscript}
         isFetchingResponse={isFetchingResponse}
         sendMessage={sendMessage}
+        fileInputRef={fileInputRef}
+        discardImage={discardImage}
       />
     </ThreadLayout>
   );
