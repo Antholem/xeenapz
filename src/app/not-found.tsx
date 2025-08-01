@@ -1,19 +1,53 @@
 "use client";
 
-import React from "react";
+import React, { useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Flex, Text, Button } from "@chakra-ui/react";
+import { Flex, Text } from "@chakra-ui/react";
+import { ThreadLayout } from "@/layouts";
+import { MessageInput } from "@/components";
+import { Button } from "@themed-components";
+import { IoAdd } from "react-icons/io5";
 
 const NotFound = () => {
   const router = useRouter();
+  const noop = () => {};
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   return (
-    <Flex direction="column" align="center" justify="center" h="100vh" gap={4}>
-      <Flex direction="column" align="center">
-        <Text fontSize="3xl">Page Not Found</Text>
-        <Text fontSize="md">Sorry, the page you&apos;re looking for doesn&apos;t exist.</Text>
+    <ThreadLayout>
+      <Flex
+        flex="1"
+        direction="column"
+        justify="center"
+        align="center"
+        h="100%"
+        overflow="hidden"
+        gap={4}
+      >
+        <Flex direction="column" justify="center">
+          <Text fontSize="3xl" align="center">
+            Page Not Found
+          </Text>
+          <Text fontSize="md" align="center">
+            Sorry, the page you&apos;re looking for doesn&apos;t exist.
+          </Text>
+        </Flex>
+        <Button onClick={() => router.push("/")} leftIcon={<IoAdd />}>
+          New Chat
+        </Button>
       </Flex>
-      <Button onClick={() => router.push("/")}>New Chat</Button>
-    </Flex>
+      <MessageInput
+        isDisabled={true}
+        input={""}
+        setInput={noop}
+        isListening={false}
+        resetTranscript={noop}
+        isFetchingResponse={false}
+        sendMessage={noop}
+        fileInputRef={fileInputRef}
+        discardImage={noop}
+      />
+    </ThreadLayout>
   );
 };
 
