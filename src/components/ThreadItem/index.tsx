@@ -92,6 +92,24 @@ const ThreadItem: FC<ThreadItemProps> = ({
         .eq("user_id", user.id)
         .eq("thread_id", thread.id);
 
+      const { data: files, error: listError } = await supabase.storage
+        .from("messages")
+        .list(`${user.id}/${thread.id}`);
+
+      if (listError) {
+        console.error("Failed to list images:", listError);
+      } else if (files && files.length > 0) {
+        const paths = files.map(
+          (file) => `${user.id}/${thread.id}/${file.name}`,
+        );
+        const { error: removeError } = await supabase.storage
+          .from("messages")
+          .remove(paths);
+        if (removeError) {
+          console.error("Failed to remove images:", removeError);
+        }
+      }
+
       await supabase
         .from("threads")
         .delete()
