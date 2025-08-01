@@ -4,7 +4,7 @@ import { FC, memo } from "react";
 import ReactMarkdown from "react-markdown";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
-import { IoIosMic } from "react-icons/io";
+import { HiSpeakerWave } from "react-icons/hi2";
 import { IoStop } from "react-icons/io5";
 import {
   Box,
@@ -73,6 +73,16 @@ const MessageItem: FC<MessageItemProps> = ({
           alignItems={isUser ? "flex-end" : "flex-start"}
           gap={1}
         >
+          {message.image && (
+            <Image
+              src={message.image.url}
+              id={message.image.id}
+              alt={message.image.id}
+              mt={2}
+              maxW={200}
+              rounded="md"
+            />
+          )}
           <Box
             p={3}
             borderRadius="lg"
@@ -101,15 +111,6 @@ const MessageItem: FC<MessageItemProps> = ({
             >
               {message.text}
             </ReactMarkdown>
-            {message.image && (
-              <Image
-                src={message.image.url}
-                alt="Attached image"
-                mt={2}
-                borderRadius="md"
-                maxW="200px"
-              />
-            )}
           </Box>
 
           <Flex align="center" justify="center" gap={1}>
@@ -121,7 +122,11 @@ const MessageItem: FC<MessageItemProps> = ({
                 <IconButton
                   aria-label="Read aloud"
                   icon={
-                    playingMessage === message.text ? <IoStop /> : <IoIosMic />
+                    playingMessage === message.text ? (
+                      <IoStop />
+                    ) : (
+                      <HiSpeakerWave />
+                    )
                   }
                   variant="ghost"
                   size="xs"
