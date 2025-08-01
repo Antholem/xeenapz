@@ -194,23 +194,16 @@ const Home: FC = () => {
   const sendMessage = async () => {
     const base64Image = await getImageBase64();
     if (!input.trim() && !base64Image) return;
-
     const now = new Date().toISOString();
     const timestamp = Date.now();
     const fileId = uuidv4();
     let id = threadId;
-
-    const textToSend = input.trim() || "[Image sent]";
-    const userMessage: Message = {
-      text: textToSend,
-      sender: "user",
-      timestamp,
-      created_at: now,
-    };
+    let createdNew = false;
 
     // Create thread if needed
     if (user && !id && !isMessageTemporary) {
       id = uuidv4();
+      createdNew = true;
       setThreadId(id);
 
       await supabase.from("users").upsert({ id: user.id, user_id: user.id });
@@ -226,12 +219,7 @@ const Home: FC = () => {
       });
 
       window.history.pushState({}, "", `/thread/${id}`);
-      setGlobalMessages(id, [userMessage]);
     }
-
-    setInput("home", "");
-    setMessages((prev) => [...prev, userMessage]);
-    discardImage();
 
     // Upload image and attach public URL
     let imageData: Message["image"] | undefined;
@@ -264,6 +252,23 @@ const Home: FC = () => {
       }
     }
 
+    const textToSend = input.trim() || "[Image sent]";
+    const userMessage: Message = {
+      text: textToSend,
+      sender: "user",
+      timestamp,
+      created_at: now,
+      image: imageData,
+    };
+
+    setInput("home", "");
+    setMessages((prev) => [...prev, userMessage]);
+    discardImage();
+
+    if (createdNew && id) {
+      setGlobalMessages(id, [userMessage]);
+    }
+
     // Insert message
     if (user && !isMessageTemporary && id) {
       try {
@@ -279,7 +284,7 @@ const Home: FC = () => {
           })
           .eq("id", id);
 
-        addMessageToBottom(id, { ...userMessage, image: imageData } as any);
+        addMessageToBottom(id, userMessage);
 
         await supabase.from("messages").insert({
           user_id: user.id,

@@ -6,6 +6,11 @@ export interface Message {
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;
+  image?: {
+    id: string;
+    path: string;
+    url: string;
+  };
 }
 
 interface ThreadMessageStore {
