@@ -16,7 +16,7 @@ import { MessageInput } from "@/components";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
 
 interface Message {
-  text: string;
+  text: string | null;
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;
@@ -24,7 +24,7 @@ interface Message {
     id: string;
     path: string;
     url: string;
-  };
+  } | null;
 }
 
 const Home: FC = () => {
@@ -201,7 +201,7 @@ const Home: FC = () => {
     let id = threadId;
     let isNewThread = false;
 
-    const textToSend = input.trim() || "[Image sent]";
+    const textToSend = input.trim() || null;
     const userMessage: Message = {
       text: textToSend,
       sender: "user",
@@ -297,7 +297,7 @@ const Home: FC = () => {
           image: imageData ?? null,
         });
 
-        await fetchBotSetTitle(userMessage.text, id);
+        await fetchBotSetTitle(userMessage.text ?? "", id);
         fetchBotResponse(userMessage, id, base64Image);
       } catch (error) {
         console.error("Error sending message:", error);

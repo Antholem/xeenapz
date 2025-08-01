@@ -237,7 +237,7 @@ const Thread: FC = () => {
     const fileId = uuidv4();
 
     const userMessage: Message = {
-      text: input.trim() || "[Image sent]",
+      text: input.trim() || null,
       sender: "user",
       timestamp,
       created_at: now,

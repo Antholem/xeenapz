@@ -18,7 +18,7 @@ import {
 import { useTheme } from "@/stores";
 
 interface Message {
-  text: string;
+  text: string | null;
   sender: "user" | "bot";
   timestamp: number;
   image?: {
@@ -57,6 +57,8 @@ const MessageItem: FC<MessageItemProps> = ({
 
   const { colorScheme } = useTheme();
 
+  if (!message.text && !message.image) return null;
+
   return (
     <Flex
       direction="column"
@@ -83,39 +85,41 @@ const MessageItem: FC<MessageItemProps> = ({
               rounded="md"
             />
           )}
-          <Box
-            p={3}
-            borderRadius="lg"
-            color={isUser ? "white" : ""}
-            bg={isUser ? `${colorScheme}.400` : "mutedSurface"}
-            maxW="max-content"
-            whiteSpace="pre-wrap"
-            wordBreak="break-word"
-            overflowWrap="anywhere"
-          >
-            <ReactMarkdown
-              components={{
-                ul: ({ children }) => (
-                  <ul style={{ paddingLeft: "20px" }}>{children}</ul>
-                ),
-                a: ({ ...props }) => (
-                  <a
-                    {...props}
-                    style={{
-                      wordBreak: "break-all",
-                      overflowWrap: "break-word",
-                    }}
-                  />
-                ),
-              }}
+          {message.text && (
+            <Box
+              p={3}
+              borderRadius="lg"
+              color={isUser ? "white" : ""}
+              bg={isUser ? `${colorScheme}.400` : "mutedSurface"}
+              maxW="max-content"
+              whiteSpace="pre-wrap"
+              wordBreak="break-word"
+              overflowWrap="anywhere"
             >
-              {message.text}
-            </ReactMarkdown>
-          </Box>
+              <ReactMarkdown
+                components={{
+                  ul: ({ children }) => (
+                    <ul style={{ paddingLeft: "20px" }}>{children}</ul>
+                  ),
+                  a: ({ ...props }) => (
+                    <a
+                      {...props}
+                      style={{
+                        wordBreak: "break-all",
+                        overflowWrap: "break-word",
+                      }}
+                    />
+                  ),
+                }}
+              >
+                {message.text}
+              </ReactMarkdown>
+            </Box>
+          )}
 
           <Flex align="center" justify="center" gap={1}>
             {user && <Text fontSize="xs">{formattedTime}</Text>}
-            {!isUser && (
+            {!isUser && message.text && (
               <Tooltip
                 label={playingMessage === message.text ? "Stop" : "Read aloud"}
               >
@@ -131,7 +135,7 @@ const MessageItem: FC<MessageItemProps> = ({
                   variant="ghost"
                   size="xs"
                   onClick={() =>
-                    speakText(message.text, playingMessage, setPlayingMessage)
+                    speakText(message.text!, playingMessage, setPlayingMessage)
                   }
                 />
               </Tooltip>
