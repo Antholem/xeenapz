@@ -36,9 +36,10 @@ const NotFound = () => {
           New Chat
         </Button>
       </Flex>
+
       <MessageInput
         isDisabled={true}
-        input={""}
+        input=""
         setInput={noop}
         isListening={false}
         resetTranscript={noop}
