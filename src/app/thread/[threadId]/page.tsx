@@ -236,16 +236,7 @@ const Thread: FC = () => {
     const timestamp = Date.now();
     const fileId = uuidv4();
 
-    const userMessage: Message = {
-      text: input.trim() || null,
-      sender: "user",
-      timestamp,
-      created_at: now,
-    };
-
-    setInput(threadId, "");
-    discardImage();
-
+    // Upload image first
     let imageData: Message["image"] | undefined;
     if (base64Image) {
       try {
@@ -275,6 +266,16 @@ const Thread: FC = () => {
         console.error("Image upload failed:", err);
       }
     }
+
+    const userMessage: Message = {
+      text: input.trim() || null,
+      sender: "user",
+      timestamp,
+      created_at: now,
+    };
+
+    setInput(threadId, "");
+    discardImage();
 
     addMessageToBottom(threadId, { ...userMessage, image: imageData });
 
