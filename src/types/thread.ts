@@ -4,6 +4,11 @@ export interface Message {
   text: string;
   timestamp?: { seconds: number; nanoseconds: number };
   created_at?: string;
+  image?: {
+    id: string;
+    path: string;
+    url: string;
+  } | null;
 }
 
 export interface Thread {
