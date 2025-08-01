@@ -38,7 +38,7 @@ const Home: FC = () => {
 
   const [threadId, setThreadId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [isFetchingResponse, setIsFetchingResponse] = useState<boolean>(false);
+  const [isFetchingResponse, setIsFetchingResponse] = useState(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
 
@@ -59,7 +59,7 @@ const Home: FC = () => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
-        const result = (reader.result as string).split(",")[1]; // strip prefix
+        const result = (reader.result as string).split(",")[1];
         resolve(result);
       };
       reader.onerror = reject;
@@ -167,15 +167,18 @@ const Home: FC = () => {
 
   const fetchBotSetTitle = async (
     userMessageText: string,
+    imageBase64: string | null,
     threadId: string
   ) => {
     try {
-      const prompt = `Generate a short, descriptive title (only the title) for the following message: "${userMessageText}"`;
+      const prompt =
+        `Generate a short, descriptive title (only the title) for the following message.` +
+        ` If an image is provided, consider its contents. Message: "${userMessageText}"`;
 
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: prompt }),
+        body: JSON.stringify({ message: prompt, image: imageBase64 }),
       });
 
       const data = await res.json();
@@ -198,42 +201,10 @@ const Home: FC = () => {
     const now = new Date().toISOString();
     const timestamp = Date.now();
     const fileId = uuidv4();
-    let id = threadId;
-    let isNewThread = false;
 
-    const textToSend = input.trim() || null;
-    const userMessage: Message = {
-      text: textToSend,
-      sender: "user",
-      timestamp,
-      created_at: now,
-    };
+    const id = threadId || (user && !isMessageTemporary ? uuidv4() : null);
+    const isNewThread = !!user && !threadId && !isMessageTemporary && !!id;
 
-    // Create thread if needed
-    if (user && !id && !isMessageTemporary) {
-      id = uuidv4();
-      setThreadId(id);
-      isNewThread = true;
-
-      await supabase.from("users").upsert({ id: user.id, user_id: user.id });
-      await supabase.from("threads").insert({
-        id,
-        user_id: user.id,
-        is_archived: false,
-        is_deleted: false,
-        is_pinned: false,
-        created_at: now,
-        updated_at: now,
-        last_message: null,
-      });
-
-      window.history.pushState({}, "", `/thread/${id}`);
-    }
-
-    setInput("home", "");
-    discardImage();
-
-    // Upload image and attach public URL
     let imageData: Message["image"] | undefined;
     if (user && base64Image && id) {
       try {
@@ -264,25 +235,38 @@ const Home: FC = () => {
       }
     }
 
-    // Insert message
+    if (user && isNewThread && id) {
+      setThreadId(id);
+      await supabase.from("users").upsert({ id: user.id, user_id: user.id });
+      await supabase.from("threads").insert({
+        id,
+        user_id: user.id,
+        is_archived: false,
+        is_deleted: false,
+        is_pinned: false,
+        created_at: now,
+        updated_at: now,
+        last_message: null,
+      });
+    }
+
+    const textToSend = input.trim() || null;
+    const userMessage: Message = {
+      text: textToSend,
+      sender: "user",
+      timestamp,
+      created_at: now,
+    };
+
+    setInput("home", "");
+    discardImage();
+
+    setMessages((prev) => [...prev, { ...userMessage, image: imageData }]);
+
     if (user && !isMessageTemporary && id) {
       try {
-        await supabase
-          .from("threads")
-          .update({
-            updated_at: now,
-            last_message: {
-              text: userMessage.text,
-              sender: userMessage.sender,
-              created_at: now,
-            },
-          })
-          .eq("id", id);
-
         if (isNewThread) {
-          setGlobalMessages(id, [
-            { ...userMessage, image: imageData } as any,
-          ]);
+          setGlobalMessages(id, [{ ...userMessage, image: imageData } as any]);
         } else {
           addMessageToBottom(id, { ...userMessage, image: imageData } as any);
         }
@@ -297,19 +281,34 @@ const Home: FC = () => {
           image: imageData ?? null,
         });
 
-        await fetchBotSetTitle(userMessage.text ?? "", id);
-        fetchBotResponse(userMessage, id, base64Image);
+        await supabase
+          .from("threads")
+          .update({
+            updated_at: now,
+            last_message: {
+              text: userMessage.text,
+              sender: userMessage.sender,
+              created_at: now,
+            },
+          })
+          .eq("id", id);
+
+        await fetchBotResponse(userMessage, id, base64Image);
+
+        if (isNewThread && pathname === "/") {
+          await fetchBotSetTitle(userMessage.text ?? "", base64Image, id);
+        }
       } catch (error) {
         console.error("Error sending message:", error);
       }
     } else {
-      fetchBotResponse(userMessage, null, base64Image);
+      await fetchBotResponse(userMessage, null, base64Image);
     }
 
-    setMessages((prev) => [
-      ...prev,
-      { ...userMessage, image: imageData },
-    ]);
+    if (isNewThread && id) {
+      window.history.pushState({}, "", `/thread/${id}`);
+      setThreadId(null);
+    }
   };
 
   return (
