@@ -27,7 +27,7 @@ import { Spinner, Progress } from "@themed-components";
 
 interface Message {
   id?: string;
-  text: string;
+  text: string | null;
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;

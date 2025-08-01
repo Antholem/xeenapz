@@ -228,7 +228,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
     if (searchTerm) {
       loadedThreads.forEach((thread) => {
         thread.messages?.forEach((msg) => {
-          if (msg.text.toLowerCase().includes(lower)) {
+          if (msg.text && msg.text.toLowerCase().includes(lower)) {
             const start = msg.text.toLowerCase().indexOf(lower);
             const end = start + searchTerm.length;
 

@@ -8,12 +8,18 @@ import { MessageInput } from "@/components";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
 import { speakText } from "@/lib";
 import { useAuth, useThreadInput } from "@/stores";
+import { v4 as uuidv4 } from "uuid";
 
 interface Message {
-  text: string;
+  text: string | null;
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;
+  image?: {
+    id: string;
+    path: string;
+    url: string;
+  } | null;
 }
 
 const TempThread: FC = () => {
@@ -38,6 +44,20 @@ const TempThread: FC = () => {
 
   const discardImage = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const getImageBase64 = async (): Promise<string | null> => {
+    const file = fileInputRef.current?.files?.[0];
+    if (!file) return null;
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = (reader.result as string).split(",")[1];
+        resolve(result);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
   useEffect(() => {
@@ -82,33 +102,34 @@ const TempThread: FC = () => {
     };
   }, []);
 
-  const sendMessage = async (imageBase64?: string | null) => {
+  const sendMessage = async () => {
+    const imageBase64 = await getImageBase64();
     if (!input.trim() && !imageBase64) return;
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
+    const fileId = uuidv4();
 
-    if (input.trim()) {
-      const userMessage: Message = {
-        text: input,
-        sender: "user",
-        timestamp,
-        created_at: now,
-      };
-      setMessages((prev) => [...prev, userMessage]);
-    }
+    const imageData = imageBase64
+      ? {
+          id: fileId,
+          path: "",
+          url: `data:image/png;base64,${imageBase64}`,
+        }
+      : null;
 
-    if (!input.trim()) {
-      const userImageMessage: Message = {
-        text: "[Image sent]",
-        sender: "user",
-        timestamp,
-        created_at: now,
-      };
-      setMessages((prev) => [...prev, userImageMessage]);
-    }
+    const userMessage: Message = {
+      text: input.trim() || null,
+      sender: "user",
+      timestamp,
+      created_at: now,
+      image: imageData,
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
 
     setInput("home", "");
+    discardImage();
     setIsFetchingResponse(true);
 
     try {
