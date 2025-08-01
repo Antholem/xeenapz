@@ -20,6 +20,11 @@ interface Message {
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;
+  image?: {
+    id: string;
+    path: string;
+    url: string;
+  };
 }
 
 const Home: FC = () => {
@@ -44,18 +49,17 @@ const Home: FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const discardImage = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const getImageBase64 = async (): Promise<string | null> => {
     const file = fileInputRef.current?.files?.[0];
     if (!file) return null;
+
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
-        const result = (reader.result as string).split(",")[1]; // strip `data:image/...;base64,`
+        const result = (reader.result as string).split(",")[1]; // strip prefix
         resolve(result);
       };
       reader.onerror = reject;
@@ -65,7 +69,6 @@ const Home: FC = () => {
 
   useEffect(() => {
     if (!user || isMessageTemporary) return;
-
     if (!hasMounted.current) {
       hasMounted.current = true;
       if (pathname === "/") {
@@ -157,14 +160,6 @@ const Home: FC = () => {
       }
     } catch (error) {
       console.error("Error fetching bot response:", error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          text: "Error fetching response",
-          sender: "bot",
-          timestamp: Date.now(),
-        },
-      ]);
     } finally {
       setIsFetchingResponse(false);
     }
@@ -184,7 +179,6 @@ const Home: FC = () => {
       });
 
       const data = await res.json();
-
       const newTitle =
         data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || threadId;
 
@@ -194,16 +188,11 @@ const Home: FC = () => {
         .eq("id", threadId);
     } catch (error) {
       console.error("Error setting title:", error);
-      await supabase
-        .from("threads")
-        .update({ title: threadId })
-        .eq("id", threadId);
     }
   };
 
   const sendMessage = async () => {
     const base64Image = await getImageBase64();
-
     if (!input.trim() && !base64Image) return;
 
     const now = new Date().toISOString();
@@ -211,13 +200,20 @@ const Home: FC = () => {
     const fileId = uuidv4();
     let id = threadId;
 
-    // STEP 1: Create thread early if needed (BEFORE storing image)
+    const textToSend = input.trim() || "[Image sent]";
+    const userMessage: Message = {
+      text: textToSend,
+      sender: "user",
+      timestamp,
+      created_at: now,
+    };
+
+    // Create thread if needed
     if (user && !id && !isMessageTemporary) {
       id = uuidv4();
       setThreadId(id);
 
       await supabase.from("users").upsert({ id: user.id, user_id: user.id });
-
       await supabase.from("threads").insert({
         id,
         user_id: user.id,
@@ -229,22 +225,16 @@ const Home: FC = () => {
         last_message: null,
       });
 
-      // window.history.pushState({}, "", `/thread/${id}`);
+      window.history.pushState({}, "", `/thread/${id}`);
+      setGlobalMessages(id, [userMessage]);
     }
-
-    const textToSend = input.trim() || "[Image sent]";
-    const userMessage: Message = {
-      text: textToSend,
-      sender: "user",
-      timestamp,
-      created_at: now,
-    };
 
     setInput("home", "");
     setMessages((prev) => [...prev, userMessage]);
     discardImage();
 
-    // STEP 2: Upload image now that we have threadId
+    // Upload image and attach public URL
+    let imageData: Message["image"] | undefined;
     if (user && base64Image && id) {
       try {
         const binary = atob(base64Image);
@@ -258,13 +248,23 @@ const Home: FC = () => {
         });
 
         const path = `${user.id}/${id}/${fileId}.png`;
-        await supabase.storage.from("messages").upload(path, file);
+        const uploadRes = await supabase.storage
+          .from("messages")
+          .upload(path, file);
+
+        if (!uploadRes.error) {
+          imageData = {
+            id: fileId,
+            path,
+            url: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/messages/${path}`,
+          };
+        }
       } catch (e) {
         console.error("Failed to store image to Supabase:", e);
       }
     }
 
-    // STEP 3: Insert message and update thread
+    // Insert message
     if (user && !isMessageTemporary && id) {
       try {
         await supabase
@@ -279,7 +279,7 @@ const Home: FC = () => {
           })
           .eq("id", id);
 
-        addMessageToBottom(id, userMessage);
+        addMessageToBottom(id, { ...userMessage, image: imageData } as any);
 
         await supabase.from("messages").insert({
           user_id: user.id,
@@ -288,6 +288,7 @@ const Home: FC = () => {
           sender: userMessage.sender,
           created_at: now,
           timestamp,
+          image: imageData ?? null,
         });
 
         await fetchBotSetTitle(userMessage.text, id);
