@@ -279,7 +279,7 @@ const Home: FC = () => {
           })
           .eq("id", id);
 
-        addMessageToBottom(id, { ...userMessage, image: imageData } as any);
+        addMessageToBottom(id, { ...userMessage, image: imageData });
 
         await supabase.from("messages").insert({
           user_id: user.id,

@@ -21,6 +21,11 @@ interface Message {
   text: string;
   sender: "user" | "bot";
   timestamp: number;
+  image?: {
+    id: string;
+    path: string;
+    url: string;
+  };
 }
 
 interface MessageItemProps extends BoxProps {
@@ -96,6 +101,15 @@ const MessageItem: FC<MessageItemProps> = ({
             >
               {message.text}
             </ReactMarkdown>
+            {message.image && (
+              <Image
+                mt={2}
+                src={message.image.url}
+                alt="Attached image"
+                borderRadius="md"
+                maxH="300px"
+              />
+            )}
           </Box>
 
           <Flex align="center" justify="center" gap={1}>

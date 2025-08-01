@@ -244,10 +244,10 @@ const Thread: FC = () => {
     };
 
     setInput(threadId, "");
-    addMessageToBottom(threadId, userMessage);
     discardImage();
 
-    // upload image to storage
+    // Upload image and attach public URL
+    let imageData: Message["image"] | undefined;
     if (base64Image) {
       try {
         const binary = atob(base64Image);
@@ -261,11 +261,23 @@ const Thread: FC = () => {
         });
 
         const path = `${user.id}/${threadId}/${fileId}.png`;
-        await supabase.storage.from("messages").upload(path, file);
+        const uploadRes = await supabase.storage
+          .from("messages")
+          .upload(path, file);
+
+        if (!uploadRes.error) {
+          imageData = {
+            id: fileId,
+            path,
+            url: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/messages/${path}`,
+          };
+        }
       } catch (err) {
         console.error("Image upload failed:", err);
       }
     }
+
+    addMessageToBottom(threadId, { ...userMessage, image: imageData });
 
     try {
       await supabase.from("messages").insert({
@@ -275,6 +287,7 @@ const Thread: FC = () => {
         sender: userMessage.sender,
         created_at: now,
         timestamp,
+        image: imageData ?? null,
       });
 
       await supabase
