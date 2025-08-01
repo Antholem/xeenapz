@@ -38,7 +38,7 @@ const Home: FC = () => {
 
   const [threadId, setThreadId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [isFetchingResponse, setIsFetchingResponse] = useState<boolean>(false);
+  const [isFetchingResponse, setIsFetchingResponse] = useState(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
 
@@ -59,7 +59,7 @@ const Home: FC = () => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
-        const result = (reader.result as string).split(",")[1]; // strip prefix
+        const result = (reader.result as string).split(",")[1];
         resolve(result);
       };
       reader.onerror = reject;
@@ -205,7 +205,6 @@ const Home: FC = () => {
     const id = threadId || (user && !isMessageTemporary ? uuidv4() : null);
     const isNewThread = !!user && !threadId && !isMessageTemporary && !!id;
 
-    // Upload image first
     let imageData: Message["image"] | undefined;
     if (user && base64Image && id) {
       try {
@@ -236,7 +235,6 @@ const Home: FC = () => {
       }
     }
 
-    // Create thread if needed
     if (user && isNewThread && id) {
       setThreadId(id);
       await supabase.from("users").upsert({ id: user.id, user_id: user.id });
@@ -296,7 +294,10 @@ const Home: FC = () => {
           .eq("id", id);
 
         await fetchBotResponse(userMessage, id, base64Image);
-        await fetchBotSetTitle(userMessage.text ?? "", base64Image, id);
+
+        if (isNewThread && pathname === "/") {
+          await fetchBotSetTitle(userMessage.text ?? "", base64Image, id);
+        }
       } catch (error) {
         console.error("Error sending message:", error);
       }
@@ -306,6 +307,7 @@ const Home: FC = () => {
 
     if (isNewThread && id) {
       window.history.pushState({}, "", `/thread/${id}`);
+      setThreadId(null);
     }
   };
 

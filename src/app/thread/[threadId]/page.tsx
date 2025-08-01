@@ -55,7 +55,8 @@ const Thread: FC = () => {
 
   const getImageBase64 = async (): Promise<string | null> => {
     const file = fileInputRef.current?.files?.[0];
-    if (!file) return null;
+    if (!file || !file.type.startsWith("image/")) return null;
+
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
@@ -198,15 +199,19 @@ const Thread: FC = () => {
 
       addMessageToBottom(threadId, botMessage);
 
-      await supabase.from("messages").insert({
-        user_id: user.id,
-        thread_id: threadId,
-        text: botMessage.text,
-        sender: botMessage.sender,
-        created_at: botMessage.created_at,
-        is_generated: true,
-        timestamp: botMessage.timestamp,
-      });
+      try {
+        await supabase.from("messages").insert({
+          user_id: user.id,
+          thread_id: threadId,
+          text: botMessage.text,
+          sender: botMessage.sender,
+          created_at: botMessage.created_at,
+          is_generated: true,
+          timestamp: botMessage.timestamp,
+        });
+      } catch (err) {
+        console.error("Bot message insert failed:", err);
+      }
 
       await supabase
         .from("threads")
@@ -236,7 +241,6 @@ const Thread: FC = () => {
     const timestamp = Date.now();
     const fileId = uuidv4();
 
-    // Upload image first
     let imageData: Message["image"] | undefined;
     if (base64Image) {
       try {
@@ -255,7 +259,9 @@ const Thread: FC = () => {
           .from("messages")
           .upload(path, file);
 
-        if (!uploadRes.error) {
+        if (uploadRes.error) {
+          console.error("Upload failed:", uploadRes.error.message);
+        } else {
           imageData = {
             id: fileId,
             path,
