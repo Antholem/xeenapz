@@ -1,7 +1,15 @@
-import { FC, Fragment } from "react";
-import { Flex, IconButton, Card, Tooltip, Divider } from "@chakra-ui/react";
+import { FC, Fragment, useState, useEffect, RefObject } from "react";
+import {
+  Flex,
+  IconButton,
+  Card,
+  Tooltip,
+  Divider,
+  Box,
+  Image,
+} from "@chakra-ui/react";
 import { IoStop } from "react-icons/io5";
-import { IoIosMic, IoMdSend } from "react-icons/io";
+import { IoIosMic, IoMdImage, IoMdSend, IoMdClose } from "react-icons/io";
 import { SpeechRecognize } from "@/lib";
 import { Input } from "@themed-components";
 
@@ -13,6 +21,8 @@ interface MessageInputProps {
   isFetchingResponse: boolean;
   isDisabled?: boolean;
   sendMessage: () => void;
+  fileInputRef: RefObject<HTMLInputElement | null>;
+  discardImage: () => void;
 }
 
 const MessageInput: FC<MessageInputProps> = ({
@@ -23,23 +33,81 @@ const MessageInput: FC<MessageInputProps> = ({
   isFetchingResponse,
   isDisabled,
   sendMessage,
+  fileInputRef,
+  discardImage,
 }) => {
   const toggleSpeechRecognition = () => {
     SpeechRecognize(isListening, resetTranscript);
+  };
+
+  const [preview, setPreview] = useState<string | null>(null);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+  };
+
+  const handleDiscard = () => {
+    if (preview) URL.revokeObjectURL(preview);
+    setPreview(null);
+    discardImage();
+  };
+
+  useEffect(() => {
+    return () => {
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
+    };
+  }, [preview]);
+
+  const handleSend = async () => {
+    await sendMessage();
+    handleDiscard();
   };
 
   return (
     <Fragment>
       <Divider orientation="horizontal" />
       <Card p={3} borderRadius={0} variant="surface">
+        {preview && (
+          <Box position="relative" maxW="100px" mb={3}>
+            <Image src={preview} alt="Preview" borderRadius="md" />
+            <IconButton
+              aria-label="Discard image"
+              size="xs"
+              bg="Background"
+              color="primaryText"
+              _hover={{ bg: "Background", color: "primaryText" }}
+              _active={{ bg: "Background", color: "primaryText" }}
+              _focus={{ bg: "Background", color: "primaryText" }}
+              icon={<IoMdClose />}
+              variant="solid"
+              position="absolute"
+              top={1}
+              right={1}
+              isRound={true}
+              onClick={handleDiscard}
+            />
+          </Box>
+        )}
+        <input
+          type="file"
+          accept="image/*"
+          ref={fileInputRef}
+          style={{ display: "none" }}
+          onChange={handleImageChange}
+        />
         <Flex gap={2} justify="center" align="center">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
+            onKeyDown={async (e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                sendMessage();
+                await handleSend();
               }
             }}
             placeholder="Write a message..."
@@ -47,6 +115,15 @@ const MessageInput: FC<MessageInputProps> = ({
             variant="filled"
             isDisabled={isDisabled}
           />
+          <Tooltip label="Upload image">
+            <IconButton
+              aria-label="Upload image"
+              variant="ghost"
+              icon={<IoMdImage />}
+              onClick={() => fileInputRef.current?.click()}
+              isDisabled={isDisabled}
+            />
+          </Tooltip>
           <Tooltip label={isListening ? "Stop" : "Type by voice"}>
             <IconButton
               aria-label="Speech Recognition"
@@ -61,8 +138,10 @@ const MessageInput: FC<MessageInputProps> = ({
               aria-label="Send Message"
               variant="ghost"
               icon={<IoMdSend />}
-              isDisabled={isFetchingResponse || !input.trim() || isListening}
-              onClick={sendMessage}
+              isDisabled={
+                isFetchingResponse || (!input.trim() && !preview) || isListening
+              }
+              onClick={handleSend}
             />
           </Tooltip>
         </Flex>

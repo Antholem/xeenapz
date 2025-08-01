@@ -2,10 +2,15 @@ import { create } from "zustand";
 
 export interface Message {
   id?: string; // ⬅️ Was: id: any;
-  text: string;
+  text: string | null;
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;
+  image?: {
+    id: string;
+    path: string;
+    url: string;
+  } | null;
 }
 
 interface ThreadMessageStore {

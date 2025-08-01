@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Flex, Text } from "@chakra-ui/react";
 import { ThreadLayout } from "@/layouts";
@@ -11,6 +11,7 @@ import { IoAdd } from "react-icons/io5";
 const NotFound = () => {
   const router = useRouter();
   const noop = () => {};
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   return (
     <ThreadLayout>
@@ -35,14 +36,17 @@ const NotFound = () => {
           New Chat
         </Button>
       </Flex>
+
       <MessageInput
         isDisabled={true}
-        input={""}
+        input=""
         setInput={noop}
         isListening={false}
         resetTranscript={noop}
         isFetchingResponse={false}
         sendMessage={noop}
+        fileInputRef={fileInputRef}
+        discardImage={noop}
       />
     </ThreadLayout>
   );

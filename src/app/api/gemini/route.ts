@@ -11,10 +11,10 @@ export async function OPTIONS() {
 
 export async function POST(req: Request) {
   try {
-    const { message } = await req.json();
-    if (!message)
+    const { message, image } = await req.json();
+    if (!message && !image)
       return NextResponse.json(
-        { error: "Message is required" },
+        { error: "Message or image is required" },
         { status: 400 }
       );
 
@@ -22,21 +22,34 @@ export async function POST(req: Request) {
     if (!apiKey)
       return NextResponse.json({ error: "API key not found" }, { status: 500 });
 
+    const parts: any[] = [];
+
+    if (message) parts.push({ text: message });
+
+    if (image) {
+      parts.push({
+        inlineData: {
+          mimeType: "image/jpeg",
+          data: image, // base64 string, no data:image/... prefix
+        },
+      });
+    }
+
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: message }] }],
+          contents: [{ parts }],
         }),
       }
     );
 
+    const data = await response.json();
+
     const headers = new Headers();
     headers.set("Access-Control-Allow-Origin", "*");
-
-    const data = await response.json();
 
     return new Response(JSON.stringify(data), { headers });
   } catch (error) {

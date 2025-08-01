@@ -8,12 +8,18 @@ import { MessageInput } from "@/components";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
 import { speakText } from "@/lib";
 import { useAuth, useThreadInput } from "@/stores";
+import { v4 as uuidv4 } from "uuid";
 
 interface Message {
-  text: string;
+  text: string | null;
   sender: "user" | "bot";
   timestamp: number;
   created_at?: string;
+  image?: {
+    id: string;
+    path: string;
+    url: string;
+  } | null;
 }
 
 const TempThread: FC = () => {
@@ -34,6 +40,25 @@ const TempThread: FC = () => {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasMounted = useRef(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const discardImage = () => {
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const getImageBase64 = async (): Promise<string | null> => {
+    const file = fileInputRef.current?.files?.[0];
+    if (!file) return null;
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = (reader.result as string).split(",")[1];
+        resolve(result);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
 
   useEffect(() => {
     if (!loading && !user) {
@@ -77,13 +102,44 @@ const TempThread: FC = () => {
     };
   }, []);
 
-  const fetchBotResponse = async (userMessage: Message) => {
+  const sendMessage = async () => {
+    const imageBase64 = await getImageBase64();
+    if (!input.trim() && !imageBase64) return;
+
+    const timestamp = Date.now();
+    const now = new Date().toISOString();
+    const fileId = uuidv4();
+
+    const imageData = imageBase64
+      ? {
+          id: fileId,
+          path: "",
+          url: `data:image/png;base64,${imageBase64}`,
+        }
+      : null;
+
+    const userMessage: Message = {
+      text: input.trim() || null,
+      sender: "user",
+      timestamp,
+      created_at: now,
+      image: imageData,
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+
+    setInput("home", "");
+    discardImage();
     setIsFetchingResponse(true);
+
     try {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.text }),
+        body: JSON.stringify({
+          message: input.trim() || null,
+          image: imageBase64 || null,
+        }),
       });
 
       const data = await res.json();
@@ -113,23 +169,6 @@ const TempThread: FC = () => {
     }
   };
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
-
-    const timestamp = Date.now();
-    const now = new Date().toISOString();
-    const userMessage: Message = {
-      text: input,
-      sender: "user",
-      timestamp: timestamp,
-      created_at: now,
-    };
-
-    setInput("home", "");
-    setMessages((prev) => [...prev, userMessage]);
-    fetchBotResponse(userMessage);
-  };
-
   const isBlocked = !user && !loading;
 
   return (
@@ -151,6 +190,8 @@ const TempThread: FC = () => {
         resetTranscript={resetTranscript}
         isFetchingResponse={isFetchingResponse}
         sendMessage={sendMessage}
+        fileInputRef={fileInputRef}
+        discardImage={discardImage}
       />
     </ThreadLayout>
   );

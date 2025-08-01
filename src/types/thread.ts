@@ -1,9 +1,14 @@
 export interface Message {
   id: string;
   sender_id?: string;
-  text: string;
+  text: string | null;
   timestamp?: { seconds: number; nanoseconds: number };
   created_at?: string;
+  image?: {
+    id: string;
+    path: string;
+    url: string;
+  } | null;
 }
 
 export interface Thread {

@@ -4,7 +4,7 @@ import { FC, memo } from "react";
 import ReactMarkdown from "react-markdown";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
-import { IoIosMic } from "react-icons/io";
+import { HiSpeakerWave } from "react-icons/hi2";
 import { IoStop } from "react-icons/io5";
 import {
   Box,
@@ -18,9 +18,14 @@ import {
 import { useTheme } from "@/stores";
 
 interface Message {
-  text: string;
+  text: string | null;
   sender: "user" | "bot";
   timestamp: number;
+  image?: {
+    id: string;
+    path: string;
+    url: string;
+  } | null;
 }
 
 interface MessageItemProps extends BoxProps {
@@ -52,6 +57,8 @@ const MessageItem: FC<MessageItemProps> = ({
 
   const { colorScheme } = useTheme();
 
+  if (!message.text && !message.image) return null;
+
   return (
     <Flex
       direction="column"
@@ -68,51 +75,67 @@ const MessageItem: FC<MessageItemProps> = ({
           alignItems={isUser ? "flex-end" : "flex-start"}
           gap={1}
         >
-          <Box
-            p={3}
-            borderRadius="lg"
-            color={isUser ? "white" : ""}
-            bg={isUser ? `${colorScheme}.400` : "mutedSurface"}
-            maxW="max-content"
-            whiteSpace="pre-wrap"
-            wordBreak="break-word"
-            overflowWrap="anywhere"
-          >
-            <ReactMarkdown
-              components={{
-                ul: ({ children }) => (
-                  <ul style={{ paddingLeft: "20px" }}>{children}</ul>
-                ),
-                a: ({ ...props }) => (
-                  <a
-                    {...props}
-                    style={{
-                      wordBreak: "break-all",
-                      overflowWrap: "break-word",
-                    }}
-                  />
-                ),
-              }}
+          {message.image && (
+            <Image
+              src={message.image.url}
+              id={message.image.id}
+              alt={message.image.id}
+              mt={2}
+              maxW={200}
+              rounded="md"
+            />
+          )}
+          {message.text && (
+            <Box
+              p={3}
+              borderRadius="lg"
+              color={isUser ? "white" : ""}
+              bg={isUser ? `${colorScheme}.400` : "mutedSurface"}
+              maxW="max-content"
+              whiteSpace="pre-wrap"
+              wordBreak="break-word"
+              overflowWrap="anywhere"
             >
-              {message.text}
-            </ReactMarkdown>
-          </Box>
+              <ReactMarkdown
+                components={{
+                  ul: ({ children }) => (
+                    <ul style={{ paddingLeft: "20px" }}>{children}</ul>
+                  ),
+                  a: ({ ...props }) => (
+                    <a
+                      {...props}
+                      style={{
+                        wordBreak: "break-all",
+                        overflowWrap: "break-word",
+                      }}
+                    />
+                  ),
+                }}
+              >
+                {message.text}
+              </ReactMarkdown>
+            </Box>
+          )}
 
           <Flex align="center" justify="center" gap={1}>
             {user && <Text fontSize="xs">{formattedTime}</Text>}
-            {!isUser && (
+            {!isUser && message.text && (
               <Tooltip
                 label={playingMessage === message.text ? "Stop" : "Read aloud"}
               >
                 <IconButton
                   aria-label="Read aloud"
                   icon={
-                    playingMessage === message.text ? <IoStop /> : <IoIosMic />
+                    playingMessage === message.text ? (
+                      <IoStop />
+                    ) : (
+                      <HiSpeakerWave />
+                    )
                   }
                   variant="ghost"
                   size="xs"
                   onClick={() =>
-                    speakText(message.text, playingMessage, setPlayingMessage)
+                    speakText(message.text!, playingMessage, setPlayingMessage)
                   }
                 />
               </Tooltip>
