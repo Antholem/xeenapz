@@ -64,8 +64,12 @@ const MessageInput: FC<MessageInputProps> = ({
   }, [preview]);
 
   const handleSend = async () => {
-    await sendMessage();
-    handleDiscard();
+    const sendPromise = sendMessage();
+    if (preview) {
+      URL.revokeObjectURL(preview);
+      setPreview(null);
+    }
+    await sendPromise;
   };
 
   return (
