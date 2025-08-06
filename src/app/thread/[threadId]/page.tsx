@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import { ThreadLayout, MessagesLayout } from "@/layouts";
 import { MessageInput } from "@/components";
+import type { MessageInputHandle } from "@/components/MessageInput";
 import { supabase, speakText } from "@/lib";
 import {
   useAuth,
@@ -46,6 +47,7 @@ const Thread: FC = () => {
   const prevTranscriptRef = useRef("");
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const messageInputRef = useRef<MessageInputHandle | null>(null);
 
   const discardImage = () => {
     if (fileInputRef.current) {
@@ -317,7 +319,9 @@ const Thread: FC = () => {
   if (loading) return null;
 
   return (
-    <ThreadLayout>
+    <ThreadLayout
+      onFileDrop={(file) => messageInputRef.current?.handleFile(file)}
+    >
       <MessagesLayout
         messages={messages}
         isFetchingResponse={isFetchingResponse}
@@ -330,6 +334,7 @@ const Thread: FC = () => {
         isLoading={loadingMessages}
       />
       <MessageInput
+        ref={messageInputRef}
         input={input}
         setInput={(val) => setInput(threadId || "home", val)}
         isListening={isListening}

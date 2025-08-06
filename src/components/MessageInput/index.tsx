@@ -1,4 +1,11 @@
-import { FC, Fragment, useState, useEffect, RefObject } from "react";
+import {
+  Fragment,
+  useState,
+  useEffect,
+  RefObject,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import {
   Flex,
   IconButton,
@@ -13,6 +20,10 @@ import { IoIosMic, IoMdImage, IoMdSend, IoMdClose } from "react-icons/io";
 import { SpeechRecognize } from "@/lib";
 import { Input } from "@themed-components";
 
+export interface MessageInputHandle {
+  handleFile: (file: File) => void;
+}
+
 interface MessageInputProps {
   input: string;
   setInput: (value: string) => void;
@@ -25,28 +36,44 @@ interface MessageInputProps {
   discardImage: () => void;
 }
 
-const MessageInput: FC<MessageInputProps> = ({
-  input,
-  setInput,
-  isListening,
-  resetTranscript,
-  isFetchingResponse,
-  isDisabled,
-  sendMessage,
-  fileInputRef,
-  discardImage,
-}) => {
+const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
+  (
+    {
+      input,
+      setInput,
+      isListening,
+      resetTranscript,
+      isFetchingResponse,
+      isDisabled,
+      sendMessage,
+      fileInputRef,
+      discardImage,
+    },
+    ref
+  ) => {
   const toggleSpeechRecognition = () => {
     SpeechRecognize(isListening, resetTranscript);
   };
 
   const [preview, setPreview] = useState<string | null>(null);
 
+  const handleFile = (file: File) => {
+    if (preview) {
+      URL.revokeObjectURL(preview);
+    }
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    if (fileInputRef.current) {
+      fileInputRef.current.files = dt.files;
+    }
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setPreview(url);
+    handleFile(file);
   };
 
   const handleDiscard = () => {
@@ -62,6 +89,8 @@ const MessageInput: FC<MessageInputProps> = ({
       }
     };
   }, [preview]);
+
+  useImperativeHandle(ref, () => ({ handleFile }));
 
   const handleSend = async () => {
     const sendPromise = sendMessage();
@@ -152,6 +181,8 @@ const MessageInput: FC<MessageInputProps> = ({
       </Card>
     </Fragment>
   );
-};
+});
+
+MessageInput.displayName = "MessageInput";
 
 export default MessageInput;
