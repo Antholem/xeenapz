@@ -41,12 +41,42 @@ const MessageInput: FC<MessageInputProps> = ({
   };
 
   const [preview, setPreview] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const url = URL.createObjectURL(file);
     setPreview(url);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    if (fileInputRef.current) {
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      (fileInputRef.current as any).files = dt.files;
+    }
+    if (preview) URL.revokeObjectURL(preview);
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  };
+
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
   };
 
   const handleDiscard = () => {
@@ -75,7 +105,17 @@ const MessageInput: FC<MessageInputProps> = ({
   return (
     <Fragment>
       <Divider orientation="horizontal" />
-      <Card p={3} borderRadius={0} variant="surface">
+      <Card
+        p={3}
+        borderRadius={0}
+        variant="surface"
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        border={isDragging ? "2px dashed" : undefined}
+        borderColor={isDragging ? "border" : undefined}
+      >
         {preview && (
           <Box position="relative" maxW="100px" mb={3}>
             <Image src={preview} alt="Preview" borderRadius="md" />
