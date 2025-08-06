@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useSpeechRecognition } from "react-speech-recognition";
 
 import { MessageInput } from "@/components";
+import type { MessageInputHandle } from "@/components/MessageInput";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
 import { speakText } from "@/lib";
 import { useAuth, useThreadInput } from "@/stores";
@@ -41,6 +42,7 @@ const TempThread: FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasMounted = useRef(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const messageInputRef = useRef<MessageInputHandle | null>(null);
 
   const discardImage = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -172,7 +174,9 @@ const TempThread: FC = () => {
   const isBlocked = !user && !loading;
 
   return (
-    <ThreadLayout>
+    <ThreadLayout
+      onFileDrop={(file) => messageInputRef.current?.handleFile(file)}
+    >
       <MessagesLayout
         messages={isBlocked ? [] : messages}
         isFetchingResponse={isBlocked ? false : isFetchingResponse}
@@ -184,6 +188,7 @@ const TempThread: FC = () => {
         emptyStateText="Temporary Thread"
       />
       <MessageInput
+        ref={messageInputRef}
         input={isBlocked ? "" : input}
         setInput={(val) => setInput("home", val)}
         isListening={isBlocked ? false : isListening}

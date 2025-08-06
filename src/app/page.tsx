@@ -13,6 +13,7 @@ import {
   useThreadMessages,
 } from "@/stores";
 import { MessageInput } from "@/components";
+import type { MessageInputHandle } from "@/components/MessageInput";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
 
 interface Message {
@@ -47,6 +48,7 @@ const Home: FC = () => {
   const prevTranscriptRef = useRef("");
   const hasMounted = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const messageInputRef = useRef<MessageInputHandle | null>(null);
 
   const discardImage = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -312,7 +314,9 @@ const Home: FC = () => {
   };
 
   return (
-    <ThreadLayout>
+    <ThreadLayout
+      onFileDrop={(file) => messageInputRef.current?.handleFile(file)}
+    >
       <MessagesLayout
         messages={messages}
         isFetchingResponse={isFetchingResponse}
@@ -323,6 +327,7 @@ const Home: FC = () => {
         messagesEndRef={messagesEndRef}
       />
       <MessageInput
+        ref={messageInputRef}
         input={input}
         setInput={(val) => setInput("home", val)}
         isListening={isListening}
