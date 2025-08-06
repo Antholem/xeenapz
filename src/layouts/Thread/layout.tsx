@@ -1,10 +1,53 @@
 import { FC, ReactNode, useState, useRef } from "react";
-import { Flex, Text } from "@chakra-ui/react";
+import { Flex, Icon, Text, useColorMode } from "@chakra-ui/react";
+import { IoMdImage } from "react-icons/io";
+import { useTheme } from "@/stores";
 
 interface ThreadLayoutProps {
   children: ReactNode;
   onFileDrop?: (file: File) => void;
 }
+
+const DropOverlay: FC = () => {
+  const { colorMode } = useColorMode();
+  const { colorScheme } = useTheme();
+
+  const borderColor =
+    colorMode === "dark" ? `${colorScheme}.300` : `${colorScheme}.500`;
+
+  return (
+    <Flex
+      position="absolute"
+      inset={0}
+      bg="blackAlpha.600"
+      zIndex={10}
+      align="center"
+      justify="center"
+      pointerEvents="none"
+      borderWidth="1px"
+      borderColor={borderColor}
+    >
+      <Flex
+        direction="column"
+        align="center"
+        pointerEvents="none"
+        gap={4}
+        px={6}
+        py={4}
+      >
+        <Icon as={IoMdImage} boxSize={16} color="white" />
+        <Text
+          fontSize="2xl"
+          color="white"
+          fontWeight="semibold"
+          textAlign="center"
+        >
+          Drop your image here
+        </Text>
+      </Flex>
+    </Flex>
+  );
+};
 
 const ThreadLayout: FC<ThreadLayoutProps> = ({ children, onFileDrop }) => {
   const [isDragging, setIsDragging] = useState(false);
@@ -21,7 +64,8 @@ const ThreadLayout: FC<ThreadLayoutProps> = ({ children, onFileDrop }) => {
     if (!onFileDrop) return;
     e.preventDefault();
     dragCounter.current--;
-    if (dragCounter.current === 0) {
+    if (dragCounter.current <= 0) {
+      dragCounter.current = 0;
       setIsDragging(false);
     }
   };
@@ -54,24 +98,7 @@ const ThreadLayout: FC<ThreadLayoutProps> = ({ children, onFileDrop }) => {
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      {isDragging && (
-        <Flex
-          position="absolute"
-          top={0}
-          left={0}
-          right={0}
-          bottom={0}
-          bg="blackAlpha.600"
-          zIndex={10}
-          align="center"
-          justify="center"
-          pointerEvents="none"
-        >
-          <Text fontSize="2xl" color="white">
-            Drop your image here
-          </Text>
-        </Flex>
-      )}
+      {isDragging && onFileDrop && <DropOverlay />}
       {children}
     </Flex>
   );
