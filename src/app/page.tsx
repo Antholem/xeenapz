@@ -135,31 +135,12 @@ const Home: FC = () => {
 
       if (user && threadId && !isMessageTemporary) {
         addMessageToBottom(threadId, botMessage);
-
-        await supabase.from("messages").insert({
-          user_id: user.id,
-          thread_id: threadId,
-          text: botMessage.text,
-          sender: botMessage.sender,
-          created_at: botMessage.created_at,
-          is_generated: true,
-          timestamp: botMessage.timestamp,
-        });
-
-        await supabase
-          .from("threads")
-          .update({
-            updated_at: new Date().toISOString(),
-            last_message: {
-              text: botMessage.text,
-              sender: botMessage.sender,
-              created_at: botMessage.created_at,
-            },
-          })
-          .eq("id", threadId);
       }
+
+      return botMessage;
     } catch (error) {
       console.error("Error fetching bot response:", error);
+      throw error;
     } finally {
       setIsFetchingResponse(false);
     }
@@ -167,8 +148,7 @@ const Home: FC = () => {
 
   const fetchBotSetTitle = async (
     userMessageText: string,
-    imageBase64: string | null,
-    threadId: string
+    imageBase64: string | null
   ) => {
     try {
       const prompt =
@@ -182,15 +162,10 @@ const Home: FC = () => {
       });
 
       const data = await res.json();
-      const newTitle =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || threadId;
-
-      await supabase
-        .from("threads")
-        .update({ title: newTitle })
-        .eq("id", threadId);
+      return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
     } catch (error) {
       console.error("Error setting title:", error);
+      return "";
     }
   };
 
@@ -237,17 +212,6 @@ const Home: FC = () => {
 
     if (user && isNewThread && id) {
       setThreadId(id);
-      await supabase.from("users").upsert({ id: user.id, user_id: user.id });
-      await supabase.from("threads").insert({
-        id,
-        user_id: user.id,
-        is_archived: false,
-        is_deleted: false,
-        is_pinned: false,
-        created_at: now,
-        updated_at: now,
-        last_message: null,
-      });
     }
 
     const textToSend = input.trim() || null;
@@ -264,45 +228,90 @@ const Home: FC = () => {
     setMessages((prev) => [...prev, { ...userMessage, image: imageData }]);
 
     if (user && !isMessageTemporary && id) {
+      if (isNewThread) {
+        setGlobalMessages(id, [{ ...userMessage, image: imageData } as any]);
+      } else {
+        addMessageToBottom(id, { ...userMessage, image: imageData } as any);
+      }
+    }
+
+    const botMessage = await fetchBotResponse(
+      userMessage,
+      user && !isMessageTemporary ? id : null,
+      base64Image
+    );
+
+    let title: string | undefined;
+    if (user && !isMessageTemporary && isNewThread && pathname === "/") {
+      title = await fetchBotSetTitle(userMessage.text ?? "", base64Image);
+    }
+
+    if (user && !isMessageTemporary && id && botMessage) {
       try {
         if (isNewThread) {
-          setGlobalMessages(id, [{ ...userMessage, image: imageData } as any]);
+          await supabase.from("users").upsert({
+            id: user.id,
+            user_id: user.id,
+          });
+          await supabase.from("threads").insert({
+            id,
+            user_id: user.id,
+            is_archived: false,
+            is_deleted: false,
+            is_pinned: false,
+            created_at: now,
+            updated_at: botMessage.created_at,
+            last_message: {
+              text: botMessage.text,
+              sender: botMessage.sender,
+              created_at: botMessage.created_at,
+            },
+            ...(title ? { title } : {}),
+          });
         } else {
-          addMessageToBottom(id, { ...userMessage, image: imageData } as any);
+          await supabase
+            .from("threads")
+            .update({
+              updated_at: botMessage.created_at,
+              last_message: {
+                text: botMessage.text,
+                sender: botMessage.sender,
+                created_at: botMessage.created_at,
+              },
+            })
+            .eq("id", id);
         }
 
-        await supabase.from("messages").insert({
-          user_id: user.id,
-          thread_id: id,
-          text: userMessage.text,
-          sender: userMessage.sender,
-          created_at: now,
-          timestamp,
-          image: imageData ?? null,
-        });
+        await supabase.from("messages").insert([
+          {
+            user_id: user.id,
+            thread_id: id,
+            text: userMessage.text,
+            sender: userMessage.sender,
+            created_at: now,
+            timestamp,
+            image: imageData ?? null,
+          },
+          {
+            user_id: user.id,
+            thread_id: id,
+            text: botMessage.text,
+            sender: botMessage.sender,
+            created_at: botMessage.created_at,
+            is_generated: true,
+            timestamp: botMessage.timestamp,
+          },
+        ]);
 
-        await supabase
-          .from("threads")
-          .update({
-            updated_at: now,
-            last_message: {
-              text: userMessage.text,
-              sender: userMessage.sender,
-              created_at: now,
-            },
-          })
-          .eq("id", id);
-
-        await fetchBotResponse(userMessage, id, base64Image);
-
-        if (isNewThread && pathname === "/") {
-          await fetchBotSetTitle(userMessage.text ?? "", base64Image, id);
+        if (title && !isNewThread) {
+          await supabase
+            .from("threads")
+            .update({ title })
+            .eq("id", id);
         }
       } catch (error) {
         console.error("Error sending message:", error);
       }
-    } else {
-      await fetchBotResponse(userMessage, null, base64Image);
     }
 
     if (isNewThread && id) {

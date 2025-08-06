@@ -199,33 +199,10 @@ const Thread: FC = () => {
 
       addMessageToBottom(threadId, botMessage);
 
-      try {
-        await supabase.from("messages").insert({
-          user_id: user.id,
-          thread_id: threadId,
-          text: botMessage.text,
-          sender: botMessage.sender,
-          created_at: botMessage.created_at,
-          is_generated: true,
-          timestamp: botMessage.timestamp,
-        });
-      } catch (err) {
-        console.error("Bot message insert failed:", err);
-      }
-
-      await supabase
-        .from("threads")
-        .update({
-          updated_at: new Date().toISOString(),
-          last_message: {
-            text: botMessage.text,
-            sender: botMessage.sender,
-            created_at: botMessage.created_at,
-          },
-        })
-        .eq("id", threadId);
+      return botMessage;
     } catch (err) {
       console.error("Error fetching bot response:", err);
+      throw err;
     } finally {
       setIsFetchingResponse(false);
     }
@@ -285,30 +262,43 @@ const Thread: FC = () => {
 
     addMessageToBottom(threadId, { ...userMessage, image: imageData });
 
+    const botMessage = await fetchBotResponse(userMessage, base64Image);
+
+    if (!botMessage) return;
+
     try {
-      await supabase.from("messages").insert({
-        user_id: user.id,
-        thread_id: threadId,
-        text: userMessage.text,
-        sender: userMessage.sender,
-        created_at: now,
-        timestamp,
-        image: imageData ?? null,
-      });
+      await supabase.from("messages").insert([
+        {
+          user_id: user.id,
+          thread_id: threadId,
+          text: userMessage.text,
+          sender: userMessage.sender,
+          created_at: now,
+          timestamp,
+          image: imageData ?? null,
+        },
+        {
+          user_id: user.id,
+          thread_id: threadId,
+          text: botMessage.text,
+          sender: botMessage.sender,
+          created_at: botMessage.created_at,
+          is_generated: true,
+          timestamp: botMessage.timestamp,
+        },
+      ]);
 
       await supabase
         .from("threads")
         .update({
-          updated_at: now,
+          updated_at: botMessage.created_at,
           last_message: {
-            text: userMessage.text,
-            sender: userMessage.sender,
-            created_at: now,
+            text: botMessage.text,
+            sender: botMessage.sender,
+            created_at: botMessage.created_at,
           },
         })
         .eq("id", threadId);
-
-      await fetchBotResponse(userMessage, base64Image);
     } catch (error) {
       console.error("Error sending message:", error);
     }
