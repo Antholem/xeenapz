@@ -42,11 +42,28 @@ const MessageInput: FC<MessageInputProps> = ({
 
   const [preview, setPreview] = useState<string | null>(null);
 
+  const processFile = (file: File) => {
+    if (preview) URL.revokeObjectURL(preview);
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    if (fileInputRef.current) {
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      (fileInputRef.current as any).files = dt.files;
+    }
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setPreview(url);
+    processFile(file);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    processFile(file);
   };
 
   const handleDiscard = () => {
@@ -75,7 +92,13 @@ const MessageInput: FC<MessageInputProps> = ({
   return (
     <Fragment>
       <Divider orientation="horizontal" />
-      <Card p={3} borderRadius={0} variant="surface">
+      <Card
+        p={3}
+        borderRadius={0}
+        variant="surface"
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={handleDrop}
+      >
         {preview && (
           <Box position="relative" maxW="100px" mb={3}>
             <Image src={preview} alt="Preview" borderRadius="md" />
