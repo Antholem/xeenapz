@@ -171,6 +171,24 @@ const TempThread: FC = () => {
 
   const isBlocked = !user && !loading;
 
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    if (fileInputRef.current) {
+      fileInputRef.current.files = dt.files;
+      const event = new Event("change", { bubbles: true });
+      fileInputRef.current.dispatchEvent(event);
+    }
+  };
+
   return (
     <ThreadLayout>
       <MessagesLayout
@@ -182,6 +200,8 @@ const TempThread: FC = () => {
         setPlayingMessage={setPlayingMessage}
         messagesEndRef={messagesEndRef}
         emptyStateText="Temporary Thread"
+        handleDrop={handleDrop}
+        handleDragOver={handleDragOver}
       />
       <MessageInput
         input={isBlocked ? "" : input}
@@ -192,6 +212,8 @@ const TempThread: FC = () => {
         sendMessage={sendMessage}
         fileInputRef={fileInputRef}
         discardImage={discardImage}
+        handleDrop={handleDrop}
+        handleDragOver={handleDragOver}
       />
     </ThreadLayout>
   );

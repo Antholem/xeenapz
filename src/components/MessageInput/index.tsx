@@ -23,6 +23,8 @@ interface MessageInputProps {
   sendMessage: () => void;
   fileInputRef: RefObject<HTMLInputElement | null>;
   discardImage: () => void;
+  handleDrop: (e: React.DragEvent<HTMLDivElement>) => void;
+  handleDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
 }
 
 const MessageInput: FC<MessageInputProps> = ({
@@ -35,6 +37,8 @@ const MessageInput: FC<MessageInputProps> = ({
   sendMessage,
   fileInputRef,
   discardImage,
+  handleDrop,
+  handleDragOver,
 }) => {
   const toggleSpeechRecognition = () => {
     SpeechRecognize(isListening, resetTranscript);
@@ -75,7 +79,13 @@ const MessageInput: FC<MessageInputProps> = ({
   return (
     <Fragment>
       <Divider orientation="horizontal" />
-      <Card p={3} borderRadius={0} variant="surface">
+      <Card
+        p={3}
+        borderRadius={0}
+        variant="surface"
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+      >
         {preview && (
           <Box position="relative" maxW="100px" mb={3}>
             <Image src={preview} alt="Preview" borderRadius="md" />

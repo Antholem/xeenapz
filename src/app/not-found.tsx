@@ -13,6 +13,24 @@ const NotFound = () => {
   const noop = () => {};
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    if (fileInputRef.current) {
+      fileInputRef.current.files = dt.files;
+      const event = new Event("change", { bubbles: true });
+      fileInputRef.current.dispatchEvent(event);
+    }
+  };
+
   return (
     <ThreadLayout>
       <Flex
@@ -47,6 +65,8 @@ const NotFound = () => {
         sendMessage={noop}
         fileInputRef={fileInputRef}
         discardImage={noop}
+        handleDrop={handleDrop}
+        handleDragOver={handleDragOver}
       />
     </ThreadLayout>
   );

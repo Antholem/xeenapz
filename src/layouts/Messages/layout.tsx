@@ -53,6 +53,8 @@ interface MessagesLayoutProps {
   isLoading?: boolean;
   emptyStateText?: string;
   onLoadMore?: () => Promise<void>;
+  handleDrop: (e: React.DragEvent<HTMLDivElement>) => void;
+  handleDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
 }
 
 const MessagesLayout: FC<MessagesLayoutProps> = ({
@@ -66,6 +68,8 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
   isLoading = false,
   emptyStateText = "Hello, what can I help with?",
   onLoadMore,
+  handleDrop,
+  handleDragOver,
 }) => {
   const { user: authUser } = useAuth();
   const virtuosoRef = useRef<VirtuosoHandle>(null);
@@ -142,7 +146,12 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
   }
 
   return (
-    <Box flex="1" overflow="hidden">
+    <Box
+      flex="1"
+      overflow="hidden"
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+    >
       {messages.length === 0 ? (
         <VStack height="100%">
           <Flex flex="1" justify="center" align="center">

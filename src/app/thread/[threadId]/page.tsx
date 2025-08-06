@@ -53,6 +53,24 @@ const Thread: FC = () => {
     }
   };
 
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    if (fileInputRef.current) {
+      fileInputRef.current.files = dt.files;
+      const event = new Event("change", { bubbles: true });
+      fileInputRef.current.dispatchEvent(event);
+    }
+  };
+
   const getImageBase64 = async (): Promise<string | null> => {
     const file = fileInputRef.current?.files?.[0];
     if (!file || !file.type.startsWith("image/")) return null;
@@ -328,6 +346,8 @@ const Thread: FC = () => {
         messagesEndRef={messagesEndRef}
         onLoadMore={handleLoadMessages}
         isLoading={loadingMessages}
+        handleDrop={handleDrop}
+        handleDragOver={handleDragOver}
       />
       <MessageInput
         input={input}
@@ -338,6 +358,8 @@ const Thread: FC = () => {
         sendMessage={sendMessage}
         fileInputRef={fileInputRef}
         discardImage={discardImage}
+        handleDrop={handleDrop}
+        handleDragOver={handleDragOver}
       />
     </ThreadLayout>
   );
