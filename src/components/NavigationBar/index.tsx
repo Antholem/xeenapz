@@ -44,6 +44,11 @@ const NavigationBar: FC = () => {
     null
   );
 
+  const formattedModel = GEMINI_MODEL
+    .replace(/^gemini/i, "Gemini")
+    .replace(/-/g, " ")
+    .replace(/\b(\w)/g, (match) => match.toUpperCase());
+
   useEffect(() => {
     const fetchThreadTitle = async () => {
       if (
@@ -143,7 +148,7 @@ const NavigationBar: FC = () => {
             )}
           </Flex>
 
-          <Flex align="center" gap={3}>
+          <Flex align="start" direction="column">
             <Text
               fontSize="lg"
               fontWeight="bold"
@@ -152,8 +157,8 @@ const NavigationBar: FC = () => {
             >
               {pathname === "/" ? "Xeenapz" : currentThreadTitle || "Xeenapz"}
             </Text>
-            <Text fontSize="xs" color="gray.500" noOfLines={1}>
-              {GEMINI_MODEL}
+            <Text fontSize="xs" color="secondaryText" noOfLines={1}>
+              {formattedModel}
             </Text>
           </Flex>
 
