@@ -11,6 +11,7 @@ import {
   useTempThread,
   useThreadInput,
   useThreadMessages,
+  useModel,
 } from "@/stores";
 import { MessageInput } from "@/components";
 import type { MessageInputHandle } from "@/components/MessageInput";
@@ -35,6 +36,7 @@ const Home: FC = () => {
   const { getInput, setInput } = useThreadInput();
   const { setMessages: setGlobalMessages, addMessageToBottom } =
     useThreadMessages();
+  const { model } = useModel();
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
 
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -119,6 +121,7 @@ const Home: FC = () => {
         body: JSON.stringify({
           message: userMessage.text || null,
           image: imageBase64 || null,
+          model,
         }),
       });
 
@@ -180,7 +183,7 @@ const Home: FC = () => {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: prompt, image: imageBase64 }),
+        body: JSON.stringify({ message: prompt, image: imageBase64, model }),
       });
 
       const data = await res.json();

@@ -13,6 +13,7 @@ import {
   useAuth,
   useThreadInput,
   useThreadMessages,
+  useModel,
   type Message,
 } from "@/stores";
 
@@ -23,6 +24,7 @@ const Thread: FC = () => {
   const { user, loading } = useAuth();
   const { getInput, setInput } = useThreadInput();
   const input = getInput(threadId || "home");
+  const { model } = useModel();
 
   const {
     messagesByThread,
@@ -185,6 +187,7 @@ const Thread: FC = () => {
         body: JSON.stringify({
           message: userMessage.text || null,
           image: imageBase64 || null,
+          model,
         }),
       });
 
