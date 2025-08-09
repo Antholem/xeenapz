@@ -22,7 +22,7 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 
-import { supabase } from "@/lib";
+import { supabase, GEMINI_MODEL } from "@/lib";
 import { useAuth } from "@/stores";
 import { Button } from "@themed-components";
 import { useToastStore } from "@/stores";
@@ -151,6 +151,9 @@ const NavigationBar: FC = () => {
               noOfLines={1}
             >
               {pathname === "/" ? "Xeenapz" : currentThreadTitle || "Xeenapz"}
+            </Text>
+            <Text fontSize="xs" color="gray.500" noOfLines={1}>
+              {GEMINI_MODEL}
             </Text>
           </Flex>
 
