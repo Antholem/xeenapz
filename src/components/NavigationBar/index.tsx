@@ -169,8 +169,6 @@ const NavigationBar: FC = () => {
                 variant="ghost"
                 color="secondaryText"
                 px={0}
-                _hover={{ bg: "transparent" }}
-                _active={{ bg: "transparent" }}
               >
                 {formattedModel}
               </MenuButton>
