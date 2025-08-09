@@ -8,7 +8,7 @@ import { MessageInput } from "@/components";
 import type { MessageInputHandle } from "@/components/MessageInput";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
 import { speakText } from "@/lib";
-import { useAuth, useThreadInput } from "@/stores";
+import { useAuth, useThreadInput, useModel } from "@/stores";
 import { v4 as uuidv4 } from "uuid";
 
 interface Message {
@@ -35,6 +35,7 @@ const TempThread: FC = () => {
 
   const { getInput, setInput } = useThreadInput();
   const input = getInput("home");
+  const { model } = useModel();
 
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
   const prevTranscriptRef = useRef("");
@@ -141,6 +142,7 @@ const TempThread: FC = () => {
         body: JSON.stringify({
           message: input.trim() || null,
           image: imageBase64 || null,
+          model,
         }),
       });
 

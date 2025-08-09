@@ -17,15 +17,16 @@ import {
   Divider,
   Flex,
   IconButton,
+  Menu,
+  MenuButton,
   Text,
   useColorMode,
   useDisclosure,
 } from "@chakra-ui/react";
 
-import { supabase, GEMINI_MODEL } from "@/lib";
-import { useAuth } from "@/stores";
-import { Button } from "@themed-components";
-import { useToastStore } from "@/stores";
+import { supabase, GEMINI_MODELS } from "@/lib";
+import { useAuth, useModel, useToastStore } from "@/stores";
+import { Button, MenuItem, MenuList } from "@themed-components";
 import { SideBar } from "@/components";
 
 interface Thread {
@@ -39,15 +40,19 @@ const NavigationBar: FC = () => {
   const pathname = usePathname();
   const router = useRouter();
   const { showToast } = useToastStore();
+  const { model, setModel } = useModel();
 
   const [currentThreadTitle, setCurrentThreadTitle] = useState<string | null>(
     null
   );
 
-  const formattedModel = GEMINI_MODEL
-    .replace(/^gemini/i, "Gemini")
-    .replace(/-/g, " ")
-    .replace(/\b(\w)/g, (match) => match.toUpperCase());
+  const formatModel = (value: string) =>
+    value
+      .replace(/^gemini/i, "Gemini")
+      .replace(/-/g, " ")
+      .replace(/\b(\w)/g, (match) => match.toUpperCase());
+
+  const formattedModel = formatModel(model);
 
   useEffect(() => {
     const fetchThreadTitle = async () => {
@@ -157,9 +162,24 @@ const NavigationBar: FC = () => {
             >
               {pathname === "/" ? "Xeenapz" : currentThreadTitle || "Xeenapz"}
             </Text>
-            <Text fontSize="xs" color="secondaryText" noOfLines={1}>
-              {formattedModel}
-            </Text>
+            <Menu>
+              <MenuButton
+                as={Button}
+                size="xs"
+                variant="ghost"
+                color="secondaryText"
+                px={0}
+              >
+                {formattedModel}
+              </MenuButton>
+              <MenuList>
+                {GEMINI_MODELS.map((m) => (
+                  <MenuItem key={m} onClick={() => setModel(m)}>
+                    {formatModel(m)}
+                  </MenuItem>
+                ))}
+              </MenuList>
+            </Menu>
           </Flex>
 
           <Flex align="center" gap={4}>

@@ -12,7 +12,7 @@ export async function OPTIONS() {
 
 export async function POST(req: Request) {
   try {
-    const { message, image } = await req.json();
+    const { message, image, model } = await req.json();
     if (!message && !image)
       return NextResponse.json(
         { error: "Message or image is required" },
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     }
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${model || GEMINI_MODEL}:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
