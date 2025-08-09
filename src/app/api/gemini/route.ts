@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { GEMINI_MODEL } from "@/lib";
 
 export async function OPTIONS() {
   const headers = new Headers();
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
     }
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

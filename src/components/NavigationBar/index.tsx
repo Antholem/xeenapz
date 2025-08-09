@@ -22,7 +22,7 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 
-import { supabase } from "@/lib";
+import { supabase, GEMINI_MODEL } from "@/lib";
 import { useAuth } from "@/stores";
 import { Button } from "@themed-components";
 import { useToastStore } from "@/stores";
@@ -43,6 +43,11 @@ const NavigationBar: FC = () => {
   const [currentThreadTitle, setCurrentThreadTitle] = useState<string | null>(
     null
   );
+
+  const formattedModel = GEMINI_MODEL
+    .replace(/^gemini/i, "Gemini")
+    .replace(/-/g, " ")
+    .replace(/\b(\w)/g, (match) => match.toUpperCase());
 
   useEffect(() => {
     const fetchThreadTitle = async () => {
@@ -143,7 +148,7 @@ const NavigationBar: FC = () => {
             )}
           </Flex>
 
-          <Flex align="center" gap={3}>
+          <Flex align="start" direction="column">
             <Text
               fontSize="lg"
               fontWeight="bold"
@@ -151,6 +156,9 @@ const NavigationBar: FC = () => {
               noOfLines={1}
             >
               {pathname === "/" ? "Xeenapz" : currentThreadTitle || "Xeenapz"}
+            </Text>
+            <Text fontSize="xs" color="secondaryText" noOfLines={1}>
+              {formattedModel}
             </Text>
           </Flex>
 
