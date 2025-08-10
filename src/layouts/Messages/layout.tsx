@@ -75,6 +75,8 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
 
+  const lastMessage = messages[messages.length - 1];
+
   const virtualMessages = useMemo(() => {
     const result: Array<{
       type: "separator" | "message" | "loader";
@@ -215,6 +217,8 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
               }
 
               const msg = item.value as Message;
+              const isLastBotMessage =
+                msg === lastMessage && msg.sender === "bot";
               return (
                 <Box mx={5}>
                   <MessageItem
@@ -223,7 +227,11 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
                     speakText={speakText}
                     playingMessage={playingMessage}
                     setPlayingMessage={setPlayingMessage}
-                    onRetry={onRetryMessage ? () => onRetryMessage(msg) : undefined}
+                    onRetry={
+                      isLastBotMessage && onRetryMessage
+                        ? () => onRetryMessage(msg)
+                        : undefined
+                    }
                     mt={isFirst && !authUser ? 3 : 0}
                     pt={isFirst ? 3 : 2}
                     pb={isLast ? 3 : 2}
