@@ -3,7 +3,7 @@
 import { FC, Fragment, memo, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
-import { IoAdd } from "react-icons/io5";
+import { HiOutlineChevronDown } from "react-icons/hi";
 import { IoMdMenu } from "react-icons/io";
 import {
   RiChat3Line,
@@ -164,6 +164,7 @@ const NavigationBar: FC = () => {
                   overflow="hidden"
                   textOverflow="ellipsis"
                   whiteSpace="nowrap"
+                  rightIcon={<HiOutlineChevronDown />}
                 >
                   {formattedModel}
                 </MenuButton>
