@@ -7,7 +7,7 @@ import { enUS } from "date-fns/locale";
 import { HiSpeakerWave } from "react-icons/hi2";
 import { IoStop } from "react-icons/io5";
 import { BiSolidCopy } from "react-icons/bi";
-import { FaCheck } from "react-icons/fa6";
+import { FaCheck, FaArrowsRotate } from "react-icons/fa6";
 import {
   Box,
   Flex,
@@ -41,6 +41,7 @@ interface MessageItemProps extends BoxProps {
   ) => void;
   setPlayingMessage: (msg: string | null) => void;
   playingMessage: string | null;
+  onRetry?: () => void;
 }
 
 const MessageItem: FC<MessageItemProps> = ({
@@ -49,6 +50,7 @@ const MessageItem: FC<MessageItemProps> = ({
   speakText,
   playingMessage,
   setPlayingMessage,
+  onRetry,
   ...props
 }) => {
   const isUser = message.sender === "user";
@@ -184,6 +186,17 @@ const MessageItem: FC<MessageItemProps> = ({
                     />
                   </Tooltip>
                 )
+              )}
+              {!isUser && message.text && onRetry && (
+                <Tooltip label="Try again">
+                  <IconButton
+                    aria-label="Try again"
+                    icon={<FaArrowsRotate />}
+                    variant="ghost"
+                    size="xs"
+                    onClick={onRetry}
+                  />
+                </Tooltip>
               )}
             </Flex>
           </Flex>
