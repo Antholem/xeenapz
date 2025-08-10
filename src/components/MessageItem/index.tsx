@@ -6,6 +6,8 @@ import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { HiSpeakerWave } from "react-icons/hi2";
 import { IoStop } from "react-icons/io5";
+import { BiSolidCopy } from "react-icons/bi";
+import { FaCheck } from "react-icons/fa6";
 import {
   Box,
   Flex,
@@ -118,7 +120,8 @@ const MessageItem: FC<MessageItemProps> = ({
           )}
 
           <Flex align="center" justify="center" gap={1}>
-            {user && <Text fontSize="xs">{formattedTime}</Text>}
+            {user && <Text fontSize="xs" order={isUser ? 2 : 1}>{formattedTime}</Text>}
+            <Flex align="center" justify="center" gap={0} order={isUser ? 1 : 2}>
             {!isUser && message.text && (
               <Tooltip
                 label={playingMessage === message.text ? "Stop" : "Read aloud"}
@@ -140,6 +143,17 @@ const MessageItem: FC<MessageItemProps> = ({
                 />
               </Tooltip>
             )}
+            <Tooltip
+              label="Copy Message"
+            >
+              <IconButton
+                aria-label="Copy Message"
+                icon={<BiSolidCopy />}
+                variant="ghost"
+                size="xs"
+              />
+            </Tooltip>
+            </Flex>
           </Flex>
         </Box>
       </Flex>
