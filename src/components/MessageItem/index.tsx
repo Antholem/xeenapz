@@ -15,10 +15,9 @@ import {
   Image,
   Tooltip,
   IconButton,
-  useToast,
   BoxProps,
 } from "@chakra-ui/react";
-import { useTheme } from "@/stores";
+import { useTheme, useToastStore } from "@/stores";
 
 interface Message {
   text: string | null;
@@ -59,7 +58,7 @@ const MessageItem: FC<MessageItemProps> = ({
     });
 
   const { colorScheme } = useTheme();
-  const toast = useToast();
+  const { showToast } = useToastStore();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -67,11 +66,11 @@ const MessageItem: FC<MessageItemProps> = ({
     try {
       await navigator.clipboard.writeText(message.text);
       setCopied(true);
-      toast({
+      showToast({
+        id: `copy-${Date.now()}`,
         title: "Message copied",
         status: "success",
         duration: 2000,
-        isClosable: true,
       });
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
