@@ -145,17 +145,6 @@ const MessageItem: FC<MessageItemProps> = ({
           <Flex align="center" justify="center" gap={1}>
             {user && <Text fontSize="xs" order={isUser ? 2 : 1}>{formattedTime}</Text>}
             <Flex align="center" justify="center" gap={0} order={isUser ? 1 : 2}>
-            {!isUser && message.text && onRetry && (
-              <Tooltip label="Try again">
-                <IconButton
-                  aria-label="Try again"
-                  icon={<FaArrowsRotate />}
-                  variant="ghost"
-                  size="xs"
-                  onClick={onRetry}
-                />
-              </Tooltip>
-            )}
             {!isUser && message.text && (
               <Tooltip
                 label={playingMessage === message.text ? "Stop" : "Read aloud"}
@@ -197,6 +186,17 @@ const MessageItem: FC<MessageItemProps> = ({
                     />
                   </Tooltip>
                 )
+              )}
+              {!isUser && message.text && onRetry && (
+                <Tooltip label="Try again">
+                  <IconButton
+                    aria-label="Try again"
+                    icon={<FaArrowsRotate />}
+                    variant="ghost"
+                    size="xs"
+                    onClick={onRetry}
+                  />
+                </Tooltip>
               )}
             </Flex>
           </Flex>
