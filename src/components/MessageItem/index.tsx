@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, memo } from "react";
+import { FC, memo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
@@ -15,6 +15,7 @@ import {
   Image,
   Tooltip,
   IconButton,
+  useToast,
   BoxProps,
 } from "@chakra-ui/react";
 import { useTheme } from "@/stores";
@@ -58,6 +59,25 @@ const MessageItem: FC<MessageItemProps> = ({
     });
 
   const { colorScheme } = useTheme();
+  const toast = useToast();
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (!message.text) return;
+    try {
+      await navigator.clipboard.writeText(message.text);
+      setCopied(true);
+      toast({
+        title: "Message copied",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy message", err);
+    }
+  };
 
   if (!message.text && !message.image) return null;
 
@@ -143,16 +163,17 @@ const MessageItem: FC<MessageItemProps> = ({
                 />
               </Tooltip>
             )}
-            <Tooltip
-              label="Copy Message"
-            >
-              <IconButton
-                aria-label="Copy Message"
-                icon={<BiSolidCopy />}
-                variant="ghost"
-                size="xs"
-              />
-            </Tooltip>
+            {message.text && (
+              <Tooltip label="Copy Message">
+                <IconButton
+                  aria-label="Copy Message"
+                  icon={copied ? <FaCheck /> : <BiSolidCopy />}
+                  variant="ghost"
+                  size="xs"
+                  onClick={handleCopy}
+                />
+              </Tooltip>
+            )}
             </Flex>
           </Flex>
         </Box>
