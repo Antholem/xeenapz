@@ -16,6 +16,7 @@ import {
   Tooltip,
   IconButton,
   BoxProps,
+  useColorMode,
 } from "@chakra-ui/react";
 import { useTheme, useToastStore } from "@/stores";
 
@@ -58,6 +59,7 @@ const MessageItem: FC<MessageItemProps> = ({
     });
 
   const { colorScheme } = useTheme();
+  const { colorMode } = useColorMode();
   const { showToast } = useToastStore();
   const [copied, setCopied] = useState(false);
 
@@ -70,7 +72,7 @@ const MessageItem: FC<MessageItemProps> = ({
         id: `copy-${Date.now()}`,
         title: "Message copied",
         status: "success",
-        duration: 2000,
+        duration: 5000,
       });
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -162,17 +164,27 @@ const MessageItem: FC<MessageItemProps> = ({
                 />
               </Tooltip>
             )}
-            {message.text && (
-              <Tooltip label="Copy Message">
-                <IconButton
-                  aria-label="Copy Message"
-                  icon={copied ? <FaCheck /> : <BiSolidCopy />}
-                  variant="ghost"
-                  size="xs"
-                  onClick={handleCopy}
-                />
-              </Tooltip>
-            )}
+              {message.text && (
+                copied ? (
+                  <IconButton
+                    aria-label="Message Copied"
+                    icon={<FaCheck />}
+                    variant="ghost"
+                    size="xs"
+                    color={colorMode === "light" ? "green.600" : "green.200"}
+                  />
+                ) : (
+                  <Tooltip label="Copy Message">
+                    <IconButton
+                      aria-label="Copy Message"
+                      icon={<BiSolidCopy />}
+                      variant="ghost"
+                      size="xs"
+                      onClick={handleCopy}
+                    />
+                  </Tooltip>
+                )
+              )}
             </Flex>
           </Flex>
         </Box>
