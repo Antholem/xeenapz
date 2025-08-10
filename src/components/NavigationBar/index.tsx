@@ -138,25 +138,19 @@ const NavigationBar: FC = () => {
         <Flex py="3" px="6" align="center" justify="space-between" gap={2}>
           <Flex align="center" gap={3} flex="1" minW={0}>
             <Flex align="center" display={{ base: "flex", lg: "none" }}>
-              {user ? (
+              {user && (
                 <IconButton
                   aria-label="Toggle Sidebar"
                   icon={<IoMdMenu />}
                   variant="ghost"
                   onClick={onOpen}
                 />
-              ) : (
-                <IconButton
-                  aria-label="New Chat"
-                  icon={<IoAdd />}
-                  variant="ghost"
-                />
               )}
             </Flex>
 
             <Flex align="start" direction="column" flex="1" minW={0}>
-              <Text fontSize="lg" fontWeight="bold" noOfLines={1}>
-                {pathname === "/" ? "Xeenapz" : currentThreadTitle || "Xeenapz"}
+              <Text fontSize="lg" fontWeight="bold" noOfLines={1} px={1}>
+                {pathname === "/" ? "Xeenapz" : pathname === "/thread/temp" ? "Temporary Chat" : currentThreadTitle || "Xeenapz"}
               </Text>
               <Menu>
                 <MenuButton
@@ -164,7 +158,8 @@ const NavigationBar: FC = () => {
                   size="xs"
                   variant="ghost"
                   color="secondaryText"
-                  px={0}
+                  colorScheme="gray"
+                  px={1}
                   maxW="100%"
                   overflow="hidden"
                   textOverflow="ellipsis"
