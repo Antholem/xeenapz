@@ -255,6 +255,23 @@ const Thread: FC = () => {
     temp[index] = { ...temp[index], text: null };
     setMessages(threadId, temp);
 
+    let base64Image: string | null = null;
+    if (userMessage.image?.url) {
+      try {
+        const resImg = await fetch(userMessage.image.url);
+        const blob = await resImg.blob();
+        base64Image = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () =>
+            resolve((reader.result as string).split(",")[1]);
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(blob);
+        });
+      } catch (e) {
+        console.error("Failed to fetch image for retry:", e);
+      }
+    }
+
     setIsFetchingResponse(true);
     try {
       const res = await fetch("/api/gemini", {
@@ -262,6 +279,7 @@ const Thread: FC = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: userMessage.text || null,
+          image: base64Image,
           model,
         }),
       });
