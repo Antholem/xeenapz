@@ -236,6 +236,68 @@ const Thread: FC = () => {
     }
   };
 
+  const retryBotMessage = async (botMessage: Message) => {
+    if (!threadId) return;
+
+    const index = messages.findIndex((m) => m.timestamp === botMessage.timestamp);
+    if (index === -1) return;
+
+    const userMessage = (() => {
+      for (let i = index - 1; i >= 0; i--) {
+        if (messages[i].sender === "user") return messages[i];
+      }
+      return null;
+    })();
+
+    if (!userMessage) return;
+
+    const temp = [...messages];
+    temp[index] = { ...temp[index], text: null };
+    setMessages(threadId, temp);
+
+    setIsFetchingResponse(true);
+    try {
+      const res = await fetch("/api/gemini", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: userMessage.text || null,
+          model,
+        }),
+      });
+
+      const data = await res.json();
+      const botText =
+        data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+
+      const updatedMessage: Message = {
+        ...botMessage,
+        text: botText,
+        timestamp: Date.now(),
+        created_at: new Date().toISOString(),
+      };
+
+      const newMessages = [...temp];
+      newMessages[index] = updatedMessage;
+      setMessages(threadId, newMessages);
+
+      if (botMessage.id) {
+        await supabase
+          .from("messages")
+          .update({
+            text: updatedMessage.text,
+            created_at: updatedMessage.created_at,
+            timestamp: updatedMessage.timestamp,
+          })
+          .eq("id", botMessage.id);
+      }
+    } catch (err) {
+      console.error("Error refetching bot response:", err);
+    } finally {
+      setIsFetchingResponse(false);
+    }
+  };
+
   const sendMessage = async () => {
     if (!user || !threadId) return;
 
@@ -335,6 +397,7 @@ const Thread: FC = () => {
         messagesEndRef={messagesEndRef}
         onLoadMore={handleLoadMessages}
         isLoading={loadingMessages}
+        onRetryMessage={retryBotMessage}
       />
       <MessageInput
         ref={messageInputRef}

@@ -18,6 +18,7 @@ import type { MessageInputHandle } from "@/components/MessageInput";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
 
 interface Message {
+  id?: string;
   text: string | null;
   sender: "user" | "bot";
   timestamp: number;
@@ -199,6 +200,76 @@ const Home: FC = () => {
     }
   };
 
+  const retryBotMessage = async (botMessage: Message) => {
+    const index = messages.findIndex((m) => m.timestamp === botMessage.timestamp);
+    if (index === -1) return;
+
+    const userMessage = (() => {
+      for (let i = index - 1; i >= 0; i--) {
+        if (messages[i].sender === "user") return messages[i];
+      }
+      return null;
+    })();
+
+    if (!userMessage) return;
+
+    setMessages((prev) => {
+      const newMsgs = [...prev];
+      newMsgs[index] = { ...newMsgs[index], text: null };
+      if (user && threadId && !isMessageTemporary) {
+        setGlobalMessages(threadId, newMsgs);
+      }
+      return newMsgs;
+    });
+
+    setIsFetchingResponse(true);
+    try {
+      const res = await fetch("/api/gemini", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: userMessage.text || null,
+          model,
+        }),
+      });
+
+      const data = await res.json();
+      const botResponse =
+        data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+
+      const updatedMessage: Message = {
+        ...botMessage,
+        text: botResponse,
+        timestamp: Date.now(),
+        created_at: new Date().toISOString(),
+      };
+
+      setMessages((prev) => {
+        const newMsgs = [...prev];
+        newMsgs[index] = updatedMessage;
+        if (user && threadId && !isMessageTemporary) {
+          setGlobalMessages(threadId, newMsgs);
+        }
+        return newMsgs;
+      });
+
+      if (user && threadId && !isMessageTemporary && botMessage.id) {
+        await supabase
+          .from("messages")
+          .update({
+            text: updatedMessage.text,
+            created_at: updatedMessage.created_at,
+            timestamp: updatedMessage.timestamp,
+          })
+          .eq("id", botMessage.id);
+      }
+    } catch (err) {
+      console.error("Error refetching bot response:", err);
+    } finally {
+      setIsFetchingResponse(false);
+    }
+  };
+
   const sendMessage = async () => {
     const base64Image = await getImageBase64();
     if (!input.trim() && !base64Image) return;
@@ -328,6 +399,7 @@ const Home: FC = () => {
         playingMessage={playingMessage}
         setPlayingMessage={setPlayingMessage}
         messagesEndRef={messagesEndRef}
+        onRetryMessage={retryBotMessage}
       />
       <MessageInput
         ref={messageInputRef}
