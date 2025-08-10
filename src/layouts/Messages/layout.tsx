@@ -71,6 +71,8 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
 }) => {
   const { user: authUser } = useAuth();
   const virtuosoRef = useRef<VirtuosoHandle>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isContainerReady, setIsContainerReady] = useState(false);
   const [readyToRender, setReadyToRender] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
@@ -105,7 +107,20 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
   }, [messages, isFetchingResponse, authUser]);
 
   useEffect(() => {
-    if (!readyToRender && virtualMessages.length > 0) {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      const rect = entries[0].contentRect;
+      if (rect.width > 0 && rect.height > 0) {
+        setIsContainerReady(true);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!readyToRender && virtualMessages.length > 0 && isContainerReady) {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           virtuosoRef.current?.scrollToIndex({
@@ -117,7 +132,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
         });
       });
     }
-  }, [virtualMessages.length, readyToRender]);
+  }, [virtualMessages.length, readyToRender, isContainerReady]);
 
   const handleStartReached = useCallback(async () => {
     if (!hasScrolledOnce) {
@@ -157,23 +172,25 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
         </VStack>
       ) : (
         <Box
+          ref={containerRef}
           h="100%"
           overflow={readyToRender ? "auto" : "hidden"}
           visibility={readyToRender ? "visible" : "hidden"}
         >
-          <Virtuoso
-            ref={virtuosoRef}
-            style={{ height: "100%", minHeight: 100 }}
-            data={virtualMessages}
-            followOutput="auto"
-            increaseViewportBy={200}
-            startReached={handleStartReached}
-            components={{
-              Header: () =>
-                isLoadingMore &&
-                !hasScrolledOnce && <Progress size="xs" isIndeterminate />,
-            }}
-            itemContent={(index, item) => {
+          {isContainerReady && (
+            <Virtuoso
+              ref={virtuosoRef}
+              style={{ height: "100%", minHeight: 100 }}
+              data={virtualMessages}
+              followOutput="auto"
+              increaseViewportBy={200}
+              startReached={handleStartReached}
+              components={{
+                Header: () =>
+                  isLoadingMore &&
+                  !hasScrolledOnce && <Progress size="xs" isIndeterminate />,
+              }}
+              itemContent={(index, item) => {
               const isFirst = index === 0;
               const isLast = index === virtualMessages.length - 1;
 
@@ -240,6 +257,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
               );
             }}
           />
+          )}
         </Box>
       )}
       <Box as="div" ref={messagesEndRef} />

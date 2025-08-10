@@ -51,6 +51,8 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
   const isSearchActive = !!searchTerm;
 
   const virtuosoRef = useRef<VirtuosoHandle>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isContainerReady, setIsContainerReady] = useState(false);
   const [loadedThreads, setLoadedThreads] = useState<Thread[]>([]);
   const [lastIndex, setLastIndex] = useState<number>(0);
   const [isLoadingMoreThreads, setIsLoadingMoreThreads] = useState(false);
@@ -59,6 +61,19 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
   const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
 
   const { colorScheme } = useTheme();
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      const rect = entries[0].contentRect;
+      if (rect.width > 0 && rect.height > 0) {
+        setIsContainerReady(true);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const fetchMessages = useCallback(
     async (threadId: string): Promise<Message[]> => {
@@ -87,7 +102,8 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
       hasScrolledOnce ||
       isSearchActive ||
       !pathname ||
-      loadedThreads.length === 0
+      loadedThreads.length === 0 ||
+      !isContainerReady
     )
       return;
 
@@ -113,7 +129,13 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
       setReadyToRender(true);
       setHasScrolledOnce(true);
     }
-  }, [pathname, loadedThreads, isSearchActive, hasScrolledOnce]);
+  }, [
+    pathname,
+    loadedThreads,
+    isSearchActive,
+    hasScrolledOnce,
+    isContainerReady,
+  ]);
 
   const loadMoreThreads = useCallback(async () => {
     if (!user || isSearchActive || isLoadingMoreThreads || !hasMoreThreads)
@@ -366,20 +388,22 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
             </Box>
           )}
           <Box
+            ref={containerRef}
             h="100%"
             overflow={readyToRender ? "auto" : "hidden"}
             visibility={readyToRender ? "visible" : "hidden"}
             transition="opacity 0.2s ease"
           >
-            <Virtuoso
-              ref={virtuosoRef}
-              style={{ height: "100%" }}
-              data={allItems}
-              initialTopMostItemIndex={0}
-              endReached={() => {
-                if (hasScrolledOnce) loadMoreThreads();
-              }}
-              itemContent={(index, item) => {
+            {isContainerReady && (
+              <Virtuoso
+                ref={virtuosoRef}
+                style={{ height: "100%" }}
+                data={allItems}
+                initialTopMostItemIndex={0}
+                endReached={() => {
+                  if (hasScrolledOnce) loadMoreThreads();
+                }}
+                itemContent={(index, item) => {
                 const isFirst = index === 0;
                 const isLast = index === allItems.length - 1;
 
@@ -425,6 +449,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
                 );
               }}
             />
+            )}
           </Box>
         </Fragment>
       )}
