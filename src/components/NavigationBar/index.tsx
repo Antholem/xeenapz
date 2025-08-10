@@ -3,7 +3,7 @@
 import { FC, Fragment, memo, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
-import { IoAdd } from "react-icons/io5";
+import { HiOutlineChevronDown } from "react-icons/hi";
 import { IoMdMenu } from "react-icons/io";
 import {
   RiChat3Line,
@@ -136,53 +136,50 @@ const NavigationBar: FC = () => {
     <Fragment>
       <Card as="nav" width="100%" zIndex="50" borderRadius={0}>
         <Flex py="3" px="6" align="center" justify="space-between" gap={2}>
-          <Flex align="center" gap={3} display={{ base: "block", lg: "none" }}>
-            {user ? (
-              <IconButton
-                aria-label="Toggle Sidebar"
-                icon={<IoMdMenu />}
-                variant="ghost"
-                onClick={onOpen}
-              />
-            ) : (
-              <IconButton
-                aria-label="New Chat"
-                icon={<IoAdd />}
-                variant="ghost"
-              />
-            )}
+          <Flex align="center" gap={3} flex="1" minW={0}>
+            <Flex align="center" display={{ base: "flex", lg: "none" }}>
+              {user && (
+                <IconButton
+                  aria-label="Toggle Sidebar"
+                  icon={<IoMdMenu />}
+                  variant="ghost"
+                  onClick={onOpen}
+                />
+              )}
+            </Flex>
+
+            <Flex align="start" direction="column" flex="1" minW={0}>
+              <Text fontSize="lg" fontWeight="bold" noOfLines={1} px={1}>
+                {pathname === "/" ? "Xeenapz" : pathname === "/thread/temp" ? "Temporary Chat" : currentThreadTitle || "Xeenapz"}
+              </Text>
+              <Menu>
+                <MenuButton
+                  as={Button}
+                  size="xs"
+                  variant="ghost"
+                  color="secondaryText"
+                  colorScheme="gray"
+                  px={1}
+                  maxW="100%"
+                  overflow="hidden"
+                  textOverflow="ellipsis"
+                  whiteSpace="nowrap"
+                  rightIcon={<HiOutlineChevronDown />}
+                >
+                  {formattedModel}
+                </MenuButton>
+                <MenuList>
+                  {GEMINI_MODELS.map((m) => (
+                    <MenuItem key={m} onClick={() => setModel(m)}>
+                      {formatModel(m)}
+                    </MenuItem>
+                  ))}
+                </MenuList>
+              </Menu>
+            </Flex>
           </Flex>
 
-          <Flex align="start" direction="column">
-            <Text
-              fontSize="lg"
-              fontWeight="bold"
-              textAlign="center"
-              noOfLines={1}
-            >
-              {pathname === "/" ? "Xeenapz" : currentThreadTitle || "Xeenapz"}
-            </Text>
-            <Menu>
-              <MenuButton
-                as={Button}
-                size="xs"
-                variant="ghost"
-                color="secondaryText"
-                px={0}
-              >
-                {formattedModel}
-              </MenuButton>
-              <MenuList>
-                {GEMINI_MODELS.map((m) => (
-                  <MenuItem key={m} onClick={() => setModel(m)}>
-                    {formatModel(m)}
-                  </MenuItem>
-                ))}
-              </MenuList>
-            </Menu>
-          </Flex>
-
-          <Flex align="center" gap={4}>
+          <Flex align="center" gap={4} flexShrink={0}>
             {user && (pathname === "/" || pathname === "/thread/temp") && (
               <IconButton
                 aria-label="Temporary Chat"
