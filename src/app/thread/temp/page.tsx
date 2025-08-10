@@ -173,6 +173,75 @@ const TempThread: FC = () => {
     }
   };
 
+  const retryBotMessage = async (botMessage: Message) => {
+    const index = messages.findIndex((m) => m.timestamp === botMessage.timestamp);
+    if (index === -1) return;
+
+    const userMessage = (() => {
+      for (let i = index - 1; i >= 0; i--) {
+        if (messages[i].sender === "user") return messages[i];
+      }
+      return null;
+    })();
+
+    if (!userMessage) return;
+
+    setMessages((prev) => {
+      const newMsgs = [...prev];
+      newMsgs[index] = { ...newMsgs[index], text: null };
+      return newMsgs;
+    });
+
+    let base64Image: string | null = null;
+    if (userMessage.image?.url) {
+      try {
+        const resImg = await fetch(userMessage.image.url);
+        const blob = await resImg.blob();
+        base64Image = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () =>
+            resolve((reader.result as string).split(",")[1]);
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(blob);
+        });
+      } catch (e) {
+        console.error("Failed to fetch image for retry:", e);
+      }
+    }
+
+    setIsFetchingResponse(true);
+    try {
+      const res = await fetch("/api/gemini", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: userMessage.text || null,
+          image: base64Image,
+          model,
+        }),
+      });
+
+      const data = await res.json();
+      const botResponse =
+        data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+
+      setMessages((prev) => {
+        const newMsgs = [...prev];
+        newMsgs[index] = {
+          ...botMessage,
+          text: botResponse,
+          timestamp: Date.now(),
+          created_at: new Date().toISOString(),
+        };
+        return newMsgs;
+      });
+    } catch (err) {
+      console.error("Error refetching bot response:", err);
+    } finally {
+      setIsFetchingResponse(false);
+    }
+  };
+
   const isBlocked = !user && !loading;
 
   return (
@@ -188,6 +257,7 @@ const TempThread: FC = () => {
         setPlayingMessage={setPlayingMessage}
         messagesEndRef={messagesEndRef}
         emptyStateText="Temporary Thread"
+        onRetryMessage={isBlocked ? undefined : retryBotMessage}
       />
       <MessageInput
         ref={messageInputRef}

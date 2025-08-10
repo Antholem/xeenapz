@@ -53,6 +53,7 @@ interface MessagesLayoutProps {
   isLoading?: boolean;
   emptyStateText?: string;
   onLoadMore?: () => Promise<void>;
+  onRetryMessage?: (message: Message) => void;
 }
 
 const MessagesLayout: FC<MessagesLayoutProps> = ({
@@ -66,12 +67,15 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
   isLoading = false,
   emptyStateText = "Hello, what can I help with?",
   onLoadMore,
+  onRetryMessage,
 }) => {
   const { user: authUser } = useAuth();
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [readyToRender, setReadyToRender] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
+
+  const lastMessage = messages[messages.length - 1];
 
   const virtualMessages = useMemo(() => {
     const result: Array<{
@@ -213,6 +217,8 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
               }
 
               const msg = item.value as Message;
+              const isLastBotMessage =
+                msg === lastMessage && msg.sender === "bot";
               return (
                 <Box mx={5}>
                   <MessageItem
@@ -221,6 +227,11 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
                     speakText={speakText}
                     playingMessage={playingMessage}
                     setPlayingMessage={setPlayingMessage}
+                    onRetry={
+                      isLastBotMessage && onRetryMessage
+                        ? () => onRetryMessage(msg)
+                        : undefined
+                    }
                     mt={isFirst && !authUser ? 3 : 0}
                     pt={isFirst ? 3 : 2}
                     pb={isLast ? 3 : 2}
