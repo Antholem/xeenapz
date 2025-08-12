@@ -1,6 +1,6 @@
 "use client";
 
-import { FC } from "react";
+import { FC, ReactNode } from "react";
 import {
   Box,
   Modal,
@@ -18,6 +18,8 @@ import {
   TabPanel,
   useBreakpointValue,
   useColorMode,
+  Flex,
+  Switch,
 } from "@chakra-ui/react";
 import { Button, ModalContent } from "@themed-components";
 
@@ -26,20 +28,9 @@ interface SettingsModalProps {
   onClose: () => void;
 }
 
-const sections = [
-  {
-    title: "General",
-    items: ["Item 1", "Item 2"],
-  },
-  {
-    title: "Appearance",
-    items: ["Item 1", "Item 2"],
-  },
-];
-
 const SettingsModal: FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const isMobile = useBreakpointValue({ base: true, md: false });
-  const { colorMode } = useColorMode();
+  const { colorMode, toggleColorMode } = useColorMode();
 
   const getBg = (
     state: "base" | "hover" | "active" | "focus",
@@ -66,6 +57,25 @@ const SettingsModal: FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     return palette[state];
   };
 
+  const sections: { title: string; items: ReactNode[] }[] = [
+    {
+      title: "General",
+      items: [
+        <Text key="general-item-1">Item 1</Text>,
+        <Text key="general-item-2">Item 2</Text>,
+      ],
+    },
+    {
+      title: "Appearance",
+      items: [
+        <Flex key="appearance-theme" align="center" justify="space-between" w="full">
+          <Text>Dark mode</Text>
+          <Switch isChecked={colorMode === "dark"} onChange={toggleColorMode} />
+        </Flex>,
+      ],
+    },
+  ];
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="xl" isCentered>
       <ModalOverlay />
@@ -80,11 +90,7 @@ const SettingsModal: FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                   <Text fontWeight="bold" mb={2}>
                     {section.title}
                   </Text>
-                  <Stack spacing={1}>
-                    {section.items.map((item) => (
-                      <Text key={item}>{item}</Text>
-                    ))}
-                  </Stack>
+                  <Stack spacing={1}>{section.items.map((item) => item)}</Stack>
                 </Box>
               ))}
             </Stack>
@@ -115,9 +121,7 @@ const SettingsModal: FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 {sections.map((section) => (
                   <TabPanel key={section.title} p={0}>
                     <Stack spacing={1} align="start" p={4}>
-                      {section.items.map((item) => (
-                        <Text key={item}>{item}</Text>
-                      ))}
+                      {section.items.map((item) => item)}
                     </Stack>
                   </TabPanel>
                 ))}
