@@ -33,6 +33,7 @@ import {
   Text,
   Tooltip,
   useBreakpointValue,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { FiLogOut, FiUserCheck } from "react-icons/fi";
 import { IoAdd, IoSearch, IoSettingsSharp } from "react-icons/io5";
@@ -40,7 +41,7 @@ import { IoAdd, IoSearch, IoSettingsSharp } from "react-icons/io5";
 import { supabase } from "@/lib";
 import { Spinner, Input, MenuList, MenuItem } from "@themed-components";
 import { useAuth, useToastStore } from "@/stores";
-import { ThreadList } from "@/components";
+import { ThreadList, SettingsModal } from "@/components";
 
 interface SideBarProps {
   type: "temporary" | "persistent";
@@ -70,12 +71,13 @@ const NewChatButton = () => {
   );
 };
 
-const SettingsButton = () => (
+const SettingsButton = ({ onOpen }: { onOpen: () => void }) => (
   <Tooltip label="Settings">
     <IconButton
       aria-label="Settings"
       variant="ghost"
       icon={<IoSettingsSharp />}
+      onClick={onOpen}
     />
   </Tooltip>
 );
@@ -132,6 +134,11 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
   const { user, setLoading: setAuthLoading, loading: authLoading } = useAuth();
   const router = useRouter();
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
+  const {
+    isOpen: isSettingsOpen,
+    onOpen: openSettings,
+    onClose: closeSettings,
+  } = useDisclosure();
 
   const [threads, setThreads] = useState<Thread[]>([]);
   const [loading, setLoading] = useState(true);
@@ -366,7 +373,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
             </Flex>
             <Flex flexShrink={0}>
               <NewChatButton />
-              <SettingsButton />
+              <SettingsButton onOpen={openSettings} />
             </Flex>
           </Flex>
           <Flex p={3}>
@@ -395,74 +402,74 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
 
   if (authLoading || !user) return null;
 
-  return type === "persistent" ? (
+  return (
     <Fragment>
-      {content}
-      <Divider orientation="vertical" />
-    </Fragment>
-  ) : (
-    <Drawer
-      isOpen={!!isOpen}
-      placement={placement!}
-      onClose={onClose!}
-      size="xs"
-    >
-      <DrawerOverlay />
-      <DrawerContent>
-        <Card borderRadius={0} h="100vh">
-          <DrawerHeader
-            px={3}
-            py={2}
-            pb={3}
-            display="flex"
-            justifyContent="space-between"
-          >
-            <Flex align="center" justify="start" gap={3}>
-              <MenuItems
-                user={user}
-                switchAccount={handleGoogleSignIn}
-                signOut={handleSignOut}
-              />
-              <Box
-                lineHeight="1.2"
-                maxW="170px"
-                overflow="hidden"
-                whiteSpace="nowrap"
-                textOverflow="ellipsis"
+      {type === "persistent" ? (
+        <Fragment>
+          {content}
+          <Divider orientation="vertical" />
+        </Fragment>
+      ) : (
+        <Drawer isOpen={!!isOpen} placement={placement!} onClose={onClose!} size="xs">
+          <DrawerOverlay />
+          <DrawerContent>
+            <Card borderRadius={0} h="100vh">
+              <DrawerHeader
+                px={3}
+                py={2}
+                pb={3}
+                display="flex"
+                justifyContent="space-between"
               >
-                <Text fontWeight="bold" fontSize="sm" isTruncated>
-                  {user?.user_metadata?.name}
-                </Text>
-                <Text fontSize="xs" color="gray.400" isTruncated>
-                  {user?.email}
-                </Text>
-              </Box>
-            </Flex>
-            <Box>
-              <NewChatButton />
-              <SettingsButton />
-            </Box>
-          </DrawerHeader>
-          <Flex px={3} pb={3}>
-            <SearchBar onSearch={handleSearch} />
-          </Flex>
-          <DrawerBody
-            p={0}
-            overflow="hidden"
-            display="flex"
-            borderTopWidth="1px"
-          >
-            {loading ? (
-              <Flex flex="1" justify="center" align="center">
-                <Spinner size="xl" />
+                <Flex align="center" justify="start" gap={3}>
+                  <MenuItems
+                    user={user}
+                    switchAccount={handleGoogleSignIn}
+                    signOut={handleSignOut}
+                  />
+                  <Box
+                    lineHeight="1.2"
+                    maxW="170px"
+                    overflow="hidden"
+                    whiteSpace="nowrap"
+                    textOverflow="ellipsis"
+                  >
+                    <Text fontWeight="bold" fontSize="sm" isTruncated>
+                      {user?.user_metadata?.name}
+                    </Text>
+                    <Text fontSize="xs" color="gray.400" isTruncated>
+                      {user?.email}
+                    </Text>
+                  </Box>
+                </Flex>
+                <Box>
+                  <NewChatButton />
+                  <SettingsButton onOpen={openSettings} />
+                </Box>
+              </DrawerHeader>
+              <Flex px={3} pb={3}>
+                <SearchBar onSearch={handleSearch} />
               </Flex>
-            ) : (
-              <ThreadList threads={threads} searchTerm={searchTerm} />
-            )}
-          </DrawerBody>
-        </Card>
-      </DrawerContent>
-    </Drawer>
+              <DrawerBody
+                p={0}
+                overflow="hidden"
+                display="flex"
+                borderTopWidth="1px"
+              >
+                {loading ? (
+                  <Flex flex="1" justify="center" align="center">
+                    <Spinner size="xl" />
+                  </Flex>
+                ) : (
+                  <ThreadList threads={threads} searchTerm={searchTerm} />
+                )}
+              </DrawerBody>
+            </Card>
+          </DrawerContent>
+        </Drawer>
+      )}
+      <SettingsModal isOpen={isSettingsOpen} onClose={closeSettings} />
+    </Fragment>
   );
 };
 
