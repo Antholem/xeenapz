@@ -6,6 +6,7 @@ import Toast from "./Toast";
 import AlertDialogContent from "./AlertDialogContent";
 import MenuItem from "./MenuItem";
 import MenuList from "./MenuList";
+import ModalContent from "./ModalContent";
 
 export {
   Button,
@@ -16,4 +17,5 @@ export {
   AlertDialogContent,
   MenuItem,
   MenuList,
+  ModalContent,
 };

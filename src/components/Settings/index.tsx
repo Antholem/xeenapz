@@ -5,7 +5,6 @@ import {
   Box,
   Modal,
   ModalOverlay,
-  ModalContent,
   ModalHeader,
   ModalBody,
   ModalFooter,
@@ -18,8 +17,9 @@ import {
   Tab,
   TabPanel,
   useBreakpointValue,
+  useColorMode,
 } from "@chakra-ui/react";
-import { Button } from "@themed-components";
+import { Button, ModalContent } from "@themed-components";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -39,9 +39,35 @@ const sections = [
 
 const SettingsModal: FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const isMobile = useBreakpointValue({ base: true, md: false });
+  const { colorMode } = useColorMode();
+
+  const getBg = (
+    state: "base" | "hover" | "active" | "focus",
+    isSelected: boolean
+  ) => {
+    const isDark = colorMode === "dark";
+
+    const palette = {
+      base: isDark ? "gray.800" : "gray.100",
+      hover: isDark ? "gray.700" : "gray.200",
+      active: isDark ? "gray.600" : "gray.300",
+      focus: isDark ? "gray.700" : "gray.100",
+      nonActiveHover: isDark ? "gray.800" : "gray.100",
+      nonActiveActive: isDark ? "gray.700" : "gray.200",
+    } as const;
+
+    if (!isSelected) {
+      if (state === "base") return "transparent";
+      if (state === "hover") return palette.nonActiveHover;
+      if (state === "active") return palette.nonActiveActive;
+      if (state === "focus") return palette.focus;
+    }
+
+    return palette[state];
+  };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="xl">
+    <Modal isOpen={isOpen} onClose={onClose} size="xl" isCentered>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>Settings</ModalHeader>
@@ -63,10 +89,26 @@ const SettingsModal: FC<SettingsModalProps> = ({ isOpen, onClose }) => {
               ))}
             </Stack>
           ) : (
-            <Tabs orientation="vertical" variant="enclosed">
+            <Tabs orientation="vertical" variant="unstyled">
               <TabList minW="150px">
                 {sections.map((section) => (
-                  <Tab key={section.title}>{section.title}</Tab>
+                  <Tab
+                    key={section.title}
+                    justifyContent="flex-start"
+                    borderRadius="md"
+                    bgColor={getBg("base", false)}
+                    _hover={{ bgColor: getBg("hover", false) }}
+                    _active={{ bgColor: getBg("active", false) }}
+                    _focus={{ bgColor: getBg("focus", false) }}
+                    _selected={{
+                      bgColor: getBg("base", true),
+                      _hover: { bgColor: getBg("hover", true) },
+                      _active: { bgColor: getBg("active", true) },
+                      _focus: { bgColor: getBg("focus", true) },
+                    }}
+                  >
+                    {section.title}
+                  </Tab>
                 ))}
               </TabList>
               <TabPanels>
