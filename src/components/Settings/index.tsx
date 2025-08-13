@@ -22,11 +22,17 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} isCentered>
+    <Modal
+      size="xl"
+      scrollBehavior="inside"
+      isOpen={isOpen}
+      onClose={onClose}
+      isCentered
+    >
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>Settings</ModalHeader>
-        <ModalBody>{/* Settings content goes here */}</ModalBody>
+        <ModalBody></ModalBody>
         <ModalFooter>
           <HStack gap={2}>
             <Button variant="ghost" colorScheme="gray" onClick={onClose}>
