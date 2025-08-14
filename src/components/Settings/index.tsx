@@ -1,0 +1,146 @@
+"use client";
+
+import { FC } from "react";
+import {
+  Modal,
+  ModalOverlay,
+  ModalHeader,
+  ModalBody,
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab,
+  TabPanel,
+  useColorMode,
+  Divider,
+  Icon,
+  Flex,
+  useBreakpointValue,
+  ModalCloseButton,
+} from "@chakra-ui/react";
+import { IoSettingsOutline } from "react-icons/io5";
+import { IoIosColorPalette } from "react-icons/io";
+import { ModalContent } from "@themed-components";
+import { useTheme } from "@/stores";
+
+interface SettingsProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
+  const { colorMode } = useColorMode();
+  const { colorScheme } = useTheme();
+
+  const getBg = (state: "base" | "hover" | "active" | "selected") => {
+    const isDark = colorMode === "dark";
+    const palette = {
+      base: "transparent",
+      selected: isDark ? "gray.700" : "gray.100",
+      hover: isDark ? "gray.600" : "gray.200",
+      active: isDark ? "gray.500" : "gray.300",
+    } as const;
+    return palette[state];
+  };
+
+  const tabs = [
+    { key: "general", label: "General", icon: IoSettingsOutline },
+    { key: "appearance", label: "Appearance", icon: IoIosColorPalette },
+    { key: "chat", label: "Chat", icon: IoSettingsOutline },
+    { key: "privacy", label: "Data & Privacy", icon: IoSettingsOutline },
+    { key: "account", label: "Account", icon: IoSettingsOutline },
+    { key: "about", label: "About", icon: IoSettingsOutline },
+  ];
+
+  return (
+    <Modal
+      size={useBreakpointValue({ base: "full", md: "xl" })}
+      scrollBehavior="inside"
+      isOpen={isOpen}
+      onClose={onClose}
+      isCentered
+    >
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>Settings</ModalHeader>
+        <ModalCloseButton />
+        <Divider orientation="horizontal" />
+
+        <ModalBody p={0}>
+          <Tabs
+            display={{ base: "block", md: "flex" }}
+            orientation={useBreakpointValue({
+              base: "horizontal",
+              md: "vertical",
+            })}
+            h="60vh"
+            variant="unstyled"
+          >
+            <TabList
+              w={{ base: "full", md: "200px" }}
+              p={1}
+              bgColor={colorMode === "light" ? "surface" : "mutedSurface"}
+              border="none"
+              minH={0}
+              maxH="100%"
+              display="flex"
+              flexDir={{ base: "row", md: "column" }}
+              flexWrap={{ base: "wrap", md: "nowrap" }}
+              gap={{ base: 1, md: 0 }}
+              overflowY={{ base: "visible", md: "auto" }}
+              overflowX="hidden"
+              flexShrink={0}
+            >
+              {tabs.map((t) => (
+                <Tab
+                  key={t.key}
+                  justifyContent="flex-start"
+                  rounded="md"
+                  px={3}
+                  py={2}
+                  gap={2}
+                  bgColor={getBg("base")}
+                  _selected={{
+                    color:
+                      colorMode === "dark"
+                        ? `${colorScheme}.200`
+                        : `${colorScheme}.600`,
+                    bgColor: getBg("selected"),
+                  }}
+                  _hover={{ bgColor: getBg("hover") }}
+                  _active={{ bgColor: getBg("active") }}
+                  flex={{ base: "0 1 auto", md: "initial" }}
+                >
+                  <Flex align="center" gap={2}>
+                    <Icon as={t.icon} boxSize={4} />
+                    {t.label}
+                  </Flex>
+                </Tab>
+              ))}
+            </TabList>
+            <Divider
+              orientation={useBreakpointValue({
+                base: "horizontal",
+                md: "vertical",
+              })}
+            />
+
+            <TabPanels flex="1" minH={0}>
+              <TabPanel>General settings go here.</TabPanel>
+              <TabPanel>Appearance settings go here.</TabPanel>
+              <TabPanel>Chat preferences go here.</TabPanel>
+              <TabPanel>Data & Privacy settings go here.</TabPanel>
+              <TabPanel>Account settings go here.</TabPanel>
+              <TabPanel>About info goes here.</TabPanel>
+            </TabPanels>
+          </Tabs>
+        </ModalBody>
+
+        <Divider orientation="horizontal" />
+      </ModalContent>
+    </Modal>
+  );
+};
+
+export default Settings;
+
