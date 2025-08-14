@@ -14,6 +14,8 @@ import {
   Tab,
   TabPanel,
   Card,
+  useColorMode,
+  Divider,
 } from "@chakra-ui/react";
 import { Button, ModalContent } from "@themed-components";
 
@@ -23,16 +25,25 @@ interface SettingsProps {
 }
 
 const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
+  const { colorMode } = useColorMode();
+
   const handleSave = () => {
     onClose();
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} isCentered>
+    <Modal
+      size="xl"
+      scrollBehavior="inside"
+      isOpen={isOpen}
+      onClose={onClose}
+      isCentered
+    >
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>Settings</ModalHeader>
-        <ModalBody>
+        <ModalBody p={0}>
+          <Divider orientation="horizontal" />
           <Tabs orientation="vertical" display="flex" h="60vh">
             <TabList
               as={Card}
@@ -40,7 +51,9 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
               overflowY="auto"
               w="200px"
               maxH="full"
-              mr={4}
+              rounded="none"
+              bgColor={colorMode === "light" ? "surface" : "mutedSurface"}
+              border="none"
             >
               {Array.from({ length: 20 }).map((_, i) => (
                 <Tab key={i} justifyContent="flex-start">
@@ -54,13 +67,14 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
               ))}
             </TabPanels>
           </Tabs>
+          <Divider orientation="horizontal" />
         </ModalBody>
         <ModalFooter>
           <HStack gap={2}>
             <Button variant="ghost" colorScheme="gray" onClick={onClose}>
               Cancel
             </Button>
-            <Button variant="ghost" onClick={handleSave}>
+            <Button variant="solid" onClick={handleSave}>
               Save
             </Button>
           </HStack>
