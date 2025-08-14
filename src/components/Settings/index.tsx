@@ -15,10 +15,12 @@ import {
   TabPanel,
   Card,
   useColorMode,
+  Icon,
   Divider,
 } from "@chakra-ui/react";
 import { Button, ModalContent } from "@themed-components";
 import { useTheme } from "@/stores";
+import { IoSettingsOutline } from "react-icons/io5";
 
 interface SettingsProps {
   isOpen: boolean;
@@ -88,7 +90,10 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
                   _hover={{ bgColor: getBg("hover") }}
                   _active={{ bgColor: getBg("active") }}
                 >
-                  {`Tab ${i + 1}`}
+                  <HStack gap={2}>
+                    <Icon as={IoSettingsOutline} />
+                    {`Tab ${i + 1}`}
+                  </HStack>
                 </Tab>
               ))}
             </TabList>
