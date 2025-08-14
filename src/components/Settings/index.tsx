@@ -1,6 +1,6 @@
 "use client";
 
-import { FC } from "react";
+import { FC, useRef, useState } from "react";
 import {
   Modal,
   ModalOverlay,
@@ -17,9 +17,12 @@ import {
   Flex,
   useBreakpointValue,
   ModalCloseButton,
+  FormControl,
+  FormLabel,
+  Switch,
 } from "@chakra-ui/react";
 import { IoSettingsOutline } from "react-icons/io5";
-import { IoIosColorPalette } from "react-icons/io";
+import { MdOutlineColorLens, MdColorLens } from "react-icons/md";
 import { ModalContent } from "@themed-components";
 import { useTheme } from "@/stores";
 
@@ -29,8 +32,17 @@ interface SettingsProps {
 }
 
 const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
-  const { colorMode } = useColorMode();
+  const { colorMode, toggleColorMode } = useColorMode();
   const { colorScheme } = useTheme();
+  const [tabIndex, setTabIndex] = useState(0);
+  const tabListRef = useRef<HTMLDivElement>(null);
+  const isMobile = useBreakpointValue({ base: true, md: false }) ?? false;
+
+  const handleTabListWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (!isMobile) return;
+    e.preventDefault();
+    tabListRef.current?.scrollBy({ left: e.deltaY });
+  };
 
   const getBg = (state: "base" | "hover" | "active" | "selected") => {
     const isDark = colorMode === "dark";
@@ -45,7 +57,12 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
 
   const tabs = [
     { key: "general", label: "General", icon: IoSettingsOutline },
-    { key: "appearance", label: "Appearance", icon: IoIosColorPalette },
+    {
+      key: "appearance",
+      label: "Appearance",
+      icon: MdOutlineColorLens,
+      selectedIcon: MdColorLens,
+    },
     { key: "chat", label: "Chat", icon: IoSettingsOutline },
     { key: "privacy", label: "Data & Privacy", icon: IoSettingsOutline },
     { key: "account", label: "Account", icon: IoSettingsOutline },
@@ -61,37 +78,40 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
       isCentered
     >
       <ModalOverlay />
-      <ModalContent>
+      <ModalContent h={{ base: "100vh", md: "auto" }}>
         <ModalHeader>Settings</ModalHeader>
         <ModalCloseButton />
         <Divider orientation="horizontal" />
 
-        <ModalBody p={0}>
+        <ModalBody p={0} overflow="hidden" h="full">
           <Tabs
-            display={{ base: "block", md: "flex" }}
-            orientation={useBreakpointValue({
-              base: "horizontal",
-              md: "vertical",
-            })}
-            h="60vh"
+            display="flex"
+            flexDir={{ base: "column", md: "row" }}
+            orientation={isMobile ? "horizontal" : "vertical"}
+            h={{ base: "full", md: "60vh" }}
             variant="unstyled"
+            index={tabIndex}
+            onChange={setTabIndex}
           >
             <TabList
+              ref={tabListRef}
+              onWheel={handleTabListWheel}
               w={{ base: "full", md: "200px" }}
               p={1}
               bgColor={colorMode === "light" ? "surface" : "mutedSurface"}
               border="none"
               minH={0}
+              h={{ md: "100%" }}
               maxH="100%"
               display="flex"
               flexDir={{ base: "row", md: "column" }}
               flexWrap={{ base: "wrap", md: "nowrap" }}
               gap={{ base: 1, md: 0 }}
-              overflowY={{ base: "visible", md: "auto" }}
-              overflowX="hidden"
+              overflowY={{ base: "hidden", md: "auto" }}
+              overflowX={{ base: "auto", md: "hidden" }}
               flexShrink={0}
             >
-              {tabs.map((t) => (
+              {tabs.map((t, i) => (
                 <Tab
                   key={t.key}
                   justifyContent="flex-start"
@@ -112,7 +132,10 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
                   flex={{ base: "0 1 auto", md: "initial" }}
                 >
                   <Flex align="center" gap={2}>
-                    <Icon as={t.icon} boxSize={4} />
+                    <Icon
+                      as={tabIndex === i ? t.selectedIcon ?? t.icon : t.icon}
+                      boxSize={4}
+                    />
                     {t.label}
                   </Flex>
                 </Tab>
@@ -125,9 +148,20 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
               })}
             />
 
-            <TabPanels flex="1" minH={0}>
+            <TabPanels flex="1" minH={0} overflowY="auto">
               <TabPanel>General settings go here.</TabPanel>
-              <TabPanel>Appearance settings go here.</TabPanel>
+              <TabPanel>
+                <FormControl display="flex" alignItems="center">
+                  <FormLabel htmlFor="color-mode-toggle" mb="0">
+                    Dark Mode
+                  </FormLabel>
+                  <Switch
+                    id="color-mode-toggle"
+                    isChecked={colorMode === "dark"}
+                    onChange={toggleColorMode}
+                  />
+                </FormControl>
+              </TabPanel>
               <TabPanel>Chat preferences go here.</TabPanel>
               <TabPanel>Data & Privacy settings go here.</TabPanel>
               <TabPanel>Account settings go here.</TabPanel>
