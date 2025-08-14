@@ -14,13 +14,14 @@ import {
   Tab,
   TabPanel,
   useColorMode,
-  Icon,
   Divider,
+  Icon,
   Flex,
+  useBreakpointValue,
 } from "@chakra-ui/react";
+import { IoSettingsOutline } from "react-icons/io5";
 import { Button, ModalContent } from "@themed-components";
 import { useTheme } from "@/stores";
-import { IoSettingsOutline } from "react-icons/io5";
 
 interface SettingsProps {
   isOpen: boolean;
@@ -31,26 +32,25 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
   const { colorMode } = useColorMode();
   const { colorScheme } = useTheme();
 
+  const modalSize = useBreakpointValue({ base: "full", md: "xl" });
+  const orientation = useBreakpointValue({ base: "horizontal", md: "vertical" });
+
   const getBg = (state: "base" | "hover" | "active" | "selected") => {
     const isDark = colorMode === "dark";
-
     const palette = {
       base: "transparent",
       hover: isDark ? "gray.700" : "gray.100",
       active: isDark ? "gray.500" : "gray.300",
       selected: isDark ? "gray.600" : "gray.200",
     } as const;
-
     return palette[state];
   };
 
-  const handleSave = () => {
-    onClose();
-  };
+  const handleSave = () => onClose();
 
   return (
     <Modal
-      size={{ base: "full", md: "xl" }}
+      size={modalSize}
       scrollBehavior="inside"
       isOpen={isOpen}
       onClose={onClose}
@@ -59,12 +59,13 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>Settings</ModalHeader>
+        <Divider orientation="horizontal" />
+
         <ModalBody p={0}>
-          <Divider orientation="horizontal" />
           <Tabs
-            orientation={{ base: "horizontal", md: "vertical" }}
             display={{ base: "block", md: "flex" }}
-            h={{ base: "auto", md: "60vh" }}
+            orientation={orientation}
+            h="60vh"
             variant="unstyled"
           >
             <TabList
@@ -72,9 +73,13 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
               p={1}
               bgColor={colorMode === "light" ? "surface" : "mutedSurface"}
               border="none"
-              minH={{ md: 0 }}
-              maxH={{ md: "100%" }}
-              overflowY={{ md: "auto" }}
+              minH={0}
+              maxH="100%"
+              display="flex"
+              flexDir={{ base: "row", md: "column" }}
+              flexWrap={{ base: "wrap", md: "nowrap" }}
+              gap={{ base: 1, md: 0 }}
+              overflowY={{ base: "visible", md: "auto" }}
               overflowX="hidden"
               flexShrink={0}
             >
@@ -83,7 +88,8 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
                   key={i}
                   justifyContent="flex-start"
                   rounded="md"
-                  mb={{ base: 0, md: 0.5 }}
+                  px={3}
+                  py={2}
                   bgColor={getBg("base")}
                   _selected={{
                     color:
@@ -94,22 +100,29 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
                   }}
                   _hover={{ bgColor: getBg("hover") }}
                   _active={{ bgColor: getBg("active") }}
+                  flex={{ base: "0 1 auto", md: "initial" }}
                 >
-                  <Flex align="center" justify="center" gap={2}>
-                    <Icon as={IoSettingsOutline} boxSize={4} />
+                  <Flex align="center" gap={2}>
+                    <Icon
+                      display={{ base: "none", md: "inline" }}
+                      as={IoSettingsOutline}
+                      boxSize={4}
+                    />
                     {`Tab ${i + 1}`}
                   </Flex>
                 </Tab>
               ))}
             </TabList>
+
             <TabPanels flex="1" minH={0}>
               {Array.from({ length: 20 }).map((_, i) => (
                 <TabPanel key={i}>{`Content for Tab ${i + 1}`}</TabPanel>
               ))}
             </TabPanels>
           </Tabs>
-          <Divider orientation="horizontal" />
         </ModalBody>
+
+        <Divider orientation="horizontal" />
         <ModalFooter>
           <HStack gap={2}>
             <Button variant="ghost" colorScheme="gray" onClick={onClose}>
