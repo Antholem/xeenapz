@@ -6,8 +6,6 @@ import {
   ModalOverlay,
   ModalHeader,
   ModalBody,
-  ModalFooter,
-  HStack,
   Tabs,
   TabList,
   TabPanels,
@@ -18,9 +16,11 @@ import {
   Icon,
   Flex,
   useBreakpointValue,
+  ModalCloseButton,
 } from "@chakra-ui/react";
 import { IoSettingsOutline } from "react-icons/io5";
-import { Button, ModalContent } from "@themed-components";
+import { IoIosColorPalette } from "react-icons/io";
+import { ModalContent } from "@themed-components";
 import { useTheme } from "@/stores";
 
 interface SettingsProps {
@@ -32,25 +32,29 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
   const { colorMode } = useColorMode();
   const { colorScheme } = useTheme();
 
-  const modalSize = useBreakpointValue({ base: "full", md: "xl" });
-  const orientation = useBreakpointValue({ base: "horizontal", md: "vertical" });
-
   const getBg = (state: "base" | "hover" | "active" | "selected") => {
     const isDark = colorMode === "dark";
     const palette = {
       base: "transparent",
-      hover: isDark ? "gray.700" : "gray.100",
+      selected: isDark ? "gray.700" : "gray.100",
+      hover: isDark ? "gray.600" : "gray.200",
       active: isDark ? "gray.500" : "gray.300",
-      selected: isDark ? "gray.600" : "gray.200",
     } as const;
     return palette[state];
   };
 
-  const handleSave = () => onClose();
+  const tabs = [
+    { key: "general", label: "General", icon: IoSettingsOutline },
+    { key: "appearance", label: "Appearance", icon: IoIosColorPalette },
+    { key: "chat", label: "Chat", icon: IoSettingsOutline },
+    { key: "privacy", label: "Data & Privacy", icon: IoSettingsOutline },
+    { key: "account", label: "Account", icon: IoSettingsOutline },
+    { key: "about", label: "About", icon: IoSettingsOutline },
+  ];
 
   return (
     <Modal
-      size={modalSize}
+      size={useBreakpointValue({ base: "full", md: "xl" })}
       scrollBehavior="inside"
       isOpen={isOpen}
       onClose={onClose}
@@ -59,12 +63,16 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>Settings</ModalHeader>
+        <ModalCloseButton />
         <Divider orientation="horizontal" />
 
         <ModalBody p={0}>
           <Tabs
             display={{ base: "block", md: "flex" }}
-            orientation={orientation}
+            orientation={useBreakpointValue({
+              base: "horizontal",
+              md: "vertical",
+            })}
             h="60vh"
             variant="unstyled"
           >
@@ -83,13 +91,14 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
               overflowX="hidden"
               flexShrink={0}
             >
-              {Array.from({ length: 20 }).map((_, i) => (
+              {tabs.map((t) => (
                 <Tab
-                  key={i}
+                  key={t.key}
                   justifyContent="flex-start"
                   rounded="md"
                   px={3}
                   py={2}
+                  gap={2}
                   bgColor={getBg("base")}
                   _selected={{
                     color:
@@ -103,39 +112,35 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
                   flex={{ base: "0 1 auto", md: "initial" }}
                 >
                   <Flex align="center" gap={2}>
-                    <Icon
-                      display={{ base: "none", md: "inline" }}
-                      as={IoSettingsOutline}
-                      boxSize={4}
-                    />
-                    {`Tab ${i + 1}`}
+                    <Icon as={t.icon} boxSize={4} />
+                    {t.label}
                   </Flex>
                 </Tab>
               ))}
             </TabList>
+            <Divider
+              orientation={useBreakpointValue({
+                base: "horizontal",
+                md: "vertical",
+              })}
+            />
 
             <TabPanels flex="1" minH={0}>
-              {Array.from({ length: 20 }).map((_, i) => (
-                <TabPanel key={i}>{`Content for Tab ${i + 1}`}</TabPanel>
-              ))}
+              <TabPanel>General settings go here.</TabPanel>
+              <TabPanel>Appearance settings go here.</TabPanel>
+              <TabPanel>Chat preferences go here.</TabPanel>
+              <TabPanel>Data & Privacy settings go here.</TabPanel>
+              <TabPanel>Account settings go here.</TabPanel>
+              <TabPanel>About info goes here.</TabPanel>
             </TabPanels>
           </Tabs>
         </ModalBody>
 
         <Divider orientation="horizontal" />
-        <ModalFooter>
-          <HStack gap={2}>
-            <Button variant="ghost" colorScheme="gray" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button variant="solid" onClick={handleSave}>
-              Save
-            </Button>
-          </HStack>
-        </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
 export default Settings;
+
