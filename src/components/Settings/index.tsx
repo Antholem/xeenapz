@@ -18,6 +18,7 @@ import {
   Divider,
 } from "@chakra-ui/react";
 import { Button, ModalContent } from "@themed-components";
+import { useTheme } from "@/stores";
 
 interface SettingsProps {
   isOpen: boolean;
@@ -26,6 +27,20 @@ interface SettingsProps {
 
 const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
   const { colorMode } = useColorMode();
+  const { colorScheme } = useTheme();
+
+  const getBg = (state: "base" | "hover" | "active" | "selected") => {
+    const isDark = colorMode === "dark";
+
+    const palette = {
+      base: "transparent",
+      hover: isDark ? "gray.700" : "gray.100",
+      active: isDark ? "gray.500" : "gray.300",
+      selected: isDark ? "gray.600" : "gray.200",
+    } as const;
+
+    return palette[state];
+  };
 
   const handleSave = () => {
     onClose();
@@ -44,7 +59,7 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
         <ModalHeader>Settings</ModalHeader>
         <ModalBody p={0}>
           <Divider orientation="horizontal" />
-          <Tabs orientation="vertical" display="flex" h="60vh">
+          <Tabs orientation="vertical" display="flex" h="60vh" variant="unstyled">
             <TabList
               as={Card}
               flexDir="column"
@@ -54,9 +69,25 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
               rounded="none"
               bgColor={colorMode === "light" ? "surface" : "mutedSurface"}
               border="none"
+              p={1}
             >
               {Array.from({ length: 20 }).map((_, i) => (
-                <Tab key={i} justifyContent="flex-start">
+                <Tab
+                  key={i}
+                  justifyContent="flex-start"
+                  rounded="md"
+                  mb={0.5}
+                  bgColor={getBg("base")}
+                  _selected={{
+                    color:
+                      colorMode === "dark"
+                        ? `${colorScheme}.200`
+                        : `${colorScheme}.600`,
+                    bgColor: getBg("selected"),
+                  }}
+                  _hover={{ bgColor: getBg("hover") }}
+                  _active={{ bgColor: getBg("active") }}
+                >
                   {`Tab ${i + 1}`}
                 </Tab>
               ))}
