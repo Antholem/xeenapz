@@ -77,7 +77,8 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
 
         <ModalBody p={0} overflow="hidden">
           <Tabs
-            display={{ base: "block", md: "flex" }}
+            display="flex"
+            flexDir={{ base: "column", md: "row" }}
             orientation={useBreakpointValue({
               base: "horizontal",
               md: "vertical",
