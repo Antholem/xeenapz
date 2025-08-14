@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useState } from "react";
+import { FC, useRef, useState } from "react";
 import {
   Modal,
   ModalOverlay,
@@ -35,6 +35,14 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
   const { colorMode, toggleColorMode } = useColorMode();
   const { colorScheme } = useTheme();
   const [tabIndex, setTabIndex] = useState(0);
+  const tabListRef = useRef<HTMLDivElement>(null);
+  const isMobile = useBreakpointValue({ base: true, md: false }) ?? false;
+
+  const handleTabListWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (!isMobile) return;
+    e.preventDefault();
+    tabListRef.current?.scrollBy({ left: e.deltaY });
+  };
 
   const getBg = (state: "base" | "hover" | "active" | "selected") => {
     const isDark = colorMode === "dark";
@@ -70,36 +78,36 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
       isCentered
     >
       <ModalOverlay />
-      <ModalContent>
+      <ModalContent h={{ base: "100vh", md: "auto" }}>
         <ModalHeader>Settings</ModalHeader>
         <ModalCloseButton />
         <Divider orientation="horizontal" />
 
-        <ModalBody p={0} overflow="hidden">
+        <ModalBody p={0} overflow="hidden" h="full">
           <Tabs
             display="flex"
             flexDir={{ base: "column", md: "row" }}
-            orientation={useBreakpointValue({
-              base: "horizontal",
-              md: "vertical",
-            })}
-            h="60vh"
+            orientation={isMobile ? "horizontal" : "vertical"}
+            h={{ base: "full", md: "60vh" }}
             variant="unstyled"
             index={tabIndex}
             onChange={setTabIndex}
           >
             <TabList
+              ref={tabListRef}
+              onWheel={handleTabListWheel}
               w={{ base: "full", md: "200px" }}
               p={1}
               bgColor={colorMode === "light" ? "surface" : "mutedSurface"}
               border="none"
               minH={0}
+              h={{ md: "100%" }}
               maxH="100%"
               display="flex"
               flexDir={{ base: "row", md: "column" }}
               flexWrap={{ base: "wrap", md: "nowrap" }}
               gap={{ base: 1, md: 0 }}
-              overflowY="auto"
+              overflowY={{ base: "hidden", md: "auto" }}
               overflowX={{ base: "auto", md: "hidden" }}
               flexShrink={0}
             >
