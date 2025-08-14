@@ -75,7 +75,7 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
         <ModalCloseButton />
         <Divider orientation="horizontal" />
 
-        <ModalBody p={0}>
+        <ModalBody p={0} overflow="hidden">
           <Tabs
             display={{ base: "block", md: "flex" }}
             orientation={useBreakpointValue({
@@ -98,8 +98,8 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
               flexDir={{ base: "row", md: "column" }}
               flexWrap={{ base: "wrap", md: "nowrap" }}
               gap={{ base: 1, md: 0 }}
-              overflowY={{ base: "visible", md: "auto" }}
-              overflowX="hidden"
+              overflowY="auto"
+              overflowX={{ base: "auto", md: "hidden" }}
               flexShrink={0}
             >
               {tabs.map((t, i) => (
@@ -139,7 +139,7 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
               })}
             />
 
-            <TabPanels flex="1" minH={0}>
+            <TabPanels flex="1" minH={0} overflowY="auto">
               <TabPanel>General settings go here.</TabPanel>
               <TabPanel>
                 <FormControl display="flex" alignItems="center">
