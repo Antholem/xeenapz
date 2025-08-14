@@ -13,10 +13,10 @@ import {
   TabPanels,
   Tab,
   TabPanel,
-  Card,
   useColorMode,
   Icon,
   Divider,
+  Flex,
 } from "@chakra-ui/react";
 import { Button, ModalContent } from "@themed-components";
 import { useTheme } from "@/stores";
@@ -50,7 +50,7 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
 
   return (
     <Modal
-      size="xl"
+      size={{ base: "full", md: "xl" }}
       scrollBehavior="inside"
       isOpen={isOpen}
       onClose={onClose}
@@ -61,24 +61,29 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
         <ModalHeader>Settings</ModalHeader>
         <ModalBody p={0}>
           <Divider orientation="horizontal" />
-          <Tabs orientation="vertical" display="flex" h="60vh" variant="unstyled">
+          <Tabs
+            orientation={{ base: "horizontal", md: "vertical" }}
+            display={{ base: "block", md: "flex" }}
+            h={{ base: "auto", md: "60vh" }}
+            variant="unstyled"
+          >
             <TabList
-              as={Card}
-              flexDir="column"
-              overflowY="auto"
-              w="200px"
-              maxH="full"
-              rounded="none"
+              w={{ base: "full", md: "200px" }}
+              p={1}
               bgColor={colorMode === "light" ? "surface" : "mutedSurface"}
               border="none"
-              p={1}
+              minH={{ md: 0 }}
+              maxH={{ md: "100%" }}
+              overflowY={{ md: "auto" }}
+              overflowX="hidden"
+              flexShrink={0}
             >
               {Array.from({ length: 20 }).map((_, i) => (
                 <Tab
                   key={i}
                   justifyContent="flex-start"
                   rounded="md"
-                  mb={0.5}
+                  mb={{ base: 0, md: 0.5 }}
                   bgColor={getBg("base")}
                   _selected={{
                     color:
@@ -90,14 +95,14 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
                   _hover={{ bgColor: getBg("hover") }}
                   _active={{ bgColor: getBg("active") }}
                 >
-                  <HStack gap={2}>
-                    <Icon as={IoSettingsOutline} />
+                  <Flex align="center" justify="center" gap={2}>
+                    <Icon as={IoSettingsOutline} boxSize={4} />
                     {`Tab ${i + 1}`}
-                  </HStack>
+                  </Flex>
                 </Tab>
               ))}
             </TabList>
-            <TabPanels flex="1">
+            <TabPanels flex="1" minH={0}>
               {Array.from({ length: 20 }).map((_, i) => (
                 <TabPanel key={i}>{`Content for Tab ${i + 1}`}</TabPanel>
               ))}
