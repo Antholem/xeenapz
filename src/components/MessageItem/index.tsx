@@ -123,6 +123,7 @@ const MessageItem: FC<MessageItemProps> = ({
                 onClose={() => setIsImageOpen(false)}
                 isCentered
                 size="xl"
+                motionPreset="none"
               >
                 <ModalOverlay />
                 <ModalContent>

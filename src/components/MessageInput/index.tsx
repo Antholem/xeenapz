@@ -144,6 +144,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
               onClose={() => setIsPreviewOpen(false)}
               isCentered
               size="xl"
+              motionPreset="none"
             >
               <ModalOverlay />
               <ModalContent>
