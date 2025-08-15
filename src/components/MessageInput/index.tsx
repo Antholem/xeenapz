@@ -14,11 +14,15 @@ import {
   Divider,
   Box,
   Image,
+  Modal,
+  ModalOverlay,
+  ModalCloseButton,
+  ModalBody,
 } from "@chakra-ui/react";
 import { IoStop } from "react-icons/io5";
 import { IoIosMic, IoMdImage, IoMdSend, IoMdClose } from "react-icons/io";
 import { SpeechRecognize } from "@/lib";
-import { Input } from "@themed-components";
+import { Input, ModalContent } from "@themed-components";
 
 export interface MessageInputHandle {
   handleFile: (file: File) => void;
@@ -56,6 +60,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
   };
 
   const [preview, setPreview] = useState<string | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const handleFile = (file: File) => {
     if (preview) {
@@ -80,6 +85,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
     if (preview) URL.revokeObjectURL(preview);
     setPreview(null);
     discardImage();
+    setIsPreviewOpen(false);
   };
 
   useEffect(() => {
@@ -97,6 +103,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
     if (preview) {
       URL.revokeObjectURL(preview);
       setPreview(null);
+      setIsPreviewOpen(false);
     }
     await sendPromise;
   };
@@ -106,25 +113,53 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
       <Divider orientation="horizontal" />
       <Card p={3} borderRadius={0} variant="surface">
         {preview && (
-          <Box position="relative" maxW="100px" mb={3}>
-            <Image src={preview} alt="Preview" borderRadius="md" />
-            <IconButton
-              aria-label="Discard image"
-              size="xs"
-              bg="Background"
-              color="primaryText"
-              _hover={{ bg: "Background", color: "primaryText" }}
-              _active={{ bg: "Background", color: "primaryText" }}
-              _focus={{ bg: "Background", color: "primaryText" }}
-              icon={<IoMdClose />}
-              variant="solid"
-              position="absolute"
-              top={1}
-              right={1}
-              isRound={true}
-              onClick={handleDiscard}
-            />
-          </Box>
+          <>
+            <Box position="relative" maxW="100px" mb={3}>
+              <Image
+                src={preview}
+                alt="Preview"
+                borderRadius="md"
+                cursor="pointer"
+                onClick={() => setIsPreviewOpen(true)}
+              />
+              <IconButton
+                aria-label="Discard image"
+                size="xs"
+                bg="Background"
+                color="primaryText"
+                _hover={{ bg: "Background", color: "primaryText" }}
+                _active={{ bg: "Background", color: "primaryText" }}
+                _focus={{ bg: "Background", color: "primaryText" }}
+                icon={<IoMdClose />}
+                variant="solid"
+                position="absolute"
+                top={1}
+                right={1}
+                isRound={true}
+                onClick={handleDiscard}
+              />
+            </Box>
+            <Modal
+              isOpen={isPreviewOpen}
+              onClose={() => setIsPreviewOpen(false)}
+              isCentered
+              size="xl"
+            >
+              <ModalOverlay />
+              <ModalContent>
+                <ModalCloseButton />
+                <ModalBody p={0}>
+                  <Image
+                    src={preview}
+                    alt="Preview"
+                    w="100%"
+                    maxH="80vh"
+                    objectFit="contain"
+                  />
+                </ModalBody>
+              </ModalContent>
+            </Modal>
+          </>
         )}
         <input
           type="file"

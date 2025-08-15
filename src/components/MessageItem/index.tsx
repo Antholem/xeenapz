@@ -17,7 +17,12 @@ import {
   IconButton,
   BoxProps,
   useColorMode,
+  Modal,
+  ModalOverlay,
+  ModalCloseButton,
+  ModalBody,
 } from "@chakra-ui/react";
+import { ModalContent } from "@themed-components";
 import { useTheme, useToastStore } from "@/stores";
 
 interface Message {
@@ -64,6 +69,7 @@ const MessageItem: FC<MessageItemProps> = ({
   const { colorMode } = useColorMode();
   const { showToast } = useToastStore();
   const [copied, setCopied] = useState(false);
+  const [isImageOpen, setIsImageOpen] = useState(false);
 
   const handleCopy = async () => {
     if (!message.text) return;
@@ -101,14 +107,38 @@ const MessageItem: FC<MessageItemProps> = ({
           gap={1}
         >
           {message.image && (
-            <Image
-              src={message.image.url}
-              id={message.image.id}
-              alt={message.image.id}
-              mt={2}
-              maxW={200}
-              rounded="md"
-            />
+            <>
+              <Image
+                src={message.image.url}
+                id={message.image.id}
+                alt={message.image.id}
+                mt={2}
+                maxW={200}
+                rounded="md"
+                cursor="pointer"
+                onClick={() => setIsImageOpen(true)}
+              />
+              <Modal
+                isOpen={isImageOpen}
+                onClose={() => setIsImageOpen(false)}
+                isCentered
+                size="xl"
+              >
+                <ModalOverlay />
+                <ModalContent>
+                  <ModalCloseButton />
+                  <ModalBody p={0}>
+                    <Image
+                      src={message.image.url}
+                      alt={message.image.id}
+                      w="100%"
+                      maxH="80vh"
+                      objectFit="contain"
+                    />
+                  </ModalBody>
+                </ModalContent>
+              </Modal>
+            </>
           )}
           {message.text && (
             <Box
