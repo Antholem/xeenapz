@@ -17,7 +17,12 @@ import {
   IconButton,
   BoxProps,
   useColorMode,
+  Modal,
+  ModalOverlay,
+  ModalCloseButton,
+  ModalBody,
 } from "@chakra-ui/react";
+import { ModalContent } from "@themed-components";
 import { useTheme, useToastStore } from "@/stores";
 
 interface Message {
@@ -64,6 +69,7 @@ const MessageItem: FC<MessageItemProps> = ({
   const { colorMode } = useColorMode();
   const { showToast } = useToastStore();
   const [copied, setCopied] = useState(false);
+  const [isImageOpen, setIsImageOpen] = useState(false);
 
   const handleCopy = async () => {
     if (!message.text) return;
@@ -101,14 +107,49 @@ const MessageItem: FC<MessageItemProps> = ({
           gap={1}
         >
           {message.image && (
-            <Image
-              src={message.image.url}
-              id={message.image.id}
-              alt={message.image.id}
-              mt={2}
-              maxW={200}
-              rounded="md"
-            />
+            <>
+              <Image
+                src={message.image.url}
+                id={message.image.id}
+                alt={message.image.id}
+                mt={2}
+                maxW={200}
+                rounded="md"
+                cursor="pointer"
+                onClick={() => setIsImageOpen(true)}
+              />
+              <Modal
+                isOpen={isImageOpen}
+                onClose={() => setIsImageOpen(false)}
+                isCentered
+                size="xl"
+                motionPreset="none"
+              >
+                <ModalOverlay />
+                <ModalContent>
+                  <ModalCloseButton
+                    position="fixed"
+                    top={4}
+                    right={4}
+                    borderRadius="full"
+                    bg="primaryText"
+                    color="background"
+                    _hover={{ bg: "primaryText", color: "background" }}
+                    _active={{ bg: "primaryText", color: "background" }}
+                    _focus={{ bg: "primaryText", color: "background" }}
+                  />
+                  <ModalBody p={0}>
+                    <Image
+                      src={message.image.url}
+                      alt={message.image.id}
+                      w="100%"
+                      maxH="80vh"
+                      objectFit="contain"
+                    />
+                  </ModalBody>
+                </ModalContent>
+              </Modal>
+            </>
           )}
           {message.text && (
             <Box
@@ -145,27 +186,27 @@ const MessageItem: FC<MessageItemProps> = ({
           <Flex align="center" justify="center" gap={1}>
             {user && <Text fontSize="xs" order={isUser ? 2 : 1}>{formattedTime}</Text>}
             <Flex align="center" justify="center" gap={0} order={isUser ? 1 : 2}>
-            {!isUser && message.text && (
-              <Tooltip
-                label={playingMessage === message.text ? "Stop" : "Read aloud"}
-              >
-                <IconButton
-                  aria-label="Read aloud"
-                  icon={
-                    playingMessage === message.text ? (
-                      <IoStop />
-                    ) : (
-                      <HiSpeakerWave />
-                    )
-                  }
-                  variant="ghost"
-                  size="xs"
-                  onClick={() =>
-                    speakText(message.text!, playingMessage, setPlayingMessage)
-                  }
-                />
-              </Tooltip>
-            )}
+              {!isUser && message.text && (
+                <Tooltip
+                  label={playingMessage === message.text ? "Stop" : "Read aloud"}
+                >
+                  <IconButton
+                    aria-label="Read aloud"
+                    icon={
+                      playingMessage === message.text ? (
+                        <IoStop />
+                      ) : (
+                        <HiSpeakerWave />
+                      )
+                    }
+                    variant="ghost"
+                    size="xs"
+                    onClick={() =>
+                      speakText(message.text!, playingMessage, setPlayingMessage)
+                    }
+                  />
+                </Tooltip>
+              )}
               {message.text && (
                 copied ? (
                   <IconButton
