@@ -127,7 +127,17 @@ const MessageItem: FC<MessageItemProps> = ({
               >
                 <ModalOverlay />
                 <ModalContent>
-                  <ModalCloseButton position="fixed" top={4} right={4} />
+                  <ModalCloseButton
+                    position="fixed"
+                    top={4}
+                    right={4}
+                    borderRadius="full"
+                    bg="primaryText"
+                    color="background"
+                    _hover={{ bg: "primaryText", color: "background" }}
+                    _active={{ bg: "primaryText", color: "background" }}
+                    _focus={{ bg: "primaryText", color: "background" }}
+                  />
                   <ModalBody p={0}>
                     <Image
                       src={message.image.url}
@@ -176,27 +186,27 @@ const MessageItem: FC<MessageItemProps> = ({
           <Flex align="center" justify="center" gap={1}>
             {user && <Text fontSize="xs" order={isUser ? 2 : 1}>{formattedTime}</Text>}
             <Flex align="center" justify="center" gap={0} order={isUser ? 1 : 2}>
-            {!isUser && message.text && (
-              <Tooltip
-                label={playingMessage === message.text ? "Stop" : "Read aloud"}
-              >
-                <IconButton
-                  aria-label="Read aloud"
-                  icon={
-                    playingMessage === message.text ? (
-                      <IoStop />
-                    ) : (
-                      <HiSpeakerWave />
-                    )
-                  }
-                  variant="ghost"
-                  size="xs"
-                  onClick={() =>
-                    speakText(message.text!, playingMessage, setPlayingMessage)
-                  }
-                />
-              </Tooltip>
-            )}
+              {!isUser && message.text && (
+                <Tooltip
+                  label={playingMessage === message.text ? "Stop" : "Read aloud"}
+                >
+                  <IconButton
+                    aria-label="Read aloud"
+                    icon={
+                      playingMessage === message.text ? (
+                        <IoStop />
+                      ) : (
+                        <HiSpeakerWave />
+                      )
+                    }
+                    variant="ghost"
+                    size="xs"
+                    onClick={() =>
+                      speakText(message.text!, playingMessage, setPlayingMessage)
+                    }
+                  />
+                </Tooltip>
+              )}
               {message.text && (
                 copied ? (
                   <IconButton
