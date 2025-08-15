@@ -126,7 +126,7 @@ const MessageItem: FC<MessageItemProps> = ({
               >
                 <ModalOverlay />
                 <ModalContent>
-                  <ModalCloseButton />
+                  <ModalCloseButton position="fixed" top={4} right={4} />
                   <ModalBody p={0}>
                     <Image
                       src={message.image.url}

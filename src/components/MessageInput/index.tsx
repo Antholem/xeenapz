@@ -147,7 +147,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
             >
               <ModalOverlay />
               <ModalContent>
-                <ModalCloseButton />
+                <ModalCloseButton position="fixed" top={4} right={4} />
                 <ModalBody p={0}>
                   <Image
                     src={preview}
