@@ -109,8 +109,7 @@ const MessageItem: FC<MessageItemProps> = ({
                   id={message.image.id}
                   alt={message.image.id}
                   mt={2}
-                  boxSize="200px"
-                  objectFit="cover"
+                  maxW={200}
                   rounded="md"
                   cursor="pointer"
                   onClick={() => setIsImageOpen(true)}
