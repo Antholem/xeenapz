@@ -1,7 +1,7 @@
 "use client";
 
 import { FC, useEffect } from "react";
-import { Box, Image, CloseButton, Fade, ScaleFade } from "@chakra-ui/react";
+import { Box, Image, CloseButton, Fade, ScaleFade, Portal } from "@chakra-ui/react";
 
 interface ImageModalProps {
   src: string;
@@ -12,40 +12,50 @@ interface ImageModalProps {
 
 const ImageModal: FC<ImageModalProps> = ({ src, alt, isOpen, onClose }) => {
   useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    const originalPadding = document.body.style.paddingRight;
+
     if (isOpen) {
+      const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
       document.body.style.overflow = "hidden";
+      document.body.style.paddingRight = `${scrollBarWidth}px`;
     } else {
-      document.body.style.overflow = "";
+      document.body.style.overflow = originalOverflow;
+      document.body.style.paddingRight = originalPadding;
     }
+
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = originalOverflow;
+      document.body.style.paddingRight = originalPadding;
     };
   }, [isOpen]);
 
   return (
-    <Fade in={isOpen} unmountOnExit>
-      <Box
-        position="fixed"
-        inset={0}
-        bgColor="background"
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        zIndex="modal"
-      >
-        <CloseButton
+    <Portal>
+      <Fade in={isOpen} unmountOnExit>
+        <Box
           position="fixed"
-          top={4}
-          right={4}
-          borderRadius="full"
-          color="primaryText"
-          onClick={onClose}
-        />
-        <ScaleFade in={isOpen} initialScale={0.9}>
-          <Image src={src} alt={alt} w="100%" maxH="80vh" objectFit="contain" />
-        </ScaleFade>
-      </Box>
-    </Fade>
+          inset={0}
+          bgColor="background"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          zIndex="modal"
+        >
+          <CloseButton
+            position="fixed"
+            top={4}
+            right={4}
+            borderRadius="full"
+            color="primaryText"
+            onClick={onClose}
+          />
+          <ScaleFade in={isOpen} initialScale={0.9}>
+            <Image src={src} alt={alt} w="100%" maxH="80vh" objectFit="contain" />
+          </ScaleFade>
+        </Box>
+      </Fade>
+    </Portal>
   );
 };
 
