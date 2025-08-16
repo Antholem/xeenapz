@@ -158,7 +158,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
             <Flex gap={2} justify="center" align="center">
               <InputGroup flex="1">
                 <InputLeftElement pointerEvents="auto">
-                  <Menu>
+                  <Menu isLazy lazyBehavior="unmount">
                     <Tooltip label="Add options">
                       <MenuButton
                         as={IconButton}
