@@ -17,12 +17,8 @@ import {
   IconButton,
   BoxProps,
   useColorMode,
-  Modal,
-  ModalOverlay,
-  ModalCloseButton,
-  ModalBody,
 } from "@chakra-ui/react";
-import { ModalContent } from "@themed-components";
+import { ImageModal } from "@themed-components";
 import { useTheme, useToastStore } from "@/stores";
 
 interface Message {
@@ -106,51 +102,26 @@ const MessageItem: FC<MessageItemProps> = ({
           alignItems={isUser ? "flex-end" : "flex-start"}
           gap={1}
         >
-          {message.image && (
-            <>
-              <Image
-                src={message.image.url}
-                id={message.image.id}
-                alt={message.image.id}
-                mt={2}
-                maxW={200}
-                rounded="md"
-                cursor="pointer"
-                onClick={() => setIsImageOpen(true)}
-              />
-              <Modal
-                isOpen={isImageOpen}
-                onClose={() => setIsImageOpen(false)}
-                isCentered
-                size="xl"
-                motionPreset="none"
-              >
-                <ModalOverlay />
-                <ModalContent>
-                  <ModalCloseButton
-                    position="fixed"
-                    top={4}
-                    right={4}
-                    borderRadius="full"
-                    bg="primaryText"
-                    color="background"
-                    _hover={{ bg: "primaryText", color: "background" }}
-                    _active={{ bg: "primaryText", color: "background" }}
-                    _focus={{ bg: "primaryText", color: "background" }}
-                  />
-                  <ModalBody p={0}>
-                    <Image
-                      src={message.image.url}
-                      alt={message.image.id}
-                      w="100%"
-                      maxH="80vh"
-                      objectFit="contain"
-                    />
-                  </ModalBody>
-                </ModalContent>
-              </Modal>
-            </>
-          )}
+            {message.image && (
+              <>
+                <Image
+                  src={message.image.url}
+                  id={message.image.id}
+                  alt={message.image.id}
+                  mt={2}
+                  maxW={200}
+                  rounded="md"
+                  cursor="pointer"
+                  onClick={() => setIsImageOpen(true)}
+                />
+                <ImageModal
+                  isOpen={isImageOpen}
+                  onClose={() => setIsImageOpen(false)}
+                  src={message.image.url}
+                  alt={message.image.id}
+                />
+              </>
+            )}
           {message.text && (
             <Box
               p={3}
