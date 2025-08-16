@@ -21,12 +21,11 @@ const ImageModal: FC<ImageModalProps> = ({ src, alt, ...props }) => {
     <Modal
       isCentered
       size="full"
-      motionPreset="none"
       closeOnOverlayClick={false}
       {...props}
     >
-      <ModalOverlay bgColor="background" />
-      <ModalContent h="full">
+      <ModalOverlay />
+      <ModalContent h="full" bgColor="background">
         <ModalCloseButton
           position="fixed"
           top={4}
@@ -44,7 +43,7 @@ const ImageModal: FC<ImageModalProps> = ({ src, alt, ...props }) => {
             src={src}
             alt={alt}
             maxW="100%"
-            maxH="80vh"
+            maxH="70vh"
             objectFit="contain"
           />
         </ModalBody>
