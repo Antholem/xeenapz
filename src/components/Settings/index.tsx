@@ -75,6 +75,7 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
       scrollBehavior="inside"
       isOpen={isOpen}
       onClose={onClose}
+      closeOnOverlayClick={false}
       isCentered
     >
       <ModalOverlay />
