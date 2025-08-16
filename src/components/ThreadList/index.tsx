@@ -18,7 +18,7 @@ import { Box, Text, Flex } from "@chakra-ui/react";
 import { supabase } from "@/lib/supabase/client";
 import { formatNormalTime } from "@/utils/dateFormatter";
 import { Progress } from "@themed-components";
-import { useAuth, useTheme } from "@/stores";
+import { useAuth, useAccentColor } from "@/stores";
 import { ThreadItem } from "@/components";
 
 interface SearchResultItem {
@@ -58,7 +58,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
   const [readyToRender, setReadyToRender] = useState(false);
   const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
 
-  const { colorScheme } = useTheme();
+  const { accentColor } = useAccentColor();
 
   const fetchMessages = useCallback(
     async (threadId: string): Promise<Message[]> => {
@@ -254,7 +254,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
                   textAlign="left"
                 >
                   {msg.text.substring(0, start)}
-                  <Box as="span" bgColor={`${colorScheme}.400`} color="gray.50">
+                  <Box as="span" bgColor={`${accentColor}.400`} color="gray.50">
                     {msg.text.substring(start, end)}
                   </Box>
                   {msg.text.substring(end)}
@@ -281,7 +281,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
     }
 
     return { titleResults: titles, messageResults: messages };
-  }, [searchTerm, loadedThreads, colorScheme]);
+  }, [searchTerm, loadedThreads, accentColor]);
 
   const hasResults = titleResults.length > 0 || messageResults.length > 0;
 

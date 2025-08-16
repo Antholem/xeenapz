@@ -1,7 +1,7 @@
 import { FC, ReactNode, useState, useRef } from "react";
 import { Flex, Icon, Text, useColorMode } from "@chakra-ui/react";
 import { IoMdImage } from "react-icons/io";
-import { useTheme } from "@/stores";
+import { useAccentColor } from "@/stores";
 
 interface ThreadLayoutProps {
   children: ReactNode;
@@ -10,9 +10,9 @@ interface ThreadLayoutProps {
 
 const DropOverlay: FC = () => {
   const { colorMode } = useColorMode();
-  const { colorScheme } = useTheme();
+  const { accentColor } = useAccentColor();
   const borderColor =
-    colorMode === "dark" ? `${colorScheme}.300` : `${colorScheme}.500`;
+    colorMode === "dark" ? `${accentColor}.300` : `${accentColor}.500`;
 
   return (
     <Flex
