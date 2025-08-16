@@ -7,18 +7,22 @@ import {
   useImperativeHandle,
 } from "react";
 import {
-    Flex,
-    IconButton,
-    Card,
-    Tooltip,
-    Divider,
-    Box,
-    Image,
-  } from "@chakra-ui/react";
-import { IoStop } from "react-icons/io5";
-import { IoIosMic, IoMdImage, IoMdSend, IoMdClose } from "react-icons/io";
+  Flex,
+  IconButton,
+  Card,
+  Tooltip,
+  Divider,
+  Box,
+  Image,
+  InputLeftElement,
+  Menu,
+  MenuButton,
+  Icon,
+} from "@chakra-ui/react";
+import { IoStop, IoAddCircleSharp } from "react-icons/io5";
+import { IoIosMic, IoMdSend, IoMdClose, IoMdImage } from "react-icons/io";
 import { SpeechRecognize } from "@/lib";
-  import { Input, ImageModal } from "@themed-components";
+import { Input, ImageModal, MenuList, MenuItem, InputGroup } from "@themed-components";
 
 export interface MessageInputHandle {
   handleFile: (file: File) => void;
@@ -108,43 +112,43 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
       <Fragment>
         <Divider orientation="horizontal" />
         <Card p={3} borderRadius={0} variant="surface">
-            {preview && (
-              <>
-                <Box position="relative" boxSize="100px" mb={3}>
-                  <Image
-                    src={preview}
-                    alt="Preview"
-                    borderRadius="md"
-                    cursor="pointer"
-                    boxSize="100px"
-                    objectFit="cover"
-                    onClick={() => setIsPreviewOpen(true)}
-                  />
-                  <IconButton
-                    aria-label="Discard image"
-                    size="xs"
-                    bg="primaryText"
-                    color="background"
-                    _hover={{ bg: "primaryText", color: "background" }}
-                    _active={{ bg: "primaryText", color: "background" }}
-                    _focus={{ bg: "primaryText", color: "background" }}
-                    icon={<IoMdClose />}
-                    variant="solid"
-                    position="absolute"
-                    top={1}
-                    right={1}
-                    isRound={true}
-                    onClick={handleDiscard}
-                  />
-                </Box>
-                <ImageModal
-                  isOpen={isPreviewOpen}
-                  onClose={() => setIsPreviewOpen(false)}
+          {preview && (
+            <>
+              <Box position="relative" boxSize="100px" mb={3}>
+                <Image
                   src={preview}
                   alt="Preview"
+                  borderRadius="md"
+                  cursor="pointer"
+                  boxSize="100px"
+                  objectFit="cover"
+                  onClick={() => setIsPreviewOpen(true)}
                 />
-              </>
-            )}
+                <IconButton
+                  aria-label="Discard image"
+                  size="xs"
+                  bg="primaryText"
+                  color="background"
+                  _hover={{ bg: "primaryText", color: "background" }}
+                  _active={{ bg: "primaryText", color: "background" }}
+                  _focus={{ bg: "primaryText", color: "background" }}
+                  icon={<IoMdClose />}
+                  variant="solid"
+                  position="absolute"
+                  top={1}
+                  right={1}
+                  isRound={true}
+                  onClick={handleDiscard}
+                />
+              </Box>
+              <ImageModal
+                isOpen={isPreviewOpen}
+                onClose={() => setIsPreviewOpen(false)}
+                src={preview}
+                alt="Preview"
+              />
+            </>
+          )}
           <input
             type="file"
             accept="image/*"
@@ -153,29 +157,43 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
             onChange={handleImageChange}
           />
           <Flex gap={2} justify="center" align="center">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={async (e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  await handleSend();
-                }
-              }}
-              placeholder="Write a message..."
-              flex="1"
-              variant="filled"
-              isDisabled={isDisabled}
-            />
-            <Tooltip label="Upload image">
-              <IconButton
-                aria-label="Upload image"
-                variant="ghost"
-                icon={<IoMdImage />}
-                onClick={() => fileInputRef.current?.click()}
+            <InputGroup flex="1">
+              <InputLeftElement pointerEvents="auto">
+                <Menu isLazy lazyBehavior="unmount">
+                  <Tooltip label="Add options">
+                    <MenuButton
+                      as={IconButton}
+                      aria-label="Add options"
+                      variant="ghost"
+                      icon={<IoAddCircleSharp />}
+                      isDisabled={isDisabled}
+                    />
+                  </Tooltip>
+                  <MenuList>
+                    <MenuItem
+                      icon={<Icon as={IoMdImage} boxSize={4} />}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      Upload image
+                    </MenuItem>
+                  </MenuList>
+                </Menu>
+              </InputLeftElement>
+              <Input
+                leftElement
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={async (e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    await handleSend();
+                  }
+                }}
+                placeholder="Write a message..."
+                variant="filled"
                 isDisabled={isDisabled}
               />
-            </Tooltip>
+            </InputGroup>
             <Tooltip label={isListening ? "Stop" : "Type by voice"}>
               <IconButton
                 aria-label="Speech Recognition"
