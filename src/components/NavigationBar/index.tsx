@@ -5,12 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { HiOutlineChevronDown } from "react-icons/hi";
 import { IoMdMenu } from "react-icons/io";
-import {
-  RiChat3Line,
-  RiChatHistoryFill,
-  RiMoonFill,
-  RiSunFill,
-} from "react-icons/ri";
+import { RiChat3Line, RiChatHistoryFill } from "react-icons/ri";
 
 import {
   Card,
@@ -20,7 +15,6 @@ import {
   Menu,
   MenuButton,
   Text,
-  useColorMode,
   useDisclosure,
 } from "@chakra-ui/react";
 
@@ -34,7 +28,6 @@ interface Thread {
 }
 
 const NavigationBar: FC = () => {
-  const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { user, loading: authLoading } = useAuth();
   const pathname = usePathname();
@@ -190,12 +183,6 @@ const NavigationBar: FC = () => {
                 onClick={toggleTemporaryChat}
               />
             )}
-            <IconButton
-              aria-label="Toggle Dark Mode"
-              icon={colorMode === "light" ? <RiMoonFill /> : <RiSunFill />}
-              onClick={toggleColorMode}
-              variant="ghost"
-            />
             {!user && <Button onClick={handleGoogleSignIn}>Login</Button>}
           </Flex>
         </Flex>

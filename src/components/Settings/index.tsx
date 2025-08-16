@@ -17,9 +17,6 @@ import {
   Flex,
   useBreakpointValue,
   ModalCloseButton,
-  FormControl,
-  FormLabel,
-  Switch,
 } from "@chakra-ui/react";
 import { IoSettings, IoSettingsOutline } from "react-icons/io5";
 import { MdOutlineColorLens, MdColorLens, MdInfoOutline, MdInfo } from "react-icons/md";
@@ -29,6 +26,7 @@ import { HiOutlineSpeakerWave, HiSpeakerWave, HiUser } from "react-icons/hi2";
 import { BiMessageDetail, BiSolidMessageDetail } from "react-icons/bi";
 import { TbArrowBigUpLines, TbArrowBigUpLinesFilled } from "react-icons/tb";
 import { HiLockClosed, HiOutlineLockClosed, HiOutlineUser } from "react-icons/hi";
+import Appearance from "./Appearance";
 
 interface SettingsProps {
   isOpen: boolean;
@@ -36,7 +34,7 @@ interface SettingsProps {
 }
 
 const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
-  const { colorMode, toggleColorMode } = useColorMode();
+  const { colorMode } = useColorMode();
   const { colorScheme } = useTheme();
   const [tabIndex, setTabIndex] = useState(0);
   const tabListRef = useRef<HTMLDivElement>(null);
@@ -193,20 +191,13 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
             <TabPanels flex="1" minH={0} overflowY="auto">
               <TabPanel>General settings go here.</TabPanel>
               <TabPanel>
-                <FormControl display="flex" alignItems="center">
-                  <FormLabel htmlFor="color-mode-toggle" mb="0">
-                    Dark Mode
-                  </FormLabel>
-                  <Switch
-                    id="color-mode-toggle"
-                    isChecked={colorMode === "dark"}
-                    onChange={toggleColorMode}
-                  />
-                </FormControl>
+                <Appearance />
               </TabPanel>
+              <TabPanel>Voice & Accessibility settings go here.</TabPanel>
               <TabPanel>Chat preferences go here.</TabPanel>
               <TabPanel>Data & Privacy settings go here.</TabPanel>
               <TabPanel>Account settings go here.</TabPanel>
+              <TabPanel>Advanced settings go here.</TabPanel>
               <TabPanel>About info goes here.</TabPanel>
             </TabPanels>
           </Tabs>
