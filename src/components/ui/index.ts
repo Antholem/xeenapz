@@ -7,6 +7,7 @@ import AlertDialogContent from "./AlertDialogContent";
 import ModalContent from "./ModalContent";
 import MenuItem from "./MenuItem";
 import MenuList from "./MenuList";
+import ImageModal from "./ImageModal";
 
 export {
   Button,
@@ -18,4 +19,5 @@ export {
   ModalContent,
   MenuItem,
   MenuList,
+  ImageModal,
 };

@@ -7,22 +7,18 @@ import {
   useImperativeHandle,
 } from "react";
 import {
-  Flex,
-  IconButton,
-  Card,
-  Tooltip,
-  Divider,
-  Box,
-  Image,
-  Modal,
-  ModalOverlay,
-  ModalCloseButton,
-  ModalBody,
-} from "@chakra-ui/react";
+    Flex,
+    IconButton,
+    Card,
+    Tooltip,
+    Divider,
+    Box,
+    Image,
+  } from "@chakra-ui/react";
 import { IoStop } from "react-icons/io5";
 import { IoIosMic, IoMdImage, IoMdSend, IoMdClose } from "react-icons/io";
 import { SpeechRecognize } from "@/lib";
-import { Input, ModalContent } from "@themed-components";
+  import { Input, ImageModal } from "@themed-components";
 
 export interface MessageInputHandle {
   handleFile: (file: File) => void;
@@ -112,65 +108,43 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
       <Fragment>
         <Divider orientation="horizontal" />
         <Card p={3} borderRadius={0} variant="surface">
-          {preview && (
-            <>
-              <Box position="relative" maxW="100px" mb={3}>
-                <Image
-                  src={preview}
-                  alt="Preview"
-                  borderRadius="md"
-                  cursor="pointer"
-                  onClick={() => setIsPreviewOpen(true)}
-                />
-                <IconButton
-                  aria-label="Discard image"
-                  size="xs"
-                  bg="primaryText"
-                  color="background"
-                  _hover={{ bg: "primaryText", color: "background" }}
-                  _active={{ bg: "primaryText", color: "background" }}
-                  _focus={{ bg: "primaryText", color: "background" }}
-                  icon={<IoMdClose />}
-                  variant="solid"
-                  position="absolute"
-                  top={1}
-                  right={1}
-                  isRound={true}
-                  onClick={handleDiscard}
-                />
-              </Box>
-              <Modal
-                isOpen={isPreviewOpen}
-                onClose={() => setIsPreviewOpen(false)}
-                isCentered
-                size="xl"
-                motionPreset="none"
-              >
-                <ModalOverlay />
-                <ModalContent>
-                  <ModalCloseButton
-                    position="fixed"
-                    top={4}
-                    right={4}
-                    borderRadius="full"
+            {preview && (
+              <>
+                <Box position="relative" boxSize="100px" mb={3}>
+                  <Image
+                    src={preview}
+                    alt="Preview"
+                    borderRadius="md"
+                    cursor="pointer"
+                    boxSize="100px"
+                    objectFit="cover"
+                    onClick={() => setIsPreviewOpen(true)}
+                  />
+                  <IconButton
+                    aria-label="Discard image"
+                    size="xs"
                     bg="primaryText"
                     color="background"
                     _hover={{ bg: "primaryText", color: "background" }}
                     _active={{ bg: "primaryText", color: "background" }}
-                    _focus={{ bg: "primaryText", color: "background" }} />
-                  <ModalBody p={0}>
-                    <Image
-                      src={preview}
-                      alt="Preview"
-                      w="100%"
-                      maxH="80vh"
-                      objectFit="contain"
-                    />
-                  </ModalBody>
-                </ModalContent>
-              </Modal>
-            </>
-          )}
+                    _focus={{ bg: "primaryText", color: "background" }}
+                    icon={<IoMdClose />}
+                    variant="solid"
+                    position="absolute"
+                    top={1}
+                    right={1}
+                    isRound={true}
+                    onClick={handleDiscard}
+                  />
+                </Box>
+                <ImageModal
+                  isOpen={isPreviewOpen}
+                  onClose={() => setIsPreviewOpen(false)}
+                  src={preview}
+                  alt="Preview"
+                />
+              </>
+            )}
           <input
             type="file"
             accept="image/*"
