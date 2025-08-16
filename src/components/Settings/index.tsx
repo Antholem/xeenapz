@@ -19,22 +19,15 @@ import {
   ModalCloseButton,
   FormControl,
   FormLabel,
-  Menu,
-  MenuButton,
 } from "@chakra-ui/react";
 import { IoSettings, IoSettingsOutline } from "react-icons/io5";
 import { MdOutlineColorLens, MdColorLens, MdInfoOutline, MdInfo } from "react-icons/md";
-import { ModalContent, Button, MenuItem, MenuList } from "@themed-components";
+import { ModalContent, Select } from "@themed-components";
 import { useTheme } from "@/stores";
 import { HiOutlineSpeakerWave, HiSpeakerWave, HiUser } from "react-icons/hi2";
 import { BiMessageDetail, BiSolidMessageDetail } from "react-icons/bi";
 import { TbArrowBigUpLines, TbArrowBigUpLinesFilled } from "react-icons/tb";
-import {
-  HiLockClosed,
-  HiOutlineChevronDown,
-  HiOutlineLockClosed,
-  HiOutlineUser,
-} from "react-icons/hi";
+import { HiLockClosed, HiOutlineLockClosed, HiOutlineUser } from "react-icons/hi";
 
 interface SettingsProps {
   isOpen: boolean;
@@ -81,11 +74,6 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
     } as const;
     return palette[state];
   };
-
-  const modeLabel =
-    mode === "system"
-      ? "System default"
-      : mode.charAt(0).toUpperCase() + mode.slice(1);
 
   const tabs = [
     {
@@ -224,26 +212,15 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
                 <Flex direction="column" maxW="sm" gap={4}>
                   <FormControl>
                     <FormLabel>Theme</FormLabel>
-                    <Menu>
-                      <MenuButton
-                        as={Button}
-                        rightIcon={<HiOutlineChevronDown />}
-                        variant="outline"
-                      >
-                        {modeLabel}
-                      </MenuButton>
-                      <MenuList>
-                        <MenuItem onClick={() => handleColorModeChange("light")}>
-                          Light
-                        </MenuItem>
-                        <MenuItem onClick={() => handleColorModeChange("dark")}>
-                          Dark
-                        </MenuItem>
-                        <MenuItem onClick={() => handleColorModeChange("system")}>
-                          System default
-                        </MenuItem>
-                      </MenuList>
-                    </Menu>
+                    <Select
+                      value={mode}
+                      onChange={handleColorModeChange}
+                      options={[
+                        { label: "Light", value: "light" },
+                        { label: "Dark", value: "dark" },
+                        { label: "System default", value: "system" },
+                      ]}
+                    />
                   </FormControl>
                 </Flex>
               </TabPanel>
