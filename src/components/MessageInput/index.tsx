@@ -14,11 +14,15 @@ import {
     Divider,
     Box,
     Image,
+    InputGroup,
+    InputLeftElement,
+    Menu,
+    MenuButton,
   } from "@chakra-ui/react";
-import { IoStop } from "react-icons/io5";
-import { IoIosMic, IoMdImage, IoMdSend, IoMdClose } from "react-icons/io";
+import { IoStop, IoAddCircleSharp } from "react-icons/io5";
+import { IoIosMic, IoMdSend, IoMdClose } from "react-icons/io";
 import { SpeechRecognize } from "@/lib";
-  import { Input, ImageModal } from "@themed-components";
+  import { Input, ImageModal, MenuList, MenuItem } from "@themed-components";
 
 export interface MessageInputHandle {
   handleFile: (file: File) => void;
@@ -152,30 +156,39 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
             style={{ display: "none" }}
             onChange={handleImageChange}
           />
-          <Flex gap={2} justify="center" align="center">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={async (e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  await handleSend();
-                }
-              }}
-              placeholder="Write a message..."
-              flex="1"
-              variant="filled"
-              isDisabled={isDisabled}
-            />
-            <Tooltip label="Upload image">
-              <IconButton
-                aria-label="Upload image"
-                variant="ghost"
-                icon={<IoMdImage />}
-                onClick={() => fileInputRef.current?.click()}
-                isDisabled={isDisabled}
-              />
-            </Tooltip>
+            <Flex gap={2} justify="center" align="center">
+              <InputGroup flex="1">
+                <InputLeftElement pointerEvents="auto">
+                  <Menu>
+                    <MenuButton
+                      as={IconButton}
+                      aria-label="Add options"
+                      variant="ghost"
+                      icon={<IoAddCircleSharp />}
+                      isDisabled={isDisabled}
+                    />
+                    <MenuList>
+                      <MenuItem onClick={() => fileInputRef.current?.click()}>
+                        Upload image
+                      </MenuItem>
+                    </MenuList>
+                  </Menu>
+                </InputLeftElement>
+                <Input
+                  leftElement
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={async (e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      await handleSend();
+                    }
+                  }}
+                  placeholder="Write a message..."
+                  variant="filled"
+                  isDisabled={isDisabled}
+                />
+              </InputGroup>
             <Tooltip label={isListening ? "Stop" : "Type by voice"}>
               <IconButton
                 aria-label="Speech Recognition"
