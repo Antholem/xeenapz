@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useRef, useState } from "react";
+import { FC, useEffect, useRef, useState } from "react";
 import {
   Modal,
   ModalOverlay,
@@ -19,11 +19,10 @@ import {
   ModalCloseButton,
   FormControl,
   FormLabel,
-  Switch,
 } from "@chakra-ui/react";
 import { IoSettings, IoSettingsOutline } from "react-icons/io5";
 import { MdOutlineColorLens, MdColorLens, MdInfoOutline, MdInfo } from "react-icons/md";
-import { ModalContent } from "@themed-components";
+import { ModalContent, Select } from "@themed-components";
 import { useTheme } from "@/stores";
 import { HiOutlineSpeakerWave, HiSpeakerWave, HiUser } from "react-icons/hi2";
 import { BiMessageDetail, BiSolidMessageDetail } from "react-icons/bi";
@@ -36,11 +35,28 @@ interface SettingsProps {
 }
 
 const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
-  const { colorMode, toggleColorMode } = useColorMode();
+  const { colorMode, setColorMode } = useColorMode();
   const { colorScheme } = useTheme();
   const [tabIndex, setTabIndex] = useState(0);
+  const [mode, setMode] = useState<"light" | "dark" | "system">("system");
   const tabListRef = useRef<HTMLDivElement>(null);
   const isMobile = useBreakpointValue({ base: true, md: false }) ?? false;
+
+  useEffect(() => {
+    const stored =
+      (typeof window !== "undefined" &&
+        (localStorage.getItem("chakra-ui-color-mode") as
+          | "light"
+          | "dark"
+          | "system"
+          | null)) || "system";
+    setMode(stored);
+  }, []);
+
+  const handleColorModeChange = (value: "light" | "dark" | "system") => {
+    setMode(value);
+    setColorMode(value);
+  };
 
   const handleTabListWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     if (!isMobile) return;
@@ -193,16 +209,23 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
             <TabPanels flex="1" minH={0} overflowY="auto">
               <TabPanel>General settings go here.</TabPanel>
               <TabPanel>
-                <FormControl display="flex" alignItems="center">
-                  <FormLabel htmlFor="color-mode-toggle" mb="0">
-                    Dark Mode
-                  </FormLabel>
-                  <Switch
-                    id="color-mode-toggle"
-                    isChecked={colorMode === "dark"}
-                    onChange={toggleColorMode}
-                  />
-                </FormControl>
+                <Flex direction="column" maxW="sm" gap={4}>
+                  <FormControl>
+                    <FormLabel>Theme</FormLabel>
+                    <Select
+                      value={mode}
+                      onChange={(e) =>
+                        handleColorModeChange(
+                          e.target.value as "light" | "dark" | "system"
+                        )
+                      }
+                    >
+                      <option value="light">Light</option>
+                      <option value="dark">Dark</option>
+                      <option value="system">System default</option>
+                    </Select>
+                  </FormControl>
+                </Flex>
               </TabPanel>
               <TabPanel>Chat preferences go here.</TabPanel>
               <TabPanel>Data & Privacy settings go here.</TabPanel>
