@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useRef, useState } from "react";
+import { FC, useEffect, useRef, useState } from "react";
 import {
   Modal,
   ModalOverlay,
@@ -19,11 +19,18 @@ import {
   ModalCloseButton,
   FormControl,
   FormLabel,
-  Switch,
+  MenuButton,
 } from "@chakra-ui/react";
 import { IoSettings, IoSettingsOutline } from "react-icons/io5";
 import { MdOutlineColorLens, MdColorLens, MdInfoOutline, MdInfo } from "react-icons/md";
-import { ModalContent } from "@themed-components";
+import {
+  ModalContent,
+  Menu,
+  MenuList,
+  MenuItem,
+  Button,
+} from "@themed-components";
+import { ChevronDownIcon } from "@chakra-ui/icons";
 import { useTheme } from "@/stores";
 import { HiOutlineSpeakerWave, HiSpeakerWave, HiUser } from "react-icons/hi2";
 import { BiMessageDetail, BiSolidMessageDetail } from "react-icons/bi";
@@ -36,9 +43,12 @@ interface SettingsProps {
 }
 
 const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
-  const { colorMode, toggleColorMode } = useColorMode();
+  const { colorMode, setColorMode } = useColorMode();
   const { colorScheme } = useTheme();
   const [tabIndex, setTabIndex] = useState(0);
+  const [colorModePref, setColorModePref] = useState<
+    "light" | "dark" | "system"
+  >("system");
   const tabListRef = useRef<HTMLDivElement>(null);
   const isMobile = useBreakpointValue({ base: true, md: false }) ?? false;
 
@@ -47,6 +57,35 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
     e.preventDefault();
     tabListRef.current?.scrollBy({ left: e.deltaY });
   };
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem("chakra-ui-color-mode");
+    if (
+      stored === "light" ||
+      stored === "dark" ||
+      stored === "system"
+    ) {
+      setColorModePref(stored);
+    }
+  }, []);
+
+  const handleColorModeChange = (mode: "light" | "dark" | "system") => {
+    setColorMode(mode);
+    setColorModePref(mode);
+  };
+
+  const getSelectedItemProps = (
+    mode: "light" | "dark" | "system"
+  ) =>
+    colorModePref === mode
+      ? {
+          bgColor: colorMode === "dark" ? "gray.700" : "gray.100",
+          color:
+            colorMode === "dark"
+              ? `${colorScheme}.200`
+              : `${colorScheme}.600`,
+        }
+      : {};
 
   const getBg = (state: "base" | "hover" | "active" | "selected") => {
     const isDark = colorMode === "dark";
@@ -193,15 +232,47 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
             <TabPanels flex="1" minH={0} overflowY="auto">
               <TabPanel>General settings go here.</TabPanel>
               <TabPanel>
-                <FormControl display="flex" alignItems="center">
-                  <FormLabel htmlFor="color-mode-toggle" mb="0">
-                    Dark Mode
-                  </FormLabel>
-                  <Switch
-                    id="color-mode-toggle"
-                    isChecked={colorMode === "dark"}
-                    onChange={toggleColorMode}
-                  />
+                <FormControl>
+                  <Flex align="center" gap={2}>
+                    <FormLabel mb="0" flexShrink={0}>
+                      Color Mode
+                    </FormLabel>
+                    <Menu>
+                      <MenuButton
+                        as={Button}
+                        rightIcon={<ChevronDownIcon />}
+                        flex="1"
+                        textAlign="left"
+                        justifyContent="space-between"
+                      >
+                        {colorModePref === "system"
+                          ? "System Default"
+                          : colorModePref === "light"
+                            ? "Light"
+                            : "Dark"}
+                      </MenuButton>
+                      <MenuList w="full">
+                        <MenuItem
+                          onClick={() => handleColorModeChange("light")}
+                          {...getSelectedItemProps("light")}
+                        >
+                          Light
+                        </MenuItem>
+                        <MenuItem
+                          onClick={() => handleColorModeChange("dark")}
+                          {...getSelectedItemProps("dark")}
+                        >
+                          Dark
+                        </MenuItem>
+                        <MenuItem
+                          onClick={() => handleColorModeChange("system")}
+                          {...getSelectedItemProps("system")}
+                        >
+                          System Default
+                        </MenuItem>
+                      </MenuList>
+                    </Menu>
+                  </Flex>
                 </FormControl>
               </TabPanel>
               <TabPanel>Chat preferences go here.</TabPanel>
