@@ -17,9 +17,7 @@ import {
   Flex,
   useBreakpointValue,
   ModalCloseButton,
-  FormControl,
-  FormLabel,
-  Switch,
+  Button,
 } from "@chakra-ui/react";
 import { IoSettings, IoSettingsOutline } from "react-icons/io5";
 import { MdOutlineColorLens, MdColorLens, MdInfoOutline, MdInfo } from "react-icons/md";
@@ -29,6 +27,7 @@ import { HiOutlineSpeakerWave, HiSpeakerWave, HiUser } from "react-icons/hi2";
 import { BiMessageDetail, BiSolidMessageDetail } from "react-icons/bi";
 import { TbArrowBigUpLines, TbArrowBigUpLinesFilled } from "react-icons/tb";
 import { HiLockClosed, HiOutlineLockClosed, HiOutlineUser } from "react-icons/hi";
+import { RiSunLine, RiMoonLine, RiComputerLine } from "react-icons/ri";
 
 interface SettingsProps {
   isOpen: boolean;
@@ -36,9 +35,20 @@ interface SettingsProps {
 }
 
 const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
-  const { colorMode, toggleColorMode } = useColorMode();
+  const { colorMode, setColorMode } = useColorMode();
   const { colorScheme } = useTheme();
   const [tabIndex, setTabIndex] = useState(0);
+  const [mode, setMode] = useState<"light" | "dark" | "system">(() => {
+    if (typeof window !== "undefined") {
+      return (
+        (localStorage.getItem("chakra-ui-color-mode") as
+          | "light"
+          | "dark"
+          | "system") || "light"
+      );
+    }
+    return "light";
+  });
   const tabListRef = useRef<HTMLDivElement>(null);
   const isMobile = useBreakpointValue({ base: true, md: false }) ?? false;
 
@@ -46,6 +56,11 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
     if (!isMobile) return;
     e.preventDefault();
     tabListRef.current?.scrollBy({ left: e.deltaY });
+  };
+
+  const handleColorModeChange = (value: "light" | "dark" | "system") => {
+    setMode(value);
+    setColorMode(value);
   };
 
   const getBg = (state: "base" | "hover" | "active" | "selected") => {
@@ -193,16 +208,32 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
             <TabPanels flex="1" minH={0} overflowY="auto">
               <TabPanel>General settings go here.</TabPanel>
               <TabPanel>
-                <FormControl display="flex" alignItems="center">
-                  <FormLabel htmlFor="color-mode-toggle" mb="0">
-                    Dark Mode
-                  </FormLabel>
-                  <Switch
-                    id="color-mode-toggle"
-                    isChecked={colorMode === "dark"}
-                    onChange={toggleColorMode}
-                  />
-                </FormControl>
+                <Flex gap={2} wrap="wrap">
+                  <Button
+                    leftIcon={<RiSunLine />}
+                    variant="outline"
+                    colorScheme={mode === "light" ? colorScheme : "gray"}
+                    onClick={() => handleColorModeChange("light")}
+                  >
+                    Light
+                  </Button>
+                  <Button
+                    leftIcon={<RiMoonLine />}
+                    variant="outline"
+                    colorScheme={mode === "dark" ? colorScheme : "gray"}
+                    onClick={() => handleColorModeChange("dark")}
+                  >
+                    Dark
+                  </Button>
+                  <Button
+                    leftIcon={<RiComputerLine />}
+                    variant="outline"
+                    colorScheme={mode === "system" ? colorScheme : "gray"}
+                    onClick={() => handleColorModeChange("system")}
+                  >
+                    System
+                  </Button>
+                </Flex>
               </TabPanel>
               <TabPanel>Chat preferences go here.</TabPanel>
               <TabPanel>Data & Privacy settings go here.</TabPanel>
