@@ -2,7 +2,8 @@
 
 import { FC, useEffect, useState } from "react";
 import { Button, Flex, Icon, useColorMode } from "@chakra-ui/react";
-import { useTheme, useAuth } from "@/stores";
+import { useAccentColor, useAuth } from "@/stores";
+import { ACCENT_COLORS } from "@/theme/types";
 import { supabase } from "@/lib";
 import {
   RiSunLine,
@@ -15,7 +16,7 @@ import {
 
 const Appearance: FC = () => {
   const { setColorMode } = useColorMode();
-  const { colorScheme } = useTheme();
+  const { accentColor, setAccentColor } = useAccentColor();
   const { user } = useAuth();
 
   const [mode, setMode] = useState<"light" | "dark" | "system">(() => {
@@ -107,12 +108,12 @@ const Appearance: FC = () => {
               key={item.value}
               onClick={() => handleColorModeChange(item.value)}
               variant="outline"
-              colorScheme={isSelected ? colorScheme : "gray"}
-              borderColor={isSelected ? `${colorScheme}.500` : "gray.300"}
-              bg={isSelected ? `${colorScheme}.50` : "transparent"}
+              colorScheme={isSelected ? accentColor : "gray"}
+              borderColor={isSelected ? `${accentColor}.500` : "gray.300"}
+              bg={isSelected ? `${accentColor}.50` : "transparent"}
               _dark={{
-                borderColor: isSelected ? `${colorScheme}.300` : "gray.600",
-                bg: isSelected ? `${colorScheme}.900` : "transparent",
+                borderColor: isSelected ? `${accentColor}.300` : "gray.600",
+                bg: isSelected ? `${accentColor}.900` : "transparent",
               }}
               leftIcon={
                 <Icon
@@ -123,6 +124,35 @@ const Appearance: FC = () => {
             >
               {item.label}
             </Button>
+          );
+        })}
+      </Flex>
+
+      <Flex direction="column" gap={1} mt={4}>
+        <Flex fontWeight="semibold" fontSize="md">
+          Accent Color
+        </Flex>
+        <Flex fontSize="sm" color="secondaryText">
+          Choose the accent color used across the app
+        </Flex>
+      </Flex>
+
+      <Flex gap={2} mt={1} wrap="wrap">
+        {ACCENT_COLORS.map((color) => {
+          const isSelected = accentColor === color;
+          return (
+            <Button
+              key={color}
+              onClick={() => setAccentColor(color)}
+              aria-label={color}
+              title={color}
+              w={8}
+              h={8}
+              p={0}
+              variant={isSelected ? "solid" : "outline"}
+              colorScheme={color}
+              borderRadius="full"
+            />
           );
         })}
       </Flex>

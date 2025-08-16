@@ -2,11 +2,11 @@
 
 import { forwardRef } from "react";
 import { InputGroup as ChakraInputGroup, type InputGroupProps } from "@chakra-ui/react";
-import { useTheme } from "@/stores";
+import { useAccentColor } from "@/stores";
 
 const InputGroup = forwardRef<HTMLDivElement, InputGroupProps>((props, ref) => {
-  const { colorScheme } = useTheme();
-  return <ChakraInputGroup ref={ref} colorScheme={colorScheme} {...props} />;
+  const { accentColor } = useAccentColor();
+  return <ChakraInputGroup ref={ref} colorScheme={accentColor} {...props} />;
 });
 
 InputGroup.displayName = "InputGroup";

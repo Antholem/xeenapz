@@ -6,7 +6,7 @@ import {
   InputProps,
   useColorMode,
 } from "@chakra-ui/react";
-import { useTheme } from "@/stores";
+import { useAccentColor } from "@/stores";
 
 interface CustomInputProps extends InputProps {
   leftElement?: ReactNode;
@@ -21,12 +21,12 @@ const Input: FC<CustomInputProps> = ({
   focusBorderColor,
   ...rest
 }) => {
-  const { colorScheme } = useTheme();
+  const { accentColor } = useAccentColor();
   const { colorMode } = useColorMode();
 
   const computedFocusBorderColor =
     focusBorderColor ??
-    (colorMode === "dark" ? `${colorScheme}.300` : `${colorScheme}.400`);
+    (colorMode === "dark" ? `${accentColor}.300` : `${accentColor}.400`);
 
   return (
     <ChakraInput
