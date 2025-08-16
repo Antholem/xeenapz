@@ -14,15 +14,14 @@ import {
     Divider,
     Box,
     Image,
-    InputGroup,
     InputLeftElement,
     Menu,
     MenuButton,
   } from "@chakra-ui/react";
-import { IoStop, IoAddCircleSharp } from "react-icons/io5";
+import { IoStop, IoAddCircleSharp, IoImageOutline } from "react-icons/io5";
 import { IoIosMic, IoMdSend, IoMdClose } from "react-icons/io";
 import { SpeechRecognize } from "@/lib";
-  import { Input, ImageModal, MenuList, MenuItem } from "@themed-components";
+  import { Input, ImageModal, MenuList, MenuItem, InputGroup } from "@themed-components";
 
 export interface MessageInputHandle {
   handleFile: (file: File) => void;
@@ -160,15 +159,20 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
               <InputGroup flex="1">
                 <InputLeftElement pointerEvents="auto">
                   <Menu>
-                    <MenuButton
-                      as={IconButton}
-                      aria-label="Add options"
-                      variant="ghost"
-                      icon={<IoAddCircleSharp />}
-                      isDisabled={isDisabled}
-                    />
+                    <Tooltip label="Add options">
+                      <MenuButton
+                        as={IconButton}
+                        aria-label="Add options"
+                        variant="ghost"
+                        icon={<IoAddCircleSharp />}
+                        isDisabled={isDisabled}
+                      />
+                    </Tooltip>
                     <MenuList>
-                      <MenuItem onClick={() => fileInputRef.current?.click()}>
+                      <MenuItem
+                        icon={<IoImageOutline />}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
                         Upload image
                       </MenuItem>
                     </MenuList>

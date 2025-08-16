@@ -1,5 +1,6 @@
 import Button from "./Button";
 import Input from "./Input";
+import InputGroup from "./InputGroup";
 import Progress from "./Progress";
 import Spinner from "./Spinner";
 import Toast from "./Toast";
@@ -12,6 +13,7 @@ import ImageModal from "./ImageModal";
 export {
   Button,
   Input,
+  InputGroup,
   Progress,
   Spinner,
   Toast,
