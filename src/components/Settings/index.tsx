@@ -21,10 +21,14 @@ import {
   FormLabel,
   Switch,
 } from "@chakra-ui/react";
-import { IoSettingsOutline } from "react-icons/io5";
-import { MdOutlineColorLens, MdColorLens } from "react-icons/md";
+import { IoSettings, IoSettingsOutline } from "react-icons/io5";
+import { MdOutlineColorLens, MdColorLens, MdInfoOutline, MdInfo } from "react-icons/md";
 import { ModalContent } from "@themed-components";
 import { useTheme } from "@/stores";
+import { HiOutlineSpeakerWave, HiSpeakerWave, HiUser } from "react-icons/hi2";
+import { BiMessageDetail, BiSolidMessageDetail } from "react-icons/bi";
+import { TbArrowBigUpLines, TbArrowBigUpLinesFilled } from "react-icons/tb";
+import { HiLockClosed, HiOutlineLockClosed, HiOutlineUser } from "react-icons/hi";
 
 interface SettingsProps {
   isOpen: boolean;
@@ -56,22 +60,59 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
   };
 
   const tabs = [
-    { key: "general", label: "General", icon: IoSettingsOutline },
+    {
+      key: "general",
+      label: "General",
+      icon: IoSettingsOutline,
+      selectedIcon: IoSettings,
+    },
     {
       key: "appearance",
       label: "Appearance",
       icon: MdOutlineColorLens,
       selectedIcon: MdColorLens,
     },
-    { key: "chat", label: "Chat", icon: IoSettingsOutline },
-    { key: "privacy", label: "Data & Privacy", icon: IoSettingsOutline },
-    { key: "account", label: "Account", icon: IoSettingsOutline },
-    { key: "about", label: "About", icon: IoSettingsOutline },
+    {
+      key: "voice",
+      label: "Voice & Accessibility",
+      icon: HiOutlineSpeakerWave,
+      selectedIcon: HiSpeakerWave,
+    },
+    {
+      key: "chat",
+      label: "Chat",
+      icon: BiMessageDetail,
+      selectedIcon: BiSolidMessageDetail,
+    },
+    {
+      key: "privacy",
+      label: "Data & Privacy",
+      icon: HiOutlineLockClosed,
+      selectedIcon: HiLockClosed,
+    },
+    {
+      key: "account",
+      label: "Account",
+      icon: HiOutlineUser,
+      selectedIcon: HiUser,
+    },
+    {
+      key: "advanced",
+      label: "Advanced",
+      icon: TbArrowBigUpLines,
+      selectedIcon: TbArrowBigUpLinesFilled,
+    },
+    {
+      key: "about",
+      label: "About",
+      icon: MdInfoOutline,
+      selectedIcon: MdInfo,
+    },
   ];
 
   return (
     <Modal
-      size={useBreakpointValue({ base: "full", md: "xl" })}
+      size={useBreakpointValue({ base: "full", md: "3xl" })}
       scrollBehavior="inside"
       isOpen={isOpen}
       onClose={onClose}
@@ -97,7 +138,7 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
             <TabList
               ref={tabListRef}
               onWheel={handleTabListWheel}
-              w={{ base: "full", md: "200px" }}
+              w={{ base: "full", md: "210px" }}
               p={1}
               bgColor={colorMode === "light" ? "surface" : "mutedSurface"}
               border="none"
