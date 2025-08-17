@@ -19,7 +19,7 @@ import {
   useColorMode,
 } from "@chakra-ui/react";
 import { ImageModal } from "@themed-components";
-import { useTheme, useToastStore } from "@/stores";
+import { useAccentColor, useToastStore } from "@/stores";
 
 interface Message {
   text: string | null;
@@ -61,7 +61,7 @@ const MessageItem: FC<MessageItemProps> = ({
       locale: enUS,
     });
 
-  const { colorScheme } = useTheme();
+    const { colorScheme } = useAccentColor();
   const { colorMode } = useColorMode();
   const { showToast } = useToastStore();
   const [copied, setCopied] = useState(false);
