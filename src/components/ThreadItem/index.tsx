@@ -30,7 +30,7 @@ import {
 } from "@themed-components";
 import { HiOutlineDotsVertical, HiPencil, HiTrash } from "react-icons/hi";
 import { RiArchive2Fill, RiPushpinFill, RiUnpinFill } from "react-icons/ri";
-import { useAuth, useTheme, useToastStore } from "@/stores";
+import { useAuth, useAccentColor, useToastStore } from "@/stores";
 import { ThreadWrapper } from "@/components";
 import { supabase } from "@/lib";
 
@@ -61,7 +61,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
 }) => {
   const { colorMode } = useColorMode();
   const { user } = useAuth();
-  const { colorScheme } = useTheme();
+  const { colorScheme } = useAccentColor();
   const { showToast } = useToastStore();
   const router = useRouter();
   const pathname = usePathname();

@@ -18,7 +18,7 @@ import { Box, Text, Flex } from "@chakra-ui/react";
 import { supabase } from "@/lib/supabase/client";
 import { formatNormalTime } from "@/utils/dateFormatter";
 import { Progress } from "@themed-components";
-import { useAuth, useTheme } from "@/stores";
+import { useAuth, useAccentColor } from "@/stores";
 import { ThreadItem } from "@/components";
 
 interface SearchResultItem {
@@ -58,7 +58,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
   const [readyToRender, setReadyToRender] = useState(false);
   const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
 
-  const { colorScheme } = useTheme();
+  const { colorScheme } = useAccentColor();
 
   const fetchMessages = useCallback(
     async (threadId: string): Promise<Message[]> => {

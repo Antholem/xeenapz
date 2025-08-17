@@ -4,22 +4,22 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { ColorScheme } from "@/theme/types";
 
-interface ThemeColorState {
+interface AccentColorState {
   colorScheme: ColorScheme;
   setColorScheme: (scheme: ColorScheme) => void;
 }
 
-const useTheme = create<ThemeColorState>()(
+const useAccentColor = create<AccentColorState>()(
   persist(
     (set) => ({
       colorScheme: "blue",
       setColorScheme: (scheme) => set({ colorScheme: scheme }),
     }),
     {
-      name: "theme",
+      name: "accent-color",
       storage: createJSONStorage(() => localStorage),
     }
   )
 );
 
-export default useTheme;
+export default useAccentColor;

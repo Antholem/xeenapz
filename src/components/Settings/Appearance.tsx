@@ -2,7 +2,7 @@
 
 import { FC, useEffect, useState } from "react";
 import { Button, Flex, Icon, useColorMode } from "@chakra-ui/react";
-import { useTheme, useAuth } from "@/stores";
+import { useAccentColor, useAuth } from "@/stores";
 import { supabase } from "@/lib";
 import {
   RiSunLine,
@@ -15,7 +15,7 @@ import {
 
 const Appearance: FC = () => {
   const { setColorMode } = useColorMode();
-  const { colorScheme } = useTheme();
+  const { colorScheme } = useAccentColor();
   const { user } = useAuth();
 
   const [mode, setMode] = useState<"light" | "dark" | "system">(() => {

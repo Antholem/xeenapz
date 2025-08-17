@@ -6,10 +6,10 @@ import {
   SpinnerProps,
   useColorMode,
 } from "@chakra-ui/react";
-import { useTheme } from "@/stores";
+import { useAccentColor } from "@/stores";
 
 const Spinner: FC<SpinnerProps> = (props) => {
-  const { colorScheme } = useTheme();
+  const { colorScheme } = useAccentColor();
   const { colorMode } = useColorMode();
 
   const color =
