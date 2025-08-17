@@ -2,7 +2,8 @@
 
 import { FC, useEffect, useState } from "react";
 import { Button, Flex, Icon, useColorMode } from "@chakra-ui/react";
-import { useTheme, useAuth } from "@/stores";
+import { useAccentColor, useAuth } from "@/stores";
+import { ACCENT_COLORS, AccentColor } from "@/theme/types";
 import { supabase } from "@/lib";
 import {
   RiSunLine,
@@ -15,7 +16,7 @@ import {
 
 const Appearance: FC = () => {
   const { setColorMode } = useColorMode();
-  const { colorScheme } = useTheme();
+  const { accentColor, setAccentColor } = useAccentColor();
   const { user } = useAuth();
 
   const [mode, setMode] = useState<"light" | "dark" | "system">(() => {
@@ -55,7 +56,7 @@ const Appearance: FC = () => {
         );
       }
     })();
-  }, [user]);
+  }, [user, mode, setColorMode]);
 
   const handleColorModeChange = async (value: "light" | "dark" | "system") => {
     setMode(value);
@@ -67,6 +68,10 @@ const Appearance: FC = () => {
       { onConflict: "user_id" }
     );
     if (error) console.error("Failed to save color mode:", error);
+  };
+
+  const handleAccentColorChange = (value: AccentColor) => {
+    setAccentColor(value);
   };
 
   return (
@@ -107,12 +112,12 @@ const Appearance: FC = () => {
               key={item.value}
               onClick={() => handleColorModeChange(item.value)}
               variant="outline"
-              colorScheme={isSelected ? colorScheme : "gray"}
-              borderColor={isSelected ? `${colorScheme}.500` : "gray.300"}
-              bg={isSelected ? `${colorScheme}.50` : "transparent"}
+              colorScheme={isSelected ? accentColor : "gray"}
+              borderColor={isSelected ? `${accentColor}.500` : "gray.300"}
+              bg={isSelected ? `${accentColor}.50` : "transparent"}
               _dark={{
-                borderColor: isSelected ? `${colorScheme}.300` : "gray.600",
-                bg: isSelected ? `${colorScheme}.900` : "transparent",
+                borderColor: isSelected ? `${accentColor}.300` : "gray.600",
+                bg: isSelected ? `${accentColor}.900` : "transparent",
               }}
               leftIcon={
                 <Icon
@@ -122,6 +127,37 @@ const Appearance: FC = () => {
               }
             >
               {item.label}
+            </Button>
+          );
+        })}
+      </Flex>
+
+      <Flex direction="column" gap={1} mt={6}>
+        <Flex fontWeight="semibold" fontSize="md">
+          Accent Color
+        </Flex>
+        <Flex fontSize="sm" color="secondaryText">
+          Choose a color for highlights and components
+        </Flex>
+      </Flex>
+
+      <Flex gap={2} mt={1} wrap="wrap">
+        {ACCENT_COLORS.map((color) => {
+          const isSelected = accentColor === color;
+          return (
+            <Button
+              key={color}
+              onClick={() => handleAccentColorChange(color)}
+              variant="outline"
+              colorScheme={isSelected ? color : "gray"}
+              borderColor={isSelected ? `${color}.500` : "gray.300"}
+              bg={isSelected ? `${color}.50` : "transparent"}
+              _dark={{
+                borderColor: isSelected ? `${color}.300` : "gray.600",
+                bg: isSelected ? `${color}.900` : "transparent",
+              }}
+            >
+              {color}
             </Button>
           );
         })}

@@ -2,11 +2,11 @@
 
 import { forwardRef } from "react";
 import { Button as ChakraButton, ButtonProps } from "@chakra-ui/react";
-import { useTheme } from "@/stores";
+import { useAccentColor } from "@/stores";
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
-  const { colorScheme } = useTheme();
-  return <ChakraButton ref={ref} colorScheme={colorScheme} {...props} />;
+  const { accentColor } = useAccentColor();
+  return <ChakraButton ref={ref} colorScheme={accentColor} {...props} />;
 });
 
 Button.displayName = "Button";

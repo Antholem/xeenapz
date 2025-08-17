@@ -21,7 +21,7 @@ import {
 import { IoSettings, IoSettingsOutline } from "react-icons/io5";
 import { MdOutlineColorLens, MdColorLens, MdInfoOutline, MdInfo } from "react-icons/md";
 import { ModalContent } from "@themed-components";
-import { useTheme } from "@/stores";
+import { useAccentColor } from "@/stores";
 import { HiOutlineSpeakerWave, HiSpeakerWave, HiUser } from "react-icons/hi2";
 import { BiMessageDetail, BiSolidMessageDetail } from "react-icons/bi";
 import { TbArrowBigUpLines, TbArrowBigUpLinesFilled } from "react-icons/tb";
@@ -35,7 +35,7 @@ interface SettingsProps {
 
 const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
   const { colorMode } = useColorMode();
-  const { colorScheme } = useTheme();
+  const { accentColor } = useAccentColor();
   const [tabIndex, setTabIndex] = useState(0);
   const tabListRef = useRef<HTMLDivElement>(null);
   const isMobile = useBreakpointValue({ base: true, md: false }) ?? false;
@@ -163,8 +163,8 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
                   _selected={{
                     color:
                       colorMode === "dark"
-                        ? `${colorScheme}.200`
-                        : `${colorScheme}.600`,
+                        ? `${accentColor}.200`
+                        : `${accentColor}.600`,
                     bgColor: getBg("selected"),
                   }}
                   _hover={{ bgColor: getBg("hover") }}
