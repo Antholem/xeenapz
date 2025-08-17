@@ -416,6 +416,8 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
           placement={placement!}
           onClose={onClose!}
           size="xs"
+          // Allow the underlying content (like TabPanels) to remain scrollable
+          blockScrollOnMount={false}
         >
           <DrawerOverlay />
           <DrawerContent>
