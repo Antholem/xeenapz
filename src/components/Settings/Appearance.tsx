@@ -3,6 +3,7 @@
 import { FC, useEffect, useState } from "react";
 import { Button, Flex, Icon, useColorMode } from "@chakra-ui/react";
 import { useAccentColor, useAuth } from "@/stores";
+import { ACCENT_COLORS, AccentColors } from "@/theme/types";
 import { supabase } from "@/lib";
 import {
   RiSunLine,
@@ -11,11 +12,12 @@ import {
   RiSunFill,
   RiMoonFill,
   RiComputerFill,
+  RiCheckboxBlankCircleFill,
 } from "react-icons/ri";
 
 const Appearance: FC = () => {
   const { setColorMode } = useColorMode();
-  const { accentColor } = useAccentColor();
+  const { accentColor, setAccentColor } = useAccentColor();
   const { user } = useAuth();
 
   const [mode, setMode] = useState<"light" | "dark" | "system">(() => {
@@ -107,6 +109,7 @@ const Appearance: FC = () => {
               key={item.value}
               onClick={() => handleColorModeChange(item.value)}
               variant="outline"
+              flex={1}
               colorScheme={isSelected ? accentColor : "gray"}
               borderColor={isSelected ? `${accentColor}.500` : "gray.300"}
               bg={isSelected ? `${accentColor}.50` : "transparent"}
@@ -122,6 +125,45 @@ const Appearance: FC = () => {
               }
             >
               {item.label}
+            </Button>
+          );
+        })}
+      </Flex>
+
+      <Flex direction="column" gap={1} mt={4}>
+        <Flex fontWeight="semibold" fontSize="md">
+          Accent Color
+        </Flex>
+        <Flex fontSize="sm" color="secondaryText">
+          Choose a highlight color for the interface
+        </Flex>
+      </Flex>
+
+      <Flex gap={2} mt={1} wrap="wrap">
+        {Object.entries(ACCENT_COLORS).map(([key, { name }]) => {
+          const isSelected = accentColor === key;
+          return (
+            <Button
+              key={key}
+              onClick={() => setAccentColor(key as AccentColors)}
+              variant="outline"
+              flex={1}
+              colorScheme={isSelected ? (key as AccentColors) : "gray"}
+              borderColor={isSelected ? `${key}.500` : "gray.300"}
+              bg={isSelected ? `${key}.50` : "transparent"}
+              _dark={{
+                borderColor: isSelected ? `${key}.300` : "gray.600",
+                bg: isSelected ? `${key}.900` : "transparent",
+              }}
+              leftIcon={
+                <Icon
+                  as={RiCheckboxBlankCircleFill}
+                  boxSize={4}
+                  color={`${key}.500`}
+                />
+              }
+            >
+              {name}
             </Button>
           );
         })}
