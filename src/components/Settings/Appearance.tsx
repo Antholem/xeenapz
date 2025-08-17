@@ -15,7 +15,7 @@ import {
 
 const Appearance: FC = () => {
   const { setColorMode } = useColorMode();
-  const { colorScheme } = useAccentColor();
+  const { accentColor } = useAccentColor();
   const { user } = useAuth();
 
   const [mode, setMode] = useState<"light" | "dark" | "system">(() => {
@@ -107,12 +107,12 @@ const Appearance: FC = () => {
               key={item.value}
               onClick={() => handleColorModeChange(item.value)}
               variant="outline"
-              colorScheme={isSelected ? colorScheme : "gray"}
-              borderColor={isSelected ? `${colorScheme}.500` : "gray.300"}
-              bg={isSelected ? `${colorScheme}.50` : "transparent"}
+              colorScheme={isSelected ? accentColor : "gray"}
+              borderColor={isSelected ? `${accentColor}.500` : "gray.300"}
+              bg={isSelected ? `${accentColor}.50` : "transparent"}
               _dark={{
-                borderColor: isSelected ? `${colorScheme}.300` : "gray.600",
-                bg: isSelected ? `${colorScheme}.900` : "transparent",
+                borderColor: isSelected ? `${accentColor}.300` : "gray.600",
+                bg: isSelected ? `${accentColor}.900` : "transparent",
               }}
               leftIcon={
                 <Icon
