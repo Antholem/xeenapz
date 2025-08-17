@@ -10,9 +10,9 @@ interface ThreadLayoutProps {
 
 const DropOverlay: FC = () => {
   const { colorMode } = useColorMode();
-  const { colorScheme } = useAccentColor();
+  const { accentColor } = useAccentColor();
   const borderColor =
-    colorMode === "dark" ? `${colorScheme}.300` : `${colorScheme}.500`;
+    colorMode === "dark" ? `${accentColor}.300` : `${accentColor}.500`;
 
   return (
     <Flex

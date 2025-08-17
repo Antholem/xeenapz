@@ -5,9 +5,9 @@ import { Progress as ChakraProgress, ProgressProps } from "@chakra-ui/react";
 import { useAccentColor } from "@/stores";
 
 const Progress: FC<ProgressProps> = (props) => {
-  const { colorScheme } = useAccentColor();
+  const { accentColor } = useAccentColor();
 
-  return <ChakraProgress colorScheme={colorScheme} {...props} />;
+  return <ChakraProgress colorScheme={accentColor} {...props} />;
 };
 
 export default Progress;

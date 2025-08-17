@@ -61,7 +61,7 @@ const MessageItem: FC<MessageItemProps> = ({
       locale: enUS,
     });
 
-    const { colorScheme } = useAccentColor();
+    const { accentColor } = useAccentColor();
   const { colorMode } = useColorMode();
   const { showToast } = useToastStore();
   const [copied, setCopied] = useState(false);
@@ -127,7 +127,7 @@ const MessageItem: FC<MessageItemProps> = ({
               p={3}
               borderRadius="lg"
               color={isUser ? "white" : ""}
-              bg={isUser ? `${colorScheme}.400` : "mutedSurface"}
+              bg={isUser ? `${accentColor}.400` : "mutedSurface"}
               maxW="max-content"
               whiteSpace="pre-wrap"
               wordBreak="break-word"

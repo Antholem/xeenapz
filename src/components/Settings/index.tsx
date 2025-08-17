@@ -35,7 +35,7 @@ interface SettingsProps {
 
 const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
   const { colorMode } = useColorMode();
-  const { colorScheme } = useAccentColor();
+  const { accentColor } = useAccentColor();
   const [tabIndex, setTabIndex] = useState(0);
   const tabListRef = useRef<HTMLDivElement>(null);
   const isMobile = useBreakpointValue({ base: true, md: false }) ?? false;
@@ -163,8 +163,8 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
                   _selected={{
                     color:
                       colorMode === "dark"
-                        ? `${colorScheme}.200`
-                        : `${colorScheme}.600`,
+                        ? `${accentColor}.200`
+                        : `${accentColor}.600`,
                     bgColor: getBg("selected"),
                   }}
                   _hover={{ bgColor: getBg("hover") }}

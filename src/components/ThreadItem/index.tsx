@@ -61,7 +61,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
 }) => {
   const { colorMode } = useColorMode();
   const { user } = useAuth();
-  const { colorScheme } = useAccentColor();
+  const { accentColor } = useAccentColor();
   const { showToast } = useToastStore();
   const router = useRouter();
   const pathname = usePathname();
@@ -273,8 +273,8 @@ const ThreadItem: FC<ThreadItemProps> = ({
         color={
           !isSearchActive && isActive
             ? colorMode === "dark"
-              ? `${colorScheme}.300`
-              : `${colorScheme}.500`
+              ? `${accentColor}.300`
+              : `${accentColor}.500`
             : "inherit"
         }
         colorScheme="gray"

@@ -9,11 +9,11 @@ import {
 import { useAccentColor } from "@/stores";
 
 const Spinner: FC<SpinnerProps> = (props) => {
-  const { colorScheme } = useAccentColor();
+  const { accentColor } = useAccentColor();
   const { colorMode } = useColorMode();
 
   const color =
-    colorMode === "dark" ? `${colorScheme}.300` : `${colorScheme}.400`;
+    colorMode === "dark" ? `${accentColor}.300` : `${accentColor}.400`;
 
   return <ChakraSpinner color={color} {...props} />;
 };

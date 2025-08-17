@@ -21,12 +21,12 @@ const Input: FC<CustomInputProps> = ({
   focusBorderColor,
   ...rest
 }) => {
-  const { colorScheme } = useAccentColor();
+  const { accentColor } = useAccentColor();
   const { colorMode } = useColorMode();
 
   const computedFocusBorderColor =
     focusBorderColor ??
-    (colorMode === "dark" ? `${colorScheme}.300` : `${colorScheme}.400`);
+    (colorMode === "dark" ? `${accentColor}.300` : `${accentColor}.400`);
 
   return (
     <ChakraInput
