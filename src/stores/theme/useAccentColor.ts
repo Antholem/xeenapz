@@ -2,11 +2,11 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { ColorScheme } from "@/theme/types";
+import { AccentColors } from "@/theme/types";
 
 interface AccentColorState {
-  accentColor: ColorScheme;
-  setAccentColor: (scheme: ColorScheme) => void;
+  accentColor: AccentColors;
+  setAccentColor: (scheme: AccentColors) => void;
 }
 
 const useAccentColor = create<AccentColorState>()(
