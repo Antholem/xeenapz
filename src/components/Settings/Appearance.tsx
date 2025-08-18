@@ -44,19 +44,19 @@ const Appearance: FC = () => {
     (async () => {
       const { data, error } = await supabase
         .from("user_preferences")
-        .select("color_mode")
+        .select("color_mode, accent_color")
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (error) {
-        console.error("Failed to load user color mode:", error);
+        console.error("Failed to load user preferences:", error);
         return;
       }
 
       if (data?.color_mode) {
-        const saved = data.color_mode as "light" | "dark" | "system";
-        setMode(saved);
-        setColorMode(saved);
+        const savedMode = data.color_mode as "light" | "dark" | "system";
+        setMode(savedMode);
+        setColorMode(savedMode);
       } else {
         await supabase
           .from("user_preferences")
@@ -65,9 +65,19 @@ const Appearance: FC = () => {
             { onConflict: "user_id" }
           );
       }
+
+      if (data?.accent_color) {
+        setAccentColor(data.accent_color as AccentColors);
+      } else {
+        await supabase
+          .from("user_preferences")
+          .upsert(
+            { user_id: user.id, accent_color: accentColor },
+            { onConflict: "user_id" }
+          );
+      }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, mode, setColorMode, accentColor, setAccentColor]);
 
   const handleColorModeChange = async (value: "light" | "dark" | "system") => {
     setMode(value);
@@ -81,6 +91,19 @@ const Appearance: FC = () => {
         { onConflict: "user_id" }
       );
     if (error) console.error("Failed to save color mode:", error);
+  };
+
+  const handleAccentColorChange = async (value: AccentColors) => {
+    setAccentColor(value);
+
+    if (!user) return;
+    const { error } = await supabase
+      .from("user_preferences")
+      .upsert(
+        { user_id: user.id, accent_color: value },
+        { onConflict: "user_id" }
+      );
+    if (error) console.error("Failed to save accent color:", error);
   };
 
   return (
@@ -159,7 +182,7 @@ const Appearance: FC = () => {
           return (
             <Button
               key={key}
-              onClick={() => setAccentColor(key as AccentColors)}
+              onClick={() => handleAccentColorChange(key as AccentColors)}
               variant="outline"
               justifyContent="flex-start"
               alignItems="center"
