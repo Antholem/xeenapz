@@ -44,19 +44,19 @@ const Appearance: FC = () => {
     (async () => {
       const { data, error } = await supabase
         .from("user_preferences")
-        .select("color_mode, accent_color")
+        .select("color_mode")
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (error) {
-        console.error("Failed to load user preferences:", error);
+        console.error("Failed to load user color mode:", error);
         return;
       }
 
       if (data?.color_mode) {
-        const savedMode = data.color_mode as "light" | "dark" | "system";
-        setMode(savedMode);
-        setColorMode(savedMode);
+        const saved = data.color_mode as "light" | "dark" | "system";
+        setMode(saved);
+        setColorMode(saved);
       } else {
         await supabase
           .from("user_preferences")
@@ -65,19 +65,8 @@ const Appearance: FC = () => {
             { onConflict: "user_id" }
           );
       }
-
-      if (data?.accent_color) {
-        setAccentColor(data.accent_color as AccentColors);
-      } else {
-        await supabase
-          .from("user_preferences")
-          .upsert(
-            { user_id: user.id, accent_color: accentColor },
-            { onConflict: "user_id" }
-          );
-      }
     })();
-  }, [user, mode, setColorMode, accentColor, setAccentColor]);
+  }, [user]);
 
   const handleColorModeChange = async (value: "light" | "dark" | "system") => {
     setMode(value);
@@ -208,4 +197,3 @@ const Appearance: FC = () => {
 };
 
 export default Appearance;
-
