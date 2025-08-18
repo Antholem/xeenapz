@@ -23,6 +23,7 @@ import { IoStop, IoAddCircleSharp } from "react-icons/io5";
 import { IoIosMic, IoMdSend, IoMdClose, IoMdImage } from "react-icons/io";
 import { SpeechRecognize } from "@/lib";
 import { Input, ImageModal, MenuList, MenuItem, InputGroup } from "@themed-components";
+import { useAccentColor } from "@/stores";
 
 export interface MessageInputHandle {
   handleFile: (file: File) => void;
@@ -58,6 +59,8 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
     const toggleSpeechRecognition = () => {
       SpeechRecognize(isListening, resetTranscript);
     };
+
+    const { accentColor } = useAccentColor();
 
     const [preview, setPreview] = useState<string | null>(null);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -205,6 +208,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
             </Tooltip>
             <Tooltip label="Send message">
               <IconButton
+                colorScheme={accentColor}
                 aria-label="Send Message"
                 variant="ghost"
                 icon={<IoMdSend />}

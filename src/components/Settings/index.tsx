@@ -110,7 +110,7 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
 
   return (
     <Modal
-      size={useBreakpointValue({ base: "full", md: "3xl" })}
+      size={useBreakpointValue({ base: "full", md: "4xl" })}
       scrollBehavior="inside"
       isOpen={isOpen}
       onClose={onClose}

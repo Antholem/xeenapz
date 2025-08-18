@@ -159,6 +159,16 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
 
   const stopResizing = () => setIsResizing(false);
 
+  const handleThreadSelect = useCallback(
+    (threadId: string) => {
+      router.push(`/thread/${threadId}`);
+      if (type === "temporary") {
+        onClose?.();
+      }
+    },
+    [router, type, onClose]
+  );
+
   const handleResizing = useCallback(
     (e: MouseEvent) => {
       if (isResizing) {
@@ -387,7 +397,11 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
             </Flex>
           ) : (
             <Box flex="1" overflow="hidden">
-              <ThreadList threads={threads} searchTerm={searchTerm} />
+              <ThreadList
+                threads={threads}
+                searchTerm={searchTerm}
+                onThreadClick={handleThreadSelect}
+              />
             </Box>
           )}
         </Flex>
@@ -469,7 +483,11 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
                     <Spinner size="xl" />
                   </Flex>
                 ) : (
-                  <ThreadList threads={threads} searchTerm={searchTerm} />
+                  <ThreadList
+                    threads={threads}
+                    searchTerm={searchTerm}
+                    onThreadClick={handleThreadSelect}
+                  />
                 )}
               </DrawerBody>
             </Card>

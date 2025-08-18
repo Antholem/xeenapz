@@ -4,10 +4,12 @@ import { ReactNode, useEffect, useState } from "react";
 import {
   ChakraProvider,
   ColorModeScript,
-  useColorMode,
+  useColorModeValue,
+  useTheme,
   useToken,
 } from "@chakra-ui/react";
 import { Global } from "@emotion/react";
+import { transparentize } from "@chakra-ui/theme-tools";
 import { useAccentColor } from "@/stores";
 import theme from "@/theme";
 
@@ -31,18 +33,17 @@ const Providers = ({ children }: { children: ReactNode }) => {
 
 const AccentSelection = () => {
   const { accentColor } = useAccentColor();
-  const { colorMode } = useColorMode();
-  const [lightBg, darkBg, white, black] = useToken("colors", [
-    `${accentColor}.500`,
-    `${accentColor}.300`,
-    "white",
-    "gray.900",
-  ]);
+  const chakraTheme = useTheme();
 
-  const background = colorMode === "dark" ? darkBg : lightBg;
-  const color = colorMode === "dark" ? black : white;
+  const bgToken = useColorModeValue(`${accentColor}.500`, `${accentColor}.200`);
+  const textToken = useColorModeValue("white", "gray.900");
+  const textColor = useToken("colors", textToken);
 
-  return <Global styles={{ "::selection": { background, color } }} />;
+  const background = transparentize(bgToken, 1.0)(chakraTheme);
+
+  return (
+    <Global styles={{ "::selection": { background, color: textColor } }} />
+  );
 };
 
 export default Providers;
