@@ -40,7 +40,7 @@ import { IoAdd, IoSearch, IoSettingsSharp } from "react-icons/io5";
 
 import { supabase } from "@/lib";
 import { Spinner, Input, MenuList, MenuItem } from "@themed-components";
-import { useAuth, useToastStore } from "@/stores";
+import { useAccentColor, useAuth, useToastStore } from "@/stores";
 import { ThreadList, Settings } from "@/components";
 
 interface SideBarProps {
@@ -143,6 +143,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
   const [isResizing, setIsResizing] = useState(false);
 
   const { showToast } = useToastStore();
+  const { accentColor } = useAccentColor();
 
   const {
     isOpen: isSettingsOpen,
@@ -158,6 +159,16 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
   };
 
   const stopResizing = () => setIsResizing(false);
+
+  const handleThreadSelect = useCallback(
+    (threadId: string) => {
+      router.push(`/thread/${threadId}`);
+      if (type === "temporary") {
+        onClose?.();
+      }
+    },
+    [router, type, onClose]
+  );
 
   const handleResizing = useCallback(
     (e: MouseEvent) => {
@@ -387,7 +398,11 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
             </Flex>
           ) : (
             <Box flex="1" overflow="hidden">
-              <ThreadList threads={threads} searchTerm={searchTerm} />
+              <ThreadList
+                threads={threads}
+                searchTerm={searchTerm}
+                onThreadClick={handleThreadSelect}
+              />
             </Box>
           )}
         </Flex>
@@ -396,7 +411,10 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
         w="3px"
         cursor="col-resize"
         onMouseDown={startResizing}
-        _hover={{ bg: "tertiaryText" }}
+        _hover={{
+          _light: { bg: `${accentColor}.500` },
+          _dark: { bg: `${accentColor}.200` },
+        }}
       />
     </Box>
   );
@@ -415,8 +433,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
           isOpen={!!isOpen}
           placement={placement!}
           onClose={onClose!}
-          size="xs"
-          // Allow the underlying content (like TabPanels) to remain scrollable
+          size="full"
           blockScrollOnMount={false}
         >
           <DrawerOverlay />
@@ -469,7 +486,11 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
                     <Spinner size="xl" />
                   </Flex>
                 ) : (
-                  <ThreadList threads={threads} searchTerm={searchTerm} />
+                  <ThreadList
+                    threads={threads}
+                    searchTerm={searchTerm}
+                    onThreadClick={handleThreadSelect}
+                  />
                 )}
               </DrawerBody>
             </Card>

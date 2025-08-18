@@ -1,8 +1,16 @@
 "use client";
 
 import { FC, useEffect, useState } from "react";
-import { Button, Flex, Icon, useColorMode } from "@chakra-ui/react";
+import {
+  Button,
+  Divider,
+  Flex,
+  Icon,
+  SimpleGrid,
+  useColorMode,
+} from "@chakra-ui/react";
 import { useAccentColor, useAuth } from "@/stores";
+import { ACCENT_COLORS, AccentColors } from "@/theme/types";
 import { supabase } from "@/lib";
 import {
   RiSunLine,
@@ -12,10 +20,11 @@ import {
   RiMoonFill,
   RiComputerFill,
 } from "react-icons/ri";
+import { FaSquare } from "react-icons/fa6";
 
 const Appearance: FC = () => {
   const { setColorMode } = useColorMode();
-  const { accentColor } = useAccentColor();
+  const { accentColor, setAccentColor } = useAccentColor();
   const { user } = useAuth();
 
   const [mode, setMode] = useState<"light" | "dark" | "system">(() => {
@@ -49,10 +58,12 @@ const Appearance: FC = () => {
         setMode(saved);
         setColorMode(saved);
       } else {
-        await supabase.from("user_preferences").upsert(
-          { user_id: user.id, color_mode: mode },
-          { onConflict: "user_id" }
-        );
+        await supabase
+          .from("user_preferences")
+          .upsert(
+            { user_id: user.id, color_mode: mode },
+            { onConflict: "user_id" }
+          );
       }
     })();
   }, [user]);
@@ -62,11 +73,26 @@ const Appearance: FC = () => {
     setColorMode(value);
 
     if (!user) return;
-    const { error } = await supabase.from("user_preferences").upsert(
-      { user_id: user.id, color_mode: value },
-      { onConflict: "user_id" }
-    );
+    const { error } = await supabase
+      .from("user_preferences")
+      .upsert(
+        { user_id: user.id, color_mode: value },
+        { onConflict: "user_id" }
+      );
     if (error) console.error("Failed to save color mode:", error);
+  };
+
+  const handleAccentColorChange = async (value: AccentColors) => {
+    setAccentColor(value);
+
+    if (!user) return;
+    const { error } = await supabase
+      .from("user_preferences")
+      .upsert(
+        { user_id: user.id, accent_color: value },
+        { onConflict: "user_id" }
+      );
+    if (error) console.error("Failed to save accent color:", error);
   };
 
   return (
@@ -76,44 +102,45 @@ const Appearance: FC = () => {
           Color Mode
         </Flex>
         <Flex fontSize="sm" color="secondaryText">
-          Select a preferred color mode, or let the app follow your system’s appearance setting
+          Select a preferred color mode, or let the app follow your system’s
+          appearance setting
         </Flex>
       </Flex>
 
-      <Flex gap={2} mt={1} wrap="wrap">
-        {([
-          {
-            label: "Light",
-            value: "light",
-            icon: RiSunLine,
-            selectedIcon: RiSunFill,
-          },
-          {
-            label: "Dark",
-            value: "dark",
-            icon: RiMoonLine,
-            selectedIcon: RiMoonFill,
-          },
-          {
-            label: "System",
-            value: "system",
-            icon: RiComputerLine,
-            selectedIcon: RiComputerFill,
-          },
-        ] as const).map((item) => {
+      <SimpleGrid columns={{ base: 2, sm: 3 }} gap={2}>
+        {(
+          [
+            {
+              label: "Light",
+              value: "light",
+              icon: RiSunLine,
+              selectedIcon: RiSunFill,
+            },
+            {
+              label: "Dark",
+              value: "dark",
+              icon: RiMoonLine,
+              selectedIcon: RiMoonFill,
+            },
+            {
+              label: "System",
+              value: "system",
+              icon: RiComputerLine,
+              selectedIcon: RiComputerFill,
+            },
+          ] as const
+        ).map((item) => {
           const isSelected = mode === item.value;
           return (
             <Button
               key={item.value}
               onClick={() => handleColorModeChange(item.value)}
               variant="outline"
+              justifyContent="flex-start"
+              alignItems="center"
+              textAlign="left"
+              flex={1}
               colorScheme={isSelected ? accentColor : "gray"}
-              borderColor={isSelected ? `${accentColor}.500` : "gray.300"}
-              bg={isSelected ? `${accentColor}.50` : "transparent"}
-              _dark={{
-                borderColor: isSelected ? `${accentColor}.300` : "gray.600",
-                bg: isSelected ? `${accentColor}.900` : "transparent",
-              }}
               leftIcon={
                 <Icon
                   as={isSelected ? item.selectedIcon : item.icon}
@@ -125,7 +152,46 @@ const Appearance: FC = () => {
             </Button>
           );
         })}
+      </SimpleGrid>
+
+      <Divider orientation="horizontal" my={5} />
+
+      <Flex direction="column" gap={1}>
+        <Flex fontWeight="semibold" fontSize="md">
+          Accent Color
+        </Flex>
+        <Flex fontSize="sm" color="secondaryText">
+          Choose a highlight color for the interface
+        </Flex>
       </Flex>
+
+      <SimpleGrid columns={{ base: 2, sm: 3, md: 4 }} gap={2}>
+        {Object.entries(ACCENT_COLORS).map(([key, { name }]) => {
+          const isSelected = accentColor === key;
+          return (
+            <Button
+              key={key}
+              onClick={() => handleAccentColorChange(key as AccentColors)}
+              variant="outline"
+              justifyContent="flex-start"
+              alignItems="center"
+              textAlign="left"
+              flex={1}
+              colorScheme={isSelected ? (key as AccentColors) : "gray"}
+              leftIcon={
+                <Icon
+                  as={FaSquare}
+                  boxSize={6}
+                  _light={{ color: `${key}.600` }}
+                  _dark={{ color: `${key}.200` }}
+                />
+              }
+            >
+              {name}
+            </Button>
+          );
+        })}
+      </SimpleGrid>
     </Flex>
   );
 };

@@ -31,6 +31,7 @@ interface SearchResultItem {
 interface ThreadListProps {
   threads: Thread[];
   searchTerm: string;
+  onThreadClick?: (id: string) => void;
 }
 
 type VirtuosoItem =
@@ -44,7 +45,7 @@ type VirtuosoItem =
       };
     };
 
-const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
+const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick }) => {
   const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -329,7 +330,11 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm }) => {
   }, [isSearchActive, hasResults, titleResults, messageResults, loadedThreads]);
 
   const handleThreadClick = (threadId: string) => {
-    router.push(`/thread/${threadId}`);
+    if (onThreadClick) {
+      onThreadClick(threadId);
+    } else {
+      router.push(`/thread/${threadId}`);
+    }
   };
 
   return (
