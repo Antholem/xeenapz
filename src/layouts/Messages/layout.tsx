@@ -19,8 +19,10 @@ import {
   VStack,
   Divider,
   SkeletonCircle,
+  IconButton,
 } from "@chakra-ui/react";
-import { useAuth } from "@/stores";
+import { IoMdArrowDown } from "react-icons/io";
+import { useAuth, useAccentColor } from "@/stores";
 import { MessageItem } from "@/components";
 import { formatDateGrouping } from "@/utils/dateFormatter";
 import { Spinner, Progress } from "@themed-components";
@@ -70,10 +72,12 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
   onRetryMessage,
 }) => {
   const { user: authUser } = useAuth();
+  const { accentColor } = useAccentColor();
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [readyToRender, setReadyToRender] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
 
   const lastMessage = messages[messages.length - 1];
 
@@ -119,6 +123,20 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
     }
   }, [virtualMessages.length, readyToRender]);
 
+  const scrollToBottom = useCallback(() => {
+    virtuosoRef.current?.scrollToIndex({
+      index: virtualMessages.length - 1,
+      behavior: "smooth",
+      offset: 1000000,
+    });
+  }, [virtualMessages.length]);
+
+  useEffect(() => {
+    if (readyToRender && lastMessage?.sender === "user") {
+      scrollToBottom();
+    }
+  }, [virtualMessages.length, readyToRender, lastMessage?.sender, scrollToBottom]);
+
   const handleStartReached = useCallback(async () => {
     if (!hasScrolledOnce) {
       setHasScrolledOnce(true);
@@ -137,6 +155,10 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
     }
   }, [hasScrolledOnce, onLoadMore, isLoadingMore]);
 
+  const handleAtBottomStateChange = useCallback((atBottom: boolean) => {
+    setShowScrollButton(!atBottom);
+  }, []);
+
   if (isLoading && messages.length === 0) {
     return (
       <Flex flex="1" p={4} justify="center" alignItems="center">
@@ -146,7 +168,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
   }
 
   return (
-    <Box flex="1" overflow="hidden">
+    <Box flex="1" overflow="hidden" position="relative">
       {messages.length === 0 ? (
         <VStack height="100%">
           <Flex flex="1" justify="center" align="center">
@@ -168,6 +190,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
             followOutput="auto"
             increaseViewportBy={200}
             startReached={handleStartReached}
+            atBottomStateChange={handleAtBottomStateChange}
             components={{
               Header: () =>
                 isLoadingMore &&
@@ -241,6 +264,19 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
             }}
           />
         </Box>
+      )}
+      {showScrollButton && (
+        <IconButton
+          aria-label="Scroll to bottom"
+          icon={<IoMdArrowDown />}
+          colorScheme={accentColor}
+          position="absolute"
+          bottom={4}
+          left="50%"
+          transform="translateX(-50%)"
+          onClick={scrollToBottom}
+          size="sm"
+        />
       )}
       <Box as="div" ref={messagesEndRef} />
     </Box>
