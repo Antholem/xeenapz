@@ -14,7 +14,7 @@ import {
 import { useRouter, usePathname } from "next/navigation";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import type { Thread, Message } from "@/types/thread";
-import { Box, Text, Flex } from "@chakra-ui/react";
+import { Box, Text, Flex, useColorModeValue } from "@chakra-ui/react";
 import { supabase } from "@/lib/supabase/client";
 import { formatNormalTime } from "@/utils/dateFormatter";
 import { Progress } from "@themed-components";
@@ -60,6 +60,11 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
   const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
 
   const { accentColor } = useAccentColor();
+  const bgHighlight = useColorModeValue(
+    `${accentColor}.500`,
+    `${accentColor}.200`
+  );
+  const textHighlight = useColorModeValue("white", "gray.900");
 
   const fetchMessages = useCallback(
     async (threadId: string): Promise<Message[]> => {
@@ -255,7 +260,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
                   textAlign="left"
                 >
                   {msg.text.substring(0, start)}
-                  <Box as="span" bgColor={`${accentColor}.400`} color="gray.50">
+                  <Box as="span" bgColor={bgHighlight} color={textHighlight}>
                     {msg.text.substring(start, end)}
                   </Box>
                   {msg.text.substring(end)}
@@ -282,7 +287,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
     }
 
     return { titleResults: titles, messageResults: messages };
-  }, [searchTerm, loadedThreads, accentColor]);
+  }, [searchTerm, loadedThreads, bgHighlight, textHighlight]);
 
   const hasResults = titleResults.length > 0 || messageResults.length > 0;
 
