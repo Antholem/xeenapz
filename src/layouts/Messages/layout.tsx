@@ -155,9 +155,16 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
     }
   }, [hasScrolledOnce, onLoadMore, isLoadingMore]);
 
-  const handleAtBottomStateChange = useCallback((atBottom: boolean) => {
-    setShowScrollButton(!atBottom);
-  }, []);
+  const handleAtBottomStateChange = useCallback(
+    (atBottom: boolean) => {
+      if (!readyToRender || messages.length === 0) {
+        setShowScrollButton(false);
+        return;
+      }
+      setShowScrollButton(!atBottom);
+    },
+    [readyToRender, messages.length]
+  );
 
   if (isLoading && messages.length === 0) {
     return (
@@ -265,7 +272,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
           />
         </Box>
       )}
-      {showScrollButton && (
+      {readyToRender && messages.length > 0 && showScrollButton && (
         <IconButton
           aria-label="Scroll to bottom"
           icon={<IoMdArrowDown />}
