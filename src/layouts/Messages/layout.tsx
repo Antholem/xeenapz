@@ -270,6 +270,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
           aria-label="Scroll to bottom"
           icon={<IoMdArrowDown />}
           colorScheme={accentColor}
+          isRound
           position="absolute"
           bottom={4}
           left="50%"
