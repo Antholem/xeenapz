@@ -24,6 +24,7 @@ interface ThreadMessageStore {
     updatedData: Partial<Message>
   ) => void;
   deleteMessage: (threadId: string, messageId: string) => void;
+  clearMessages: () => void;
 }
 
 const useThreadMessages = create<ThreadMessageStore>((set) => ({
@@ -97,6 +98,7 @@ const useThreadMessages = create<ThreadMessageStore>((set) => ({
         },
       };
     }),
+  clearMessages: () => set({ messagesByThread: {} }),
 }));
 
 export default useThreadMessages;
