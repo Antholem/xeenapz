@@ -22,8 +22,11 @@ const Thread: FC = () => {
   const router = useRouter();
 
   const { user, loading } = useAuth();
-  const { getInput, setInput } = useThreadInput();
+  const { getInput, setInput, getPreview, setPreview, getFile, setFile } =
+    useThreadInput();
   const input = getInput(threadId || "home");
+  const preview = getPreview(threadId || "home");
+  const file = getFile(threadId || "home");
   const { model } = useModel();
 
   const {
@@ -421,6 +424,10 @@ const Thread: FC = () => {
         ref={messageInputRef}
         input={input}
         setInput={(val) => setInput(threadId || "home", val)}
+        preview={preview}
+        setPreview={(val) => setPreview(threadId || "home", val)}
+        file={file}
+        setFile={(val) => setFile(threadId || "home", val)}
         isListening={isListening}
         resetTranscript={resetTranscript}
         isFetchingResponse={isFetchingResponse}
