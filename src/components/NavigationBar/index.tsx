@@ -48,6 +48,12 @@ const NavigationBar: FC = () => {
   const formattedModel = formatModel(model);
 
   useEffect(() => {
+    if (!user) {
+      setModel("gemini-1.5-flash");
+    }
+  }, [user, setModel]);
+
+  useEffect(() => {
     const fetchThreadTitle = async () => {
       if (
         !user ||
@@ -145,30 +151,32 @@ const NavigationBar: FC = () => {
               <Text fontSize="lg" fontWeight="bold" noOfLines={1} px={1}>
                 {pathname === "/" ? "Xeenapz" : pathname === "/thread/temp" ? "Temporary Chat" : currentThreadTitle || "Xeenapz"}
               </Text>
-              <Menu>
-                <MenuButton
-                  as={Button}
-                  size="xs"
-                  variant="ghost"
-                  color="secondaryText"
-                  colorScheme="gray"
-                  px={1}
-                  maxW="100%"
-                  overflow="hidden"
-                  textOverflow="ellipsis"
-                  whiteSpace="nowrap"
-                  rightIcon={<HiOutlineChevronDown />}
-                >
-                  {formattedModel}
-                </MenuButton>
-                <MenuList>
-                  {GEMINI_MODELS.map((m) => (
-                    <MenuItem key={m} onClick={() => setModel(m)}>
-                      {formatModel(m)}
-                    </MenuItem>
-                  ))}
-                </MenuList>
-              </Menu>
+              {user && (
+                <Menu>
+                  <MenuButton
+                    as={Button}
+                    size="xs"
+                    variant="ghost"
+                    color="secondaryText"
+                    colorScheme="gray"
+                    px={1}
+                    maxW="100%"
+                    overflow="hidden"
+                    textOverflow="ellipsis"
+                    whiteSpace="nowrap"
+                    rightIcon={<HiOutlineChevronDown />}
+                  >
+                    {formattedModel}
+                  </MenuButton>
+                  <MenuList>
+                    {GEMINI_MODELS.map((m) => (
+                      <MenuItem key={m} onClick={() => setModel(m)}>
+                        {formatModel(m)}
+                      </MenuItem>
+                    ))}
+                  </MenuList>
+                </Menu>
+              )}
             </Flex>
           </Flex>
 

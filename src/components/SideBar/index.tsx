@@ -40,7 +40,14 @@ import { IoAdd, IoSearch, IoSettingsSharp } from "react-icons/io5";
 
 import { supabase } from "@/lib";
 import { Spinner, Input, MenuList, MenuItem } from "@themed-components";
-import { useAccentColor, useAuth, useToastStore } from "@/stores";
+import {
+  useAccentColor,
+  useAuth,
+  useToastStore,
+  useTempThread,
+  useThreadInput,
+  useThreadMessages,
+} from "@/stores";
 import { ThreadList, Settings } from "@/components";
 
 interface SideBarProps {
@@ -144,6 +151,9 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
 
   const { showToast } = useToastStore();
   const { accentColor } = useAccentColor();
+  const { setIsMessageTemporary } = useTempThread();
+  const { clearInputs } = useThreadInput();
+  const { clearMessages } = useThreadMessages();
 
   const {
     isOpen: isSettingsOpen,
@@ -320,6 +330,9 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      setIsMessageTemporary(false);
+      clearInputs();
+      clearMessages();
       router.push("/");
       setAuthLoading(true);
       showToast({
