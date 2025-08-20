@@ -34,7 +34,8 @@ const Home: FC = () => {
   const pathname = usePathname();
   const { user } = useAuth();
   const { isMessageTemporary } = useTempThread();
-  const { getInput, setInput } = useThreadInput();
+  const { getInput, setInput, getPreview, setPreview, getFile, setFile } =
+    useThreadInput();
   const { setMessages: setGlobalMessages, addMessageToBottom } =
     useThreadMessages();
   const { model } = useModel();
@@ -47,6 +48,8 @@ const Home: FC = () => {
   const [isListening, setIsListening] = useState(false);
 
   const input = getInput("home");
+  const preview = getPreview("home");
+  const file = getFile("home");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const prevTranscriptRef = useRef("");
   const hasMounted = useRef(false);
@@ -422,6 +425,10 @@ const Home: FC = () => {
         ref={messageInputRef}
         input={input}
         setInput={(val) => setInput("home", val)}
+        preview={preview}
+        setPreview={(val) => setPreview("home", val)}
+        file={file}
+        setFile={(val) => setFile("home", val)}
         isListening={isListening}
         resetTranscript={resetTranscript}
         isFetchingResponse={isFetchingResponse}

@@ -33,8 +33,11 @@ const TempThread: FC = () => {
   const [isListening, setIsListening] = useState(false);
   const [playingMessage, setPlayingMessage] = useState<string | null>(null);
 
-  const { getInput, setInput } = useThreadInput();
+  const { getInput, setInput, getPreview, setPreview, getFile, setFile } =
+    useThreadInput();
   const input = getInput("home");
+  const preview = getPreview("home");
+  const file = getFile("home");
   const { model } = useModel();
 
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
@@ -263,6 +266,10 @@ const TempThread: FC = () => {
         ref={messageInputRef}
         input={isBlocked ? "" : input}
         setInput={(val) => setInput("home", val)}
+        preview={isBlocked ? null : preview}
+        setPreview={(val) => setPreview("home", val)}
+        file={isBlocked ? null : file}
+        setFile={(val) => setFile("home", val)}
         isListening={isBlocked ? false : isListening}
         resetTranscript={resetTranscript}
         isFetchingResponse={isFetchingResponse}

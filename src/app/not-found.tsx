@@ -41,6 +41,10 @@ const NotFound = () => {
         isDisabled={true}
         input=""
         setInput={noop}
+        preview={null}
+        setPreview={noop}
+        file={null}
+        setFile={noop}
         isListening={false}
         resetTranscript={noop}
         isFetchingResponse={false}

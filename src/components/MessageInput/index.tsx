@@ -32,6 +32,10 @@ export interface MessageInputHandle {
 interface MessageInputProps {
   input: string;
   setInput: (value: string) => void;
+  preview: string | null;
+  setPreview: (value: string | null) => void;
+  file: File | null;
+  setFile: (file: File | null) => void;
   isListening: boolean;
   resetTranscript: () => void;
   isFetchingResponse: boolean;
@@ -46,6 +50,10 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
     {
       input,
       setInput,
+      preview,
+      setPreview,
+      file,
+      setFile,
       isListening,
       resetTranscript,
       isFetchingResponse,
@@ -62,7 +70,6 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
 
     const { accentColor } = useAccentColor();
 
-    const [preview, setPreview] = useState<string | null>(null);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     const handleFile = (file: File) => {
@@ -76,6 +83,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
       }
       const url = URL.createObjectURL(file);
       setPreview(url);
+      setFile(file);
     };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,17 +95,20 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
     const handleDiscard = () => {
       if (preview) URL.revokeObjectURL(preview);
       setPreview(null);
+      setFile(null);
       discardImage();
       setIsPreviewOpen(false);
     };
 
     useEffect(() => {
-      return () => {
-        if (preview) {
-          URL.revokeObjectURL(preview);
-        }
-      };
-    }, [preview]);
+      if (file && fileInputRef.current) {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        fileInputRef.current.files = dt.files;
+      } else if (!file && fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }, [file, fileInputRef]);
 
     useImperativeHandle(ref, () => ({ handleFile }));
 
@@ -106,6 +117,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
       if (preview) {
         URL.revokeObjectURL(preview);
         setPreview(null);
+        setFile(null);
         setIsPreviewOpen(false);
       }
       await sendPromise;
