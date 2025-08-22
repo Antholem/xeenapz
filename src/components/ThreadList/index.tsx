@@ -90,10 +90,10 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
 
   useEffect(() => {
     if (
-      hasScrolledOnce ||
       isSearchActive ||
       !pathname ||
-      loadedThreads.length === 0
+      loadedThreads.length === 0 ||
+      readyToRender
     )
       return;
 
@@ -111,15 +111,13 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
 
           setTimeout(() => {
             setReadyToRender(true);
-            setHasScrolledOnce(true);
           }, 100);
         });
       });
     } else {
       setReadyToRender(true);
-      setHasScrolledOnce(true);
     }
-  }, [pathname, loadedThreads, isSearchActive, hasScrolledOnce]);
+  }, [pathname, loadedThreads, isSearchActive, readyToRender]);
 
   const loadMoreThreads = useCallback(async () => {
     if (!user || isSearchActive || isLoadingMoreThreads || !hasMoreThreads)
@@ -166,6 +164,15 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
     loadedThreads,
     user,
   ]);
+
+  const handleEndReached = useCallback(() => {
+    if (!hasScrolledOnce) {
+      setHasScrolledOnce(true);
+      return;
+    }
+
+    loadMoreThreads();
+  }, [hasScrolledOnce, loadMoreThreads]);
 
   useEffect(() => {
     if (!user) return;
@@ -386,9 +393,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
               style={{ height: "100%" }}
               data={allItems}
               initialTopMostItemIndex={0}
-              endReached={() => {
-                if (hasScrolledOnce) loadMoreThreads();
-              }}
+              endReached={handleEndReached}
               itemContent={(index, item) => {
                 const isFirst = index === 0;
                 const isLast = index === allItems.length - 1;
