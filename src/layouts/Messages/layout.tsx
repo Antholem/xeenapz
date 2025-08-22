@@ -78,6 +78,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const initialLoad = useRef(false);
 
   const lastMessage = messages[messages.length - 1];
 
@@ -136,6 +137,20 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
       scrollToBottom();
     }
   }, [virtualMessages.length, readyToRender, lastMessage?.sender, scrollToBottom]);
+
+  // Load more messages on first render to display the progress indicator
+  // even before the user starts scrolling.
+  useEffect(() => {
+    if (!initialLoad.current && onLoadMore) {
+      initialLoad.current = true;
+      setIsLoadingMore(true);
+      onLoadMore()
+        .catch((err) =>
+          console.error("Error loading older messages:", err)
+        )
+        .finally(() => setIsLoadingMore(false));
+    }
+  }, [onLoadMore]);
 
   const handleStartReached = useCallback(async () => {
     if (!hasScrolledOnce) {
@@ -200,8 +215,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
             atBottomStateChange={handleAtBottomStateChange}
             components={{
               Header: () =>
-                isLoadingMore &&
-                !hasScrolledOnce && <Progress size="xs" isIndeterminate />,
+                isLoadingMore ? <Progress size="xs" isIndeterminate /> : null,
             }}
             itemContent={(index, item) => {
               const isFirst = index === 0;

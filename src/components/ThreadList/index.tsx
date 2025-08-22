@@ -58,6 +58,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
   const [hasMoreThreads, setHasMoreThreads] = useState(true);
   const [readyToRender, setReadyToRender] = useState(false);
   const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
+  const initialLoad = useRef(false);
 
   const { accentColor } = useAccentColor();
   const bgHighlight = useColorModeValue(
@@ -166,6 +167,15 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
     loadedThreads,
     user,
   ]);
+
+  // Trigger loading more threads on initial render to show the progress bar
+  // even before the user starts scrolling.
+  useEffect(() => {
+    if (!initialLoad.current && hasMoreThreads) {
+      initialLoad.current = true;
+      void loadMoreThreads();
+    }
+  }, [hasMoreThreads, loadMoreThreads]);
 
   useEffect(() => {
     if (!user) return;
@@ -370,7 +380,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
         </Flex>
       ) : (
         <Fragment>
-          {isLoadingMoreThreads && hasScrolledOnce && readyToRender && (
+          {isLoadingMoreThreads && readyToRender && (
             <Box position="absolute" top={0} left={0} right={0} zIndex={1}>
               <Progress size="xs" isIndeterminate />
             </Box>
