@@ -201,7 +201,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
             components={{
               Header: () =>
                 isLoadingMore &&
-                !hasScrolledOnce && <Progress size="xs" isIndeterminate />,
+                hasScrolledOnce && <Progress size="xs" isIndeterminate />,
             }}
             itemContent={(index, item) => {
               const isFirst = index === 0;

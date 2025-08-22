@@ -58,6 +58,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
   const [hasMoreThreads, setHasMoreThreads] = useState(true);
   const [readyToRender, setReadyToRender] = useState(false);
   const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
   const { accentColor } = useAccentColor();
   const bgHighlight = useColorModeValue(
@@ -90,7 +91,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
 
   useEffect(() => {
     if (
-      hasScrolledOnce ||
+      initialized ||
       isSearchActive ||
       !pathname ||
       loadedThreads.length === 0
@@ -111,15 +112,15 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
 
           setTimeout(() => {
             setReadyToRender(true);
-            setHasScrolledOnce(true);
+            setInitialized(true);
           }, 100);
         });
       });
     } else {
       setReadyToRender(true);
-      setHasScrolledOnce(true);
+      setInitialized(true);
     }
-  }, [pathname, loadedThreads, isSearchActive, hasScrolledOnce]);
+  }, [pathname, loadedThreads, isSearchActive, initialized]);
 
   const loadMoreThreads = useCallback(async () => {
     if (!user || isSearchActive || isLoadingMoreThreads || !hasMoreThreads)
@@ -387,7 +388,11 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
               data={allItems}
               initialTopMostItemIndex={0}
               endReached={() => {
-                if (hasScrolledOnce) loadMoreThreads();
+                if (!hasScrolledOnce) {
+                  setHasScrolledOnce(true);
+                } else {
+                  loadMoreThreads();
+                }
               }}
               itemContent={(index, item) => {
                 const isFirst = index === 0;
