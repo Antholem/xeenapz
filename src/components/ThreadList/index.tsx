@@ -52,6 +52,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
   const isSearchActive = !!searchTerm;
 
   const virtuosoRef = useRef<VirtuosoHandle>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
   const [loadedThreads, setLoadedThreads] = useState<Thread[]>([]);
   const [lastIndex, setLastIndex] = useState<number>(0);
   const [isLoadingMoreThreads, setIsLoadingMoreThreads] = useState(false);
@@ -90,7 +91,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
 
   useEffect(() => {
     if (
-      hasScrolledOnce ||
+      readyToRender ||
       isSearchActive ||
       !pathname ||
       loadedThreads.length === 0
@@ -111,15 +112,30 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
 
           setTimeout(() => {
             setReadyToRender(true);
-            setHasScrolledOnce(true);
           }, 100);
         });
       });
     } else {
       setReadyToRender(true);
-      setHasScrolledOnce(true);
     }
-  }, [pathname, loadedThreads, isSearchActive, hasScrolledOnce]);
+  }, [pathname, loadedThreads, isSearchActive, readyToRender]);
+
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+
+    const handleScroll = () => {
+      if (!hasScrolledOnce) {
+        setHasScrolledOnce(true);
+      }
+    };
+
+    scroller.addEventListener("scroll", handleScroll);
+
+    return () => {
+      scroller.removeEventListener("scroll", handleScroll);
+    };
+  }, [hasScrolledOnce]);
 
   const loadMoreThreads = useCallback(async () => {
     if (!user || isSearchActive || isLoadingMoreThreads || !hasMoreThreads)
@@ -383,6 +399,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
           >
             <Virtuoso
               ref={virtuosoRef}
+              scrollerRef={scrollerRef}
               style={{ height: "100%" }}
               data={allItems}
               initialTopMostItemIndex={0}
