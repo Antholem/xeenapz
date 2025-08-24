@@ -1,4 +1,7 @@
+"use client";
+
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 export interface Message {
   id?: string; // ⬅️ Was: id: any;
@@ -25,80 +28,97 @@ interface ThreadMessageStore {
   ) => void;
   deleteMessage: (threadId: string, messageId: string) => void;
   clearMessages: () => void;
+  clearThread: (threadId: string) => void;
 }
 
-const useThreadMessages = create<ThreadMessageStore>((set) => ({
-  messagesByThread: {},
+const useThreadMessages = create<ThreadMessageStore>()(
+  persist(
+    (set) => ({
+      messagesByThread: {},
 
-  setMessages: (threadId, messages) =>
-    set((state) => ({
-      messagesByThread: {
-        ...state.messagesByThread,
-        [threadId]: messages,
-      },
-    })),
+      setMessages: (threadId, messages) =>
+        set((state) => ({
+          messagesByThread: {
+            ...state.messagesByThread,
+            [threadId]: messages,
+          },
+        })),
 
-  addMessagesToTop: (threadId, newMessages) =>
-    set((state) => {
-      const existing = state.messagesByThread[threadId] || [];
-      const updated = [...newMessages, ...existing];
-      return {
-        messagesByThread: {
-          ...state.messagesByThread,
-          [threadId]: updated,
-        },
-      };
+      addMessagesToTop: (threadId, newMessages) =>
+        set((state) => {
+          const existing = state.messagesByThread[threadId] || [];
+          const updated = [...newMessages, ...existing];
+          return {
+            messagesByThread: {
+              ...state.messagesByThread,
+              [threadId]: updated,
+            },
+          };
+        }),
+
+      addMessageToBottom: (threadId, message) =>
+        set((state) => {
+          const existing = state.messagesByThread[threadId] || [];
+
+          const isDuplicate = existing.some(
+            (msg) =>
+              msg.timestamp === message.timestamp &&
+              msg.sender === message.sender &&
+              msg.text === message.text
+          );
+
+          if (isDuplicate) return state;
+
+          return {
+            messagesByThread: {
+              ...state.messagesByThread,
+              [threadId]: [...existing, message],
+            },
+          };
+        }),
+
+      updateMessage: (threadId, messageId, updatedData) =>
+        set((state) => {
+          const existing = state.messagesByThread[threadId] || [];
+          const updated = existing.map((msg) =>
+            msg.id === messageId ? { ...msg, ...updatedData } : msg
+          );
+
+          return {
+            messagesByThread: {
+              ...state.messagesByThread,
+              [threadId]: updated,
+            },
+          };
+        }),
+
+      deleteMessage: (threadId, messageId) =>
+        set((state) => {
+          const existing = state.messagesByThread[threadId] || [];
+          const filtered = existing.filter((msg) => msg.id !== messageId);
+
+          return {
+            messagesByThread: {
+              ...state.messagesByThread,
+              [threadId]: filtered,
+            },
+          };
+        }),
+
+      clearMessages: () => set({ messagesByThread: {} }),
+      clearThread: (threadId) =>
+        set((state) => {
+          const newMessages = { ...state.messagesByThread };
+          delete newMessages[threadId];
+          return { messagesByThread: newMessages };
+        }),
     }),
-
-  addMessageToBottom: (threadId, message) =>
-    set((state) => {
-      const existing = state.messagesByThread[threadId] || [];
-
-      const isDuplicate = existing.some(
-        (msg) =>
-          msg.timestamp === message.timestamp &&
-          msg.sender === message.sender &&
-          msg.text === message.text
-      );
-
-      if (isDuplicate) return state;
-
-      return {
-        messagesByThread: {
-          ...state.messagesByThread,
-          [threadId]: [...existing, message],
-        },
-      };
-    }),
-
-  updateMessage: (threadId, messageId, updatedData) =>
-    set((state) => {
-      const existing = state.messagesByThread[threadId] || [];
-      const updated = existing.map((msg) =>
-        msg.id === messageId ? { ...msg, ...updatedData } : msg
-      );
-
-      return {
-        messagesByThread: {
-          ...state.messagesByThread,
-          [threadId]: updated,
-        },
-      };
-    }),
-
-  deleteMessage: (threadId, messageId) =>
-    set((state) => {
-      const existing = state.messagesByThread[threadId] || [];
-      const filtered = existing.filter((msg) => msg.id !== messageId);
-
-      return {
-        messagesByThread: {
-          ...state.messagesByThread,
-          [threadId]: filtered,
-        },
-      };
-    }),
-  clearMessages: () => set({ messagesByThread: {} }),
-}));
+    {
+      name: "thread-messages",
+      storage: createJSONStorage(() => sessionStorage),
+      partialize: (state) => ({ messagesByThread: state.messagesByThread }),
+    }
+  )
+);
 
 export default useThreadMessages;
