@@ -31,6 +31,13 @@ interface ThreadMessageStore {
   clearThread: (threadId: string) => void;
 }
 
+const MAX_MESSAGES_PER_THREAD = 200;
+
+const enforceLimit = (messages: Message[]): Message[] =>
+  messages.length > MAX_MESSAGES_PER_THREAD
+    ? messages.slice(messages.length - MAX_MESSAGES_PER_THREAD)
+    : messages;
+
 const useThreadMessages = create<ThreadMessageStore>()(
   persist(
     (set) => ({
@@ -40,14 +47,14 @@ const useThreadMessages = create<ThreadMessageStore>()(
         set((state) => ({
           messagesByThread: {
             ...state.messagesByThread,
-            [threadId]: messages,
+            [threadId]: enforceLimit(messages),
           },
         })),
 
       addMessagesToTop: (threadId, newMessages) =>
         set((state) => {
           const existing = state.messagesByThread[threadId] || [];
-          const updated = [...newMessages, ...existing];
+          const updated = enforceLimit([...newMessages, ...existing]);
           return {
             messagesByThread: {
               ...state.messagesByThread,
@@ -60,19 +67,21 @@ const useThreadMessages = create<ThreadMessageStore>()(
         set((state) => {
           const existing = state.messagesByThread[threadId] || [];
 
-          const isDuplicate = existing.some(
-            (msg) =>
-              msg.timestamp === message.timestamp &&
-              msg.sender === message.sender &&
-              msg.text === message.text
-          );
+          const isDuplicate = message.id
+            ? existing.some((msg) => msg.id === message.id)
+            : existing.some(
+                (msg) =>
+                  msg.timestamp === message.timestamp &&
+                  msg.sender === message.sender &&
+                  msg.text === message.text
+              );
 
           if (isDuplicate) return state;
 
           return {
             messagesByThread: {
               ...state.messagesByThread,
-              [threadId]: [...existing, message],
+              [threadId]: enforceLimit([...existing, message]),
             },
           };
         }),
