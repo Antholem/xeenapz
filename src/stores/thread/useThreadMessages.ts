@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 export interface Message {
   id?: string; // ⬅️ Was: id: any;
@@ -27,8 +28,33 @@ interface ThreadMessageStore {
   clearMessages: () => void;
 }
 
-const useThreadMessages = create<ThreadMessageStore>((set) => ({
-  messagesByThread: {},
+const sanitizeMessages = (
+  data: unknown
+): Record<string, Message[]> => {
+  const result: Record<string, Message[]> = {};
+  if (data && typeof data === "object") {
+    for (const [threadId, msgs] of Object.entries(
+      data as Record<string, unknown>
+    )) {
+      if (Array.isArray(msgs)) {
+        result[threadId] = msgs.filter(
+          (m): m is Message =>
+            typeof m === "object" &&
+            m !== null &&
+            (m as Message).text !== undefined &&
+            (m as Message).sender !== undefined &&
+            typeof (m as Message).timestamp === "number"
+        );
+      }
+    }
+  }
+  return result;
+};
+
+const useThreadMessages = create<ThreadMessageStore>()(
+  persist(
+    (set) => ({
+      messagesByThread: {},
 
   setMessages: (threadId, messages) =>
     set((state) => ({
@@ -98,7 +124,23 @@ const useThreadMessages = create<ThreadMessageStore>((set) => ({
         },
       };
     }),
-  clearMessages: () => set({ messagesByThread: {} }),
-}));
+      clearMessages: () => set({ messagesByThread: {} }),
+    }),
+    {
+      name: "thread-messages",
+      storage: createJSONStorage(() =>
+        typeof window !== "undefined" ? localStorage : undefined
+      ),
+      merge: (persistedState, currentState) => {
+        const persisted =
+          (persistedState as Partial<ThreadMessageStore>)?.messagesByThread;
+        return {
+          ...currentState,
+          messagesByThread: sanitizeMessages(persisted),
+        } as ThreadMessageStore;
+      },
+    }
+  )
+);
 
 export default useThreadMessages;
