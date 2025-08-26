@@ -118,7 +118,7 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
       isCentered
     >
       <ModalOverlay />
-      <ModalContent h={{ base: "100vh", md: "auto" }}>
+      <ModalContent h={{ base: "100dvh", md: "auto" }}>
         <ModalHeader>Settings</ModalHeader>
         <ModalCloseButton />
         <Divider orientation="horizontal" />
