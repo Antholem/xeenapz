@@ -4,7 +4,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
 export interface Message {
-  id?: string; // ⬅️ Was: id: any;
+  id: string; // ⬅️ Was: id: any;
   text: string | null;
   sender: "user" | "bot";
   timestamp: number;
@@ -69,7 +69,7 @@ const useThreadMessages = create<ThreadMessageStore>()(
 
           const isDuplicate = existing.some(
             (msg) =>
-              (message.id && msg.id === message.id) ||
+              msg.id === message.id ||
               (msg.timestamp === message.timestamp &&
                 msg.sender === message.sender &&
                 msg.text === message.text)

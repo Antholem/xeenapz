@@ -42,7 +42,7 @@ const Thread: FC = () => {
 
   const [loadingMessages, setLoadingMessages] = useState(messages.length === 0);
   const [isFetchingResponse, setIsFetchingResponse] = useState(false);
-  const [playingMessage, setPlayingMessage] = useState<string | null>(null);
+  const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
@@ -419,8 +419,8 @@ const Thread: FC = () => {
         isFetchingResponse={isFetchingResponse}
         user={user}
         speakText={speakText}
-        playingMessage={playingMessage}
-        setPlayingMessage={setPlayingMessage}
+        playingMessageId={playingMessageId}
+        setPlayingMessageId={setPlayingMessageId}
         messagesEndRef={messagesEndRef}
         onLoadMore={handleLoadMessages}
         isLoading={loadingMessages}

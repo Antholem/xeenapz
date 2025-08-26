@@ -22,6 +22,7 @@ import { ImageModal } from "@themed-components";
 import { useAccentColor, useToastStore } from "@/stores";
 
 interface Message {
+  id: string;
   text: string | null;
   sender: "user" | "bot";
   timestamp: number;
@@ -37,11 +38,12 @@ interface MessageItemProps extends BoxProps {
   user: { id: string } | null; // Supabase-style user object
   speakText: (
     text: string,
-    playingMessage: string | null,
-    setPlayingMessage: (msg: string | null) => void
+    id: string,
+    playingMessageId: string | null,
+    setPlayingMessageId: (msg: string | null) => void
   ) => void;
-  setPlayingMessage: (msg: string | null) => void;
-  playingMessage: string | null;
+  setPlayingMessageId: (msg: string | null) => void;
+  playingMessageId: string | null;
   onRetry?: () => void;
 }
 
@@ -49,8 +51,8 @@ const MessageItem: FC<MessageItemProps> = ({
   message,
   user,
   speakText,
-  playingMessage,
-  setPlayingMessage,
+  playingMessageId,
+  setPlayingMessageId,
   onRetry,
   ...props
 }) => {
@@ -159,12 +161,14 @@ const MessageItem: FC<MessageItemProps> = ({
             <Flex align="center" justify="center" gap={0} order={isUser ? 1 : 2}>
               {!isUser && message.text && (
                 <Tooltip
-                  label={playingMessage === message.text ? "Stop" : "Read aloud"}
+                  label={
+                    playingMessageId === message.id ? "Stop" : "Read aloud"
+                  }
                 >
                   <IconButton
                     aria-label="Read aloud"
                     icon={
-                      playingMessage === message.text ? (
+                      playingMessageId === message.id ? (
                         <IoStop />
                       ) : (
                         <HiSpeakerWave />
@@ -173,7 +177,12 @@ const MessageItem: FC<MessageItemProps> = ({
                     variant="ghost"
                     size="xs"
                     onClick={() =>
-                      speakText(message.text!, playingMessage, setPlayingMessage)
+                      speakText(
+                        message.text!,
+                        message.id,
+                        playingMessageId,
+                        setPlayingMessageId
+                      )
                     }
                   />
                 </Tooltip>

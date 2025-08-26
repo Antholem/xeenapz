@@ -12,6 +12,7 @@ import { useAuth, useThreadInput, useModel } from "@/stores";
 import { v4 as uuidv4 } from "uuid";
 
 interface Message {
+  id: string;
   text: string | null;
   sender: "user" | "bot";
   timestamp: number;
@@ -31,7 +32,7 @@ const TempThread: FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isFetchingResponse, setIsFetchingResponse] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  const [playingMessage, setPlayingMessage] = useState<string | null>(null);
+  const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
 
   const { getInput, setInput, getPreview, setPreview, getFile, setFile } =
     useThreadInput();
@@ -125,6 +126,7 @@ const TempThread: FC = () => {
       : null;
 
     const userMessage: Message = {
+      id: uuidv4(),
       text: input.trim() || null,
       sender: "user",
       timestamp,
@@ -154,6 +156,7 @@ const TempThread: FC = () => {
         data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
 
       const botMessage: Message = {
+        id: uuidv4(),
         text: botResponse,
         sender: "bot",
         timestamp: Date.now(),
@@ -166,6 +169,7 @@ const TempThread: FC = () => {
       setMessages((prev) => [
         ...prev,
         {
+          id: uuidv4(),
           text: "Error fetching response",
           sender: "bot",
           timestamp: Date.now(),
@@ -256,8 +260,8 @@ const TempThread: FC = () => {
         isFetchingResponse={isBlocked ? false : isFetchingResponse}
         user={user}
         speakText={speakText}
-        playingMessage={playingMessage}
-        setPlayingMessage={setPlayingMessage}
+        playingMessageId={playingMessageId}
+        setPlayingMessageId={setPlayingMessageId}
         messagesEndRef={messagesEndRef}
         emptyStateText="Temporary Thread"
         onRetryMessage={isBlocked ? undefined : retryBotMessage}

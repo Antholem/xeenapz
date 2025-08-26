@@ -18,7 +18,7 @@ import type { MessageInputHandle } from "@/components/MessageInput";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
 
 interface Message {
-  id?: string;
+  id: string;
   text: string | null;
   sender: "user" | "bot";
   timestamp: number;
@@ -44,7 +44,7 @@ const Home: FC = () => {
   const [threadId, setThreadId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isFetchingResponse, setIsFetchingResponse] = useState(false);
-  const [playingMessage, setPlayingMessage] = useState<string | null>(null);
+  const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
 
   const input = getInput("home");
@@ -422,8 +422,8 @@ const Home: FC = () => {
         isFetchingResponse={isFetchingResponse}
         user={user}
         speakText={speakText}
-        playingMessage={playingMessage}
-        setPlayingMessage={setPlayingMessage}
+        playingMessageId={playingMessageId}
+        setPlayingMessageId={setPlayingMessageId}
         messagesEndRef={messagesEndRef}
         onRetryMessage={retryBotMessage}
       />
