@@ -173,7 +173,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
   const handleThreadSelect = useCallback(
     (threadId: string, messageId?: string) => {
       const url = messageId
-        ? `/thread/${threadId}?messageId=${messageId}`
+        ? `/thread/${threadId}?messageId=${messageId}&scrollKey=${Date.now()}`
         : `/thread/${threadId}`;
       router.push(url);
       if (type === "temporary") {

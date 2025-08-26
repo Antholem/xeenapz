@@ -22,6 +22,7 @@ const Thread: FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const targetMessageId = searchParams.get("messageId");
+  const scrollKey = searchParams.get("scrollKey");
 
   const { user, loading } = useAuth();
   const { getInput, setInput, getPreview, setPreview, getFile, setFile } =
@@ -428,6 +429,7 @@ const Thread: FC = () => {
         isLoading={loadingMessages}
         onRetryMessage={retryBotMessage}
         targetMessageId={targetMessageId}
+        scrollKey={scrollKey}
       />
       <MessageInput
         ref={messageInputRef}

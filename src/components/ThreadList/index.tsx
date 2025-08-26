@@ -344,7 +344,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
         onThreadClick(threadId, messageId);
       } else {
         const url = messageId
-          ? `/thread/${threadId}?messageId=${messageId}`
+          ? `/thread/${threadId}?messageId=${messageId}&scrollKey=${Date.now()}`
           : `/thread/${threadId}`;
         router.push(url);
       }

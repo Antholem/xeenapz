@@ -58,6 +58,7 @@ interface MessagesLayoutProps {
   onLoadMore?: () => Promise<void>;
   onRetryMessage?: (message: Message) => void;
   targetMessageId?: string | null;
+  scrollKey?: string | null;
 }
 
 const MessagesLayout: FC<MessagesLayoutProps> = ({
@@ -73,6 +74,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
   onLoadMore,
   onRetryMessage,
   targetMessageId,
+  scrollKey,
 }) => {
   const { user: authUser } = useAuth();
   const { accentColor } = useAccentColor();
@@ -142,11 +144,11 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
     if (index >= 0) {
       virtuosoRef.current?.scrollToIndex({
         index,
-        align: "center",
+        align: "start",
         behavior: "auto",
       });
     }
-  }, [targetMessageId, readyToRender, virtualMessages]);
+  }, [targetMessageId, scrollKey, readyToRender, virtualMessages]);
 
   useEffect(() => {
     if (readyToRender && lastMessage?.sender === "user") {
