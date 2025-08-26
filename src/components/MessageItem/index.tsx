@@ -17,6 +17,7 @@ import {
   IconButton,
   BoxProps,
   useColorMode,
+  useColorModeValue,
 } from "@chakra-ui/react";
 import { ImageModal } from "@themed-components";
 import { useAccentColor, useToastStore } from "@/stores";
@@ -45,6 +46,7 @@ interface MessageItemProps extends BoxProps {
   setPlayingMessageId: (msg: string | null) => void;
   playingMessageId: string | null;
   onRetry?: () => void;
+  isHighlighted?: boolean;
 }
 
 const MessageItem: FC<MessageItemProps> = ({
@@ -54,6 +56,7 @@ const MessageItem: FC<MessageItemProps> = ({
   playingMessageId,
   setPlayingMessageId,
   onRetry,
+  isHighlighted = false,
   ...props
 }) => {
   const isUser = message.sender === "user";
@@ -63,11 +66,27 @@ const MessageItem: FC<MessageItemProps> = ({
       locale: enUS,
     });
 
-    const { accentColor } = useAccentColor();
+  const { accentColor } = useAccentColor();
   const { colorMode } = useColorMode();
   const { showToast } = useToastStore();
   const [copied, setCopied] = useState(false);
   const [isImageOpen, setIsImageOpen] = useState(false);
+
+  const botHighlightBg = useColorModeValue(
+    `${accentColor}.200`,
+    `${accentColor}.700`
+  );
+  const botHighlightColor = useColorModeValue("gray.900", "gray.100");
+  const highlightBg = isUser ? `${accentColor}.600` : botHighlightBg;
+  const normalBg = isUser ? `${accentColor}.400` : "mutedSurface";
+  const bubbleBg = isHighlighted ? highlightBg : normalBg;
+  const bubbleColor = isHighlighted
+    ? isUser
+      ? "white"
+      : botHighlightColor
+    : isUser
+      ? "white"
+      : "";
 
   const handleCopy = async () => {
     if (!message.text) return;
@@ -128,8 +147,9 @@ const MessageItem: FC<MessageItemProps> = ({
             <Box
               p={3}
               borderRadius="lg"
-              color={isUser ? "white" : ""}
-              bg={isUser ? `${accentColor}.400` : "mutedSurface"}
+              color={bubbleColor}
+              bg={bubbleBg}
+              transition="background-color 0.4s"
               maxW="max-content"
               whiteSpace="pre-wrap"
               wordBreak="break-word"
