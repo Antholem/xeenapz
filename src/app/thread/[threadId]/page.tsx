@@ -1,7 +1,7 @@
 "use client";
 
 import { FC, useEffect, useRef, useState } from "react";
-import { notFound, useParams, useRouter } from "next/navigation";
+import { notFound, useParams, useRouter, useSearchParams } from "next/navigation";
 import { useSpeechRecognition } from "react-speech-recognition";
 import { v4 as uuidv4 } from "uuid";
 
@@ -20,6 +20,8 @@ import {
 const Thread: FC = () => {
   const { threadId } = useParams<{ threadId: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const scrollToMessageId = searchParams.get("messageId");
 
   const { user, loading } = useAuth();
   const { getInput, setInput, getPreview, setPreview, getFile, setFile } =
@@ -425,6 +427,7 @@ const Thread: FC = () => {
         onLoadMore={handleLoadMessages}
         isLoading={loadingMessages}
         onRetryMessage={retryBotMessage}
+        scrollToMessageId={scrollToMessageId}
       />
       <MessageInput
         ref={messageInputRef}

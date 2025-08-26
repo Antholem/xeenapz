@@ -57,6 +57,7 @@ interface MessagesLayoutProps {
   emptyStateText?: string;
   onLoadMore?: () => Promise<void>;
   onRetryMessage?: (message: Message) => void;
+  scrollToMessageId?: string | null;
 }
 
 const MessagesLayout: FC<MessagesLayoutProps> = ({
@@ -71,6 +72,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
   emptyStateText = "Hello, what can I help with?",
   onLoadMore,
   onRetryMessage,
+  scrollToMessageId,
 }) => {
   const { user: authUser } = useAuth();
   const { accentColor } = useAccentColor();
@@ -123,6 +125,22 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
       });
     }
   }, [virtualMessages.length, readyToRender]);
+
+  useEffect(() => {
+    if (!scrollToMessageId || !readyToRender) return;
+    const index = virtualMessages.findIndex(
+      (item) =>
+        item.type === "message" &&
+        (item.value as Message).id === scrollToMessageId
+    );
+    if (index >= 0) {
+      virtuosoRef.current?.scrollToIndex({
+        index,
+        align: "start",
+        behavior: "smooth",
+      });
+    }
+  }, [scrollToMessageId, readyToRender, virtualMessages]);
 
   const scrollToBottom = useCallback(() => {
     virtuosoRef.current?.scrollToIndex({
