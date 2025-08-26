@@ -286,6 +286,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
           as="span"
           w="100%"
           overflow="hidden"
+          py={1}
           textOverflow="ellipsis"
           whiteSpace="nowrap"
           display="block"

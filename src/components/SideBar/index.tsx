@@ -357,8 +357,8 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
   };
 
   const content = (
-    <Box display={!isLargeScreen ? "none" : "flex"} height="100vh">
-      <Card borderRadius={0} h="100vh" w={`${sidebarWidth}px`}>
+    <Box display={!isLargeScreen ? "none" : "flex"} height="100dvh">
+      <Card borderRadius={0} h="100dvh" w={`${sidebarWidth}px`}>
         <Flex direction="column" h="100%">
           <Flex
             px={3}
@@ -451,7 +451,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
         >
           <DrawerOverlay />
           <DrawerContent>
-            <Card borderRadius={0} h="100vh">
+            <Card borderRadius={0} h="100dvh">
               <DrawerHeader
                 px={3}
                 py={2}

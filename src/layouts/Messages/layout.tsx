@@ -186,14 +186,15 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
           </Flex>
         </VStack>
       ) : (
-        <Box
-          h="100%"
-          overflow={readyToRender ? "auto" : "hidden"}
-          visibility={readyToRender ? "visible" : "hidden"}
-        >
+        <Box h="100%" overflow="hidden">
           <Virtuoso
             ref={virtuosoRef}
-            style={{ height: "100%", minHeight: 100 }}
+            style={{
+              height: "100%",
+              minHeight: 100,
+              overflowY: readyToRender ? "auto" : "hidden",
+              visibility: readyToRender ? "visible" : "hidden",
+            }}
             data={virtualMessages}
             followOutput="auto"
             increaseViewportBy={200}

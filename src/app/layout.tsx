@@ -22,7 +22,7 @@ const RootLayout = ({ children }: { children: ReactNode }) => {
       <body>
         <Providers>
           <AuthInitializer>
-            <Flex h="100vh" overflow="hidden">
+            <Flex h="100dvh" overflow="hidden">
               <SideBar type="persistent" />
               <Flex direction="column" flex="1">
                 <NavigationBar />
