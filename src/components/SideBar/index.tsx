@@ -171,8 +171,11 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
   const stopResizing = () => setIsResizing(false);
 
   const handleThreadSelect = useCallback(
-    (threadId: string) => {
-      router.push(`/thread/${threadId}`);
+    (threadId: string, messageId?: string) => {
+      const url = messageId
+        ? `/thread/${threadId}?messageId=${messageId}`
+        : `/thread/${threadId}`;
+      router.push(url);
       if (type === "temporary") {
         onClose?.();
       }

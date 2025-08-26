@@ -57,6 +57,7 @@ interface MessagesLayoutProps {
   emptyStateText?: string;
   onLoadMore?: () => Promise<void>;
   onRetryMessage?: (message: Message) => void;
+  targetMessageId?: string | null;
 }
 
 const MessagesLayout: FC<MessagesLayoutProps> = ({
@@ -71,6 +72,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
   emptyStateText = "Hello, what can I help with?",
   onLoadMore,
   onRetryMessage,
+  targetMessageId,
 }) => {
   const { user: authUser } = useAuth();
   const { accentColor } = useAccentColor();
@@ -131,6 +133,20 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
       offset: 1000000,
     });
   }, [virtualMessages.length]);
+
+  useEffect(() => {
+    if (!targetMessageId || !readyToRender) return;
+    const index = virtualMessages.findIndex(
+      (item) => item.type === "message" && item.value.id === targetMessageId
+    );
+    if (index >= 0) {
+      virtuosoRef.current?.scrollToIndex({
+        index,
+        align: "center",
+        behavior: "auto",
+      });
+    }
+  }, [targetMessageId, readyToRender, virtualMessages]);
 
   useEffect(() => {
     if (readyToRender && lastMessage?.sender === "user") {

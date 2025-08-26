@@ -10,6 +10,7 @@ import {
   useCallback,
   useEffect,
   useRef,
+  useDeferredValue,
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
@@ -31,7 +32,7 @@ interface SearchResultItem {
 interface ThreadListProps {
   threads: Thread[];
   searchTerm: string;
-  onThreadClick?: (id: string) => void;
+  onThreadClick?: (id: string, messageId?: string) => void;
 }
 
 type VirtuosoItem =
@@ -42,6 +43,7 @@ type VirtuosoItem =
         thread: Thread;
         isMessageMatch: boolean;
         highlightedText?: ReactNode;
+        messageId?: string;
       };
     };
 
@@ -49,7 +51,8 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
   const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const isSearchActive = !!searchTerm;
+  const deferredSearch = useDeferredValue(searchTerm);
+  const isSearchActive = !!deferredSearch;
 
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [loadedThreads, setLoadedThreads] = useState<Thread[]>([]);
@@ -223,20 +226,20 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
   }, [user, fetchMessages]);
 
   const { titleResults, messageResults } = useMemo(() => {
-    const lower = searchTerm.toLowerCase();
+    const lower = deferredSearch.toLowerCase();
 
     const titles = loadedThreads
-      .filter((t) => !searchTerm || t.title?.toLowerCase().includes(lower))
+      .filter((t) => !deferredSearch || t.title?.toLowerCase().includes(lower))
       .sort((a, b) => (a.title || "").localeCompare(b.title || ""));
 
     const messages: SearchResultItem[] = [];
 
-    if (searchTerm) {
+    if (deferredSearch) {
       loadedThreads.forEach((thread) => {
         thread.messages?.forEach((msg) => {
           if (msg.text && msg.text.toLowerCase().includes(lower)) {
             const start = msg.text.toLowerCase().indexOf(lower);
-            const end = start + searchTerm.length;
+            const end = start + deferredSearch.length;
 
             const createdAt = msg.created_at
               ? new Date(msg.created_at).getTime() / 1000
@@ -287,7 +290,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
     }
 
     return { titleResults: titles, messageResults: messages };
-  }, [searchTerm, loadedThreads, bgHighlight, textHighlight]);
+  }, [deferredSearch, loadedThreads, bgHighlight, textHighlight]);
 
   const hasResults = titleResults.length > 0 || messageResults.length > 0;
 
@@ -318,6 +321,7 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
               thread: result.thread,
               isMessageMatch: true,
               highlightedText: result.highlightedText,
+              messageId: result.message?.id,
             },
           })
         );
@@ -334,13 +338,19 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
       }));
   }, [isSearchActive, hasResults, titleResults, messageResults, loadedThreads]);
 
-  const handleThreadClick = (threadId: string) => {
-    if (onThreadClick) {
-      onThreadClick(threadId);
-    } else {
-      router.push(`/thread/${threadId}`);
-    }
-  };
+  const handleThreadClick = useCallback(
+    (threadId: string, messageId?: string) => {
+      if (onThreadClick) {
+        onThreadClick(threadId, messageId);
+      } else {
+        const url = messageId
+          ? `/thread/${threadId}?messageId=${messageId}`
+          : `/thread/${threadId}`;
+        router.push(url);
+      }
+    },
+    [onThreadClick, router]
+  );
 
   return (
     <Box as="span" w="100%" h="100%" position="relative">
@@ -413,13 +423,15 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
                   );
                 }
 
-                const { thread, isMessageMatch, highlightedText } = item.data;
+                const { thread, isMessageMatch, highlightedText, messageId } =
+                  item.data;
                 return (
                   <Box mx={3} pt={isFirst ? 3 : 0} pb={isLast ? 3 : 0}>
                     <ThreadItem
                       thread={thread}
                       isActive={pathname === `/thread/${thread.id}`}
                       onThreadClick={handleThreadClick}
+                      messageId={messageId}
                       isMessageMatch={isMessageMatch}
                       highlightedText={highlightedText}
                       isSearchActive={isSearchActive}

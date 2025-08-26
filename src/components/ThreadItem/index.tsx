@@ -43,11 +43,12 @@ interface Thread {
 interface ThreadItemProps extends Omit<ButtonProps, "onClick"> {
   thread: Thread;
   isActive: boolean;
-  onThreadClick: (id: string) => void;
+  onThreadClick: (id: string, messageId?: string) => void;
   onDeleteThread?: (id: string) => void;
   isMessageMatch?: boolean;
   highlightedText?: ReactNode;
   isSearchActive: boolean;
+  messageId?: string;
 }
 
 const ThreadItem: FC<ThreadItemProps> = ({
@@ -58,6 +59,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
   isMessageMatch = false,
   highlightedText,
   isSearchActive,
+  messageId,
 }) => {
   const { colorMode } = useColorMode();
   const { user } = useAuth();
@@ -273,7 +275,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
         flex="1"
         minW={0}
         justifyContent="flex-start"
-        onClick={() => onThreadClick(thread.id)}
+        onClick={() => onThreadClick(thread.id, messageId)}
         textAlign="left"
         py={isMessageMatch ? 6 : 0}
         color={
