@@ -72,6 +72,11 @@ const ThreadItem: FC<ThreadItemProps> = ({
     onOpen: onRenameOpen,
     onClose: onRenameClose,
   } = useDisclosure();
+  const {
+    isOpen: isMenuOpen,
+    onOpen: onMenuOpen,
+    onClose: onMenuClose,
+  } = useDisclosure();
 
   const cancelRef = useRef<HTMLButtonElement>(null);
   const renameCancelRef = useRef<HTMLButtonElement>(null);
@@ -265,7 +270,8 @@ const ThreadItem: FC<ThreadItemProps> = ({
     >
       <Button
         variant="ghost"
-        w="100%"
+        flex="1"
+        minW={0}
         justifyContent="flex-start"
         onClick={() => onThreadClick(thread.id)}
         textAlign="left"
@@ -303,7 +309,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
       </Button>
 
       {!isSearchActive && (
-        <Menu>
+        <Menu isOpen={isMenuOpen} onOpen={onMenuOpen} onClose={onMenuClose}>
           <Tooltip label="More Options">
             <MenuButton
               as={IconButton}
@@ -314,7 +320,7 @@ const ThreadItem: FC<ThreadItemProps> = ({
               py={isMessageMatch ? 6 : 0}
               icon={
                 thread.is_pinned ? (
-                  isHover ? (
+                  isHover || isMenuOpen ? (
                     <HiOutlineDotsVertical />
                   ) : (
                     <RiPushpinFill />
@@ -323,9 +329,11 @@ const ThreadItem: FC<ThreadItemProps> = ({
                   <HiOutlineDotsVertical />
                 )
               }
-              opacity={thread.is_pinned ? 1 : 0}
-              _groupHover={{ opacity: 1 }}
-              transition="opacity 0.2s ease-in-out"
+              display={
+                thread.is_pinned || isHover || isMenuOpen
+                  ? "inline-flex"
+                  : "none"
+              }
               onClick={(e) => e.stopPropagation()}
             />
           </Tooltip>
