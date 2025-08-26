@@ -28,7 +28,7 @@ import { formatDateGrouping } from "@/utils/dateFormatter";
 import { Spinner, Progress } from "@themed-components";
 
 interface Message {
-  id?: string;
+  id: string;
   text: string | null;
   sender: "user" | "bot";
   timestamp: number;
@@ -46,11 +46,12 @@ interface MessagesLayoutProps {
   user: { id: string } | null;
   speakText: (
     text: string,
-    playingMessage: string | null,
-    setPlayingMessage: (msg: string | null) => void
+    id: string,
+    playingMessageId: string | null,
+    setPlayingMessageId: (msg: string | null) => void
   ) => void;
-  setPlayingMessage: (msg: string | null) => void;
-  playingMessage: string | null;
+  setPlayingMessageId: (msg: string | null) => void;
+  playingMessageId: string | null;
   messagesEndRef: RefObject<HTMLDivElement | null>;
   isLoading?: boolean;
   emptyStateText?: string;
@@ -63,8 +64,8 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
   isFetchingResponse,
   user,
   speakText,
-  playingMessage,
-  setPlayingMessage,
+  playingMessageId,
+  setPlayingMessageId,
   messagesEndRef,
   isLoading = false,
   emptyStateText = "Hello, what can I help with?",
@@ -255,8 +256,8 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
                     message={msg}
                     user={user}
                     speakText={speakText}
-                    playingMessage={playingMessage}
-                    setPlayingMessage={setPlayingMessage}
+                    playingMessageId={playingMessageId}
+                    setPlayingMessageId={setPlayingMessageId}
                     onRetry={
                       isLastBotMessage && onRetryMessage
                         ? () => onRetryMessage(msg)
