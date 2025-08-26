@@ -133,7 +133,9 @@ const Home: FC = () => {
       const botResponse =
         data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
 
+      const botMessageId = uuidv4();
       const botMessage: Message = {
+        id: botMessageId,
         text: botResponse,
         sender: "bot",
         timestamp: Date.now(),
@@ -146,6 +148,7 @@ const Home: FC = () => {
         addMessageToBottom(threadId, botMessage);
 
         await supabase.from("messages").insert({
+          id: botMessageId,
           user_id: user.id,
           thread_id: threadId,
           text: botMessage.text,
@@ -297,6 +300,7 @@ const Home: FC = () => {
     const now = new Date().toISOString();
     const timestamp = Date.now();
     const fileId = uuidv4();
+    const messageId = uuidv4();
 
     const id = threadId || (user && !isMessageTemporary ? uuidv4() : null);
     const isNewThread = !!user && !threadId && !isMessageTemporary && !!id;
@@ -348,6 +352,7 @@ const Home: FC = () => {
 
     const textToSend = input.trim() || null;
     const userMessage: Message = {
+      id: messageId,
       text: textToSend,
       sender: "user",
       timestamp,
@@ -368,6 +373,7 @@ const Home: FC = () => {
         }
 
         await supabase.from("messages").insert({
+          id: messageId,
           user_id: user.id,
           thread_id: id,
           text: userMessage.text,

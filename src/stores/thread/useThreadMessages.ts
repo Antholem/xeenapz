@@ -67,14 +67,13 @@ const useThreadMessages = create<ThreadMessageStore>()(
         set((state) => {
           const existing = state.messagesByThread[threadId] || [];
 
-          const isDuplicate = message.id
-            ? existing.some((msg) => msg.id === message.id)
-            : existing.some(
-                (msg) =>
-                  msg.timestamp === message.timestamp &&
-                  msg.sender === message.sender &&
-                  msg.text === message.text
-              );
+          const isDuplicate = existing.some(
+            (msg) =>
+              (message.id && msg.id === message.id) ||
+              (msg.timestamp === message.timestamp &&
+                msg.sender === message.sender &&
+                msg.text === message.text)
+          );
 
           if (isDuplicate) return state;
 

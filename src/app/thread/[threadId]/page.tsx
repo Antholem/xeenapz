@@ -198,7 +198,9 @@ const Thread: FC = () => {
       const botText =
         data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
 
+      const botMessageId = uuidv4();
       const botMessage: Message = {
+        id: botMessageId,
         text: botText,
         sender: "bot",
         timestamp: Date.now(),
@@ -209,6 +211,7 @@ const Thread: FC = () => {
 
       try {
         await supabase.from("messages").insert({
+          id: botMessageId,
           user_id: user.id,
           thread_id: threadId,
           text: botMessage.text,
@@ -328,6 +331,7 @@ const Thread: FC = () => {
     const now = new Date().toISOString();
     const timestamp = Date.now();
     const fileId = uuidv4();
+    const messageId = uuidv4();
 
     let imageData: Message["image"] | undefined;
     if (base64Image) {
@@ -362,6 +366,7 @@ const Thread: FC = () => {
     }
 
     const userMessage: Message = {
+      id: messageId,
       text: input.trim() || null,
       sender: "user",
       timestamp,
@@ -375,6 +380,7 @@ const Thread: FC = () => {
 
     try {
       await supabase.from("messages").insert({
+        id: messageId,
         user_id: user.id,
         thread_id: threadId,
         text: userMessage.text,
