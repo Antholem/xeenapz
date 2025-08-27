@@ -9,6 +9,7 @@ import ModalContent from "./ModalContent";
 import MenuItem from "./MenuItem";
 import MenuList from "./MenuList";
 import ImageModal from "./ImageModal";
+import Switch from "./Switch";
 
 export {
   Button,
@@ -22,4 +23,5 @@ export {
   MenuItem,
   MenuList,
   ImageModal,
+  Switch,
 };
