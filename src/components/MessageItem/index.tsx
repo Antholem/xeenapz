@@ -128,26 +128,26 @@ const MessageItem: FC<MessageItemProps> = ({
           alignItems={isUser ? "flex-end" : "flex-start"}
           gap={1}
         >
-            {message.image && (
-              <>
-                <Image
-                  src={message.image.url}
-                  id={message.image.id}
-                  alt={message.image.id}
-                  mt={2}
-                  maxW={200}
-                  rounded="md"
-                  cursor="pointer"
-                  onClick={() => setIsImageOpen(true)}
-                />
-                <ImageModal
-                  isOpen={isImageOpen}
-                  onClose={() => setIsImageOpen(false)}
-                  src={message.image.url}
-                  alt={message.image.id}
-                />
-              </>
-            )}
+          {message.image && (
+            <>
+              <Image
+                src={message.image.url}
+                id={message.image.id}
+                alt={message.image.id}
+                mt={2}
+                maxW={200}
+                rounded="md"
+                cursor="pointer"
+                onClick={() => setIsImageOpen(true)}
+              />
+              <ImageModal
+                isOpen={isImageOpen}
+                onClose={() => setIsImageOpen(false)}
+                src={message.image.url}
+                alt={message.image.id}
+              />
+            </>
+          )}
           {message.text && (
             <Box
               p={3}
@@ -182,8 +182,17 @@ const MessageItem: FC<MessageItemProps> = ({
           )}
 
           <Flex align="center" justify="center" gap={1}>
-            {user && <Text fontSize="xs" order={isUser ? 2 : 1}>{formattedTime}</Text>}
-            <Flex align="center" justify="center" gap={0} order={isUser ? 1 : 2}>
+            {user && (
+              <Text fontSize="xs" order={isUser ? 2 : 1}>
+                {formattedTime}
+              </Text>
+            )}
+            <Flex
+              align="center"
+              justify="center"
+              gap={0}
+              order={isUser ? 1 : 2}
+            >
               {!isUser && message.text && (
                 <Tooltip
                   label={
@@ -201,6 +210,13 @@ const MessageItem: FC<MessageItemProps> = ({
                     }
                     variant="ghost"
                     size="xs"
+                    color={
+                      playingMessageId === message.id
+                        ? colorMode === "light"
+                          ? "red.600"
+                          : "red.200"
+                        : "inherit"
+                    }
                     onClick={() =>
                       speakText(
                         message.text!,
@@ -212,8 +228,8 @@ const MessageItem: FC<MessageItemProps> = ({
                   />
                 </Tooltip>
               )}
-              {message.text && (
-                copied ? (
+              {message.text &&
+                (copied ? (
                   <IconButton
                     aria-label="Message Copied"
                     icon={<FaCheck />}
@@ -231,8 +247,7 @@ const MessageItem: FC<MessageItemProps> = ({
                       onClick={handleCopy}
                     />
                   </Tooltip>
-                )
-              )}
+                ))}
               {!isUser && message.text && onRetry && (
                 <Tooltip label="Try again">
                   <IconButton
