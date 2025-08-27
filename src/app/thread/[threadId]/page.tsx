@@ -1,7 +1,7 @@
 "use client";
 
 import { FC, useEffect, useRef, useState } from "react";
-import { notFound, useParams, useRouter } from "next/navigation";
+import { notFound, useParams, useRouter, useSearchParams } from "next/navigation";
 import { useSpeechRecognition } from "react-speech-recognition";
 import { v4 as uuidv4 } from "uuid";
 
@@ -20,6 +20,28 @@ import {
 const Thread: FC = () => {
   const { threadId } = useParams<{ threadId: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [targetMessageId, setTargetMessageId] = useState<string | null>(null);
+  const [scrollKey, setScrollKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    const messageId = searchParams.get("messageId");
+    const key = searchParams.get("scrollKey");
+    if (messageId || key) {
+      setTargetMessageId(messageId);
+      setScrollKey(key);
+      router.replace(`/thread/${threadId}`, { scroll: false });
+    }
+  }, [searchParams, router, threadId]);
+
+  useEffect(() => {
+    if (!targetMessageId && !scrollKey) return;
+    const timer = setTimeout(() => {
+      setTargetMessageId(null);
+      setScrollKey(null);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [targetMessageId, scrollKey]);
 
   const { user, loading } = useAuth();
   const { getInput, setInput, getPreview, setPreview, getFile, setFile } =
@@ -425,6 +447,8 @@ const Thread: FC = () => {
         onLoadMore={handleLoadMessages}
         isLoading={loadingMessages}
         onRetryMessage={retryBotMessage}
+        targetMessageId={targetMessageId}
+        scrollKey={scrollKey}
       />
       <MessageInput
         ref={messageInputRef}

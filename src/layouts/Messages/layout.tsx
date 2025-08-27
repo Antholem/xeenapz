@@ -57,6 +57,8 @@ interface MessagesLayoutProps {
   emptyStateText?: string;
   onLoadMore?: () => Promise<void>;
   onRetryMessage?: (message: Message) => void;
+  targetMessageId?: string | null;
+  scrollKey?: string | null;
 }
 
 const MessagesLayout: FC<MessagesLayoutProps> = ({
@@ -71,6 +73,8 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
   emptyStateText = "Hello, what can I help with?",
   onLoadMore,
   onRetryMessage,
+  targetMessageId,
+  scrollKey,
 }) => {
   const { user: authUser } = useAuth();
   const { accentColor } = useAccentColor();
@@ -79,6 +83,8 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const lastScrollKeyRef = useRef<string | null>(null);
 
   const lastMessage = messages[messages.length - 1];
 
@@ -131,6 +137,29 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
       offset: 1000000,
     });
   }, [virtualMessages.length]);
+
+  useEffect(() => {
+    if (!targetMessageId || !scrollKey || !readyToRender) return;
+    if (lastScrollKeyRef.current === scrollKey) return;
+    lastScrollKeyRef.current = scrollKey;
+    const index = virtualMessages.findIndex(
+      (item) => item.type === "message" && item.value.id === targetMessageId
+    );
+    if (index >= 0) {
+      virtuosoRef.current?.scrollToIndex({
+        index,
+        align: "start",
+        behavior: "auto",
+      });
+    }
+  }, [targetMessageId, scrollKey, readyToRender, virtualMessages]);
+
+  useEffect(() => {
+    if (!targetMessageId) return;
+    setHighlightedId(targetMessageId);
+    const timer = setTimeout(() => setHighlightedId(null), 3000);
+    return () => clearTimeout(timer);
+  }, [targetMessageId, scrollKey]);
 
   useEffect(() => {
     if (readyToRender && lastMessage?.sender === "user") {
@@ -264,6 +293,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
                         ? () => onRetryMessage(msg)
                         : undefined
                     }
+                    isHighlighted={highlightedId === msg.id}
                     mt={isFirst && !authUser ? 3 : 0}
                     pt={isFirst ? 3 : 2}
                     pb={isLast ? 3 : 2}

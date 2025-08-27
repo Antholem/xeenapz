@@ -17,6 +17,7 @@ import {
   IconButton,
   BoxProps,
   useColorMode,
+  useColorModeValue,
 } from "@chakra-ui/react";
 import { ImageModal } from "@themed-components";
 import { useAccentColor, useToastStore } from "@/stores";
@@ -45,6 +46,7 @@ interface MessageItemProps extends BoxProps {
   setPlayingMessageId: (msg: string | null) => void;
   playingMessageId: string | null;
   onRetry?: () => void;
+  isHighlighted?: boolean;
 }
 
 const MessageItem: FC<MessageItemProps> = ({
@@ -54,6 +56,7 @@ const MessageItem: FC<MessageItemProps> = ({
   playingMessageId,
   setPlayingMessageId,
   onRetry,
+  isHighlighted = false,
   ...props
 }) => {
   const isUser = message.sender === "user";
@@ -63,11 +66,32 @@ const MessageItem: FC<MessageItemProps> = ({
       locale: enUS,
     });
 
-    const { accentColor } = useAccentColor();
+  const { accentColor } = useAccentColor();
   const { colorMode } = useColorMode();
   const { showToast } = useToastStore();
   const [copied, setCopied] = useState(false);
   const [isImageOpen, setIsImageOpen] = useState(false);
+
+  const botHighlightBg = useColorModeValue(`gray.400`, `gray.500`);
+  const botHighlightColor = useColorModeValue("gray.900", "gray.100");
+  const userHighlightBg = useColorModeValue(
+    `${accentColor}.300`,
+    `${accentColor}.200`
+  );
+  const userNormalBg = useColorModeValue(
+    `${accentColor}.500`,
+    `${accentColor}.400`
+  );
+  const highlightBg = isUser ? userHighlightBg : botHighlightBg;
+  const normalBg = isUser ? userNormalBg : "mutedSurface";
+  const bubbleBg = isHighlighted ? highlightBg : normalBg;
+  const bubbleColor = isHighlighted
+    ? isUser
+      ? "white"
+      : botHighlightColor
+    : isUser
+    ? "white"
+    : "";
 
   const handleCopy = async () => {
     if (!message.text) return;
@@ -104,32 +128,33 @@ const MessageItem: FC<MessageItemProps> = ({
           alignItems={isUser ? "flex-end" : "flex-start"}
           gap={1}
         >
-            {message.image && (
-              <>
-                <Image
-                  src={message.image.url}
-                  id={message.image.id}
-                  alt={message.image.id}
-                  mt={2}
-                  maxW={200}
-                  rounded="md"
-                  cursor="pointer"
-                  onClick={() => setIsImageOpen(true)}
-                />
-                <ImageModal
-                  isOpen={isImageOpen}
-                  onClose={() => setIsImageOpen(false)}
-                  src={message.image.url}
-                  alt={message.image.id}
-                />
-              </>
-            )}
+          {message.image && (
+            <>
+              <Image
+                src={message.image.url}
+                id={message.image.id}
+                alt={message.image.id}
+                mt={2}
+                maxW={200}
+                rounded="md"
+                cursor="pointer"
+                onClick={() => setIsImageOpen(true)}
+              />
+              <ImageModal
+                isOpen={isImageOpen}
+                onClose={() => setIsImageOpen(false)}
+                src={message.image.url}
+                alt={message.image.id}
+              />
+            </>
+          )}
           {message.text && (
             <Box
               p={3}
               borderRadius="lg"
-              color={isUser ? "white" : ""}
-              bg={isUser ? `${accentColor}.400` : "mutedSurface"}
+              color={bubbleColor}
+              bg={bubbleBg}
+              transition="background-color 0.4s"
               maxW="max-content"
               whiteSpace="pre-wrap"
               wordBreak="break-word"
@@ -157,8 +182,17 @@ const MessageItem: FC<MessageItemProps> = ({
           )}
 
           <Flex align="center" justify="center" gap={1}>
-            {user && <Text fontSize="xs" order={isUser ? 2 : 1}>{formattedTime}</Text>}
-            <Flex align="center" justify="center" gap={0} order={isUser ? 1 : 2}>
+            {user && (
+              <Text fontSize="xs" order={isUser ? 2 : 1}>
+                {formattedTime}
+              </Text>
+            )}
+            <Flex
+              align="center"
+              justify="center"
+              gap={0}
+              order={isUser ? 1 : 2}
+            >
               {!isUser && message.text && (
                 <Tooltip
                   label={
@@ -176,6 +210,13 @@ const MessageItem: FC<MessageItemProps> = ({
                     }
                     variant="ghost"
                     size="xs"
+                    color={
+                      playingMessageId === message.id
+                        ? colorMode === "light"
+                          ? "red.600"
+                          : "red.200"
+                        : "inherit"
+                    }
                     onClick={() =>
                       speakText(
                         message.text!,
@@ -187,8 +228,8 @@ const MessageItem: FC<MessageItemProps> = ({
                   />
                 </Tooltip>
               )}
-              {message.text && (
-                copied ? (
+              {message.text &&
+                (copied ? (
                   <IconButton
                     aria-label="Message Copied"
                     icon={<FaCheck />}
@@ -206,8 +247,7 @@ const MessageItem: FC<MessageItemProps> = ({
                       onClick={handleCopy}
                     />
                   </Tooltip>
-                )
-              )}
+                ))}
               {!isUser && message.text && onRetry && (
                 <Tooltip label="Try again">
                   <IconButton
