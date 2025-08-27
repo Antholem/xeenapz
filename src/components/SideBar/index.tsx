@@ -279,9 +279,12 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
           }
 
           if (payload.eventType === "UPDATE") {
+            const messages = await fetchMessages(updatedThread.id);
             setThreads((prev) =>
               prev.map((t) =>
-                t.id === updatedThread.id ? { ...t, ...updatedThread } : t
+                t.id === updatedThread.id
+                  ? { ...t, ...updatedThread, messages }
+                  : t
               )
             );
           }

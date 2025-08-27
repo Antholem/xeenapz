@@ -205,10 +205,13 @@ const ThreadList: FC<ThreadListProps> = ({ threads, searchTerm, onThreadClick })
               ])
             );
           } else if (payload.eventType === "UPDATE") {
+            const messages = await fetchMessages(newThread.id);
             setLoadedThreads((prev) =>
               sortThreads(
                 prev.map((t) =>
-                  t.id === newThread.id ? { ...t, ...newThread } : t
+                  t.id === newThread.id
+                    ? { ...t, ...newThread, messages }
+                    : t
                 )
               )
             );
