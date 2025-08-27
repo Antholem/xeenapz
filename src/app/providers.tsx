@@ -35,7 +35,7 @@ const AccentSelection = () => {
   const { accentColor } = useAccentColor();
   const chakraTheme = useTheme();
 
-  const bgToken = useColorModeValue(`${accentColor}.500`, `${accentColor}.200`);
+  const bgToken = useColorModeValue(`${accentColor}.400`, `${accentColor}.200`);
   const textToken = useColorModeValue("white", "gray.900");
   const textColor = useToken("colors", textToken);
 

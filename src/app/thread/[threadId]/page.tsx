@@ -21,8 +21,27 @@ const Thread: FC = () => {
   const { threadId } = useParams<{ threadId: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const targetMessageId = searchParams.get("messageId");
-  const scrollKey = searchParams.get("scrollKey");
+  const [targetMessageId, setTargetMessageId] = useState<string | null>(null);
+  const [scrollKey, setScrollKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    const messageId = searchParams.get("messageId");
+    const key = searchParams.get("scrollKey");
+    if (messageId || key) {
+      setTargetMessageId(messageId);
+      setScrollKey(key);
+      router.replace(`/thread/${threadId}`, { scroll: false });
+    }
+  }, [searchParams, router, threadId]);
+
+  useEffect(() => {
+    if (!targetMessageId && !scrollKey) return;
+    const timer = setTimeout(() => {
+      setTargetMessageId(null);
+      setScrollKey(null);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [targetMessageId, scrollKey]);
 
   const { user, loading } = useAuth();
   const { getInput, setInput, getPreview, setPreview, getFile, setFile } =

@@ -72,21 +72,26 @@ const MessageItem: FC<MessageItemProps> = ({
   const [copied, setCopied] = useState(false);
   const [isImageOpen, setIsImageOpen] = useState(false);
 
-  const botHighlightBg = useColorModeValue(
-    `${accentColor}.200`,
-    `${accentColor}.700`
-  );
+  const botHighlightBg = useColorModeValue(`gray.400`, `gray.500`);
   const botHighlightColor = useColorModeValue("gray.900", "gray.100");
-  const highlightBg = isUser ? `${accentColor}.600` : botHighlightBg;
-  const normalBg = isUser ? `${accentColor}.400` : "mutedSurface";
+  const userHighlightBg = useColorModeValue(
+    `${accentColor}.300`,
+    `${accentColor}.200`
+  );
+  const userNormalBg = useColorModeValue(
+    `${accentColor}.500`,
+    `${accentColor}.400`
+  );
+  const highlightBg = isUser ? userHighlightBg : botHighlightBg;
+  const normalBg = isUser ? userNormalBg : "mutedSurface";
   const bubbleBg = isHighlighted ? highlightBg : normalBg;
   const bubbleColor = isHighlighted
     ? isUser
       ? "white"
       : botHighlightColor
     : isUser
-      ? "white"
-      : "";
+    ? "white"
+    : "";
 
   const handleCopy = async () => {
     if (!message.text) return;

@@ -84,6 +84,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
   const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const lastScrollKeyRef = useRef<string | null>(null);
 
   const lastMessage = messages[messages.length - 1];
 
@@ -138,7 +139,9 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
   }, [virtualMessages.length]);
 
   useEffect(() => {
-    if (!targetMessageId || !readyToRender) return;
+    if (!targetMessageId || !scrollKey || !readyToRender) return;
+    if (lastScrollKeyRef.current === scrollKey) return;
+    lastScrollKeyRef.current = scrollKey;
     const index = virtualMessages.findIndex(
       (item) => item.type === "message" && item.value.id === targetMessageId
     );
@@ -154,7 +157,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
   useEffect(() => {
     if (!targetMessageId) return;
     setHighlightedId(targetMessageId);
-    const timer = setTimeout(() => setHighlightedId(null), 1000);
+    const timer = setTimeout(() => setHighlightedId(null), 3000);
     return () => clearTimeout(timer);
   }, [targetMessageId, scrollKey]);
 
