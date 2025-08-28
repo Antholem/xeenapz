@@ -8,7 +8,7 @@ import { MessageInput } from "@/components";
 import type { MessageInputHandle } from "@/components/MessageInput";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
 import { speakText } from "@/lib";
-import { useAuth, useThreadInput, useModel } from "@/stores";
+import { useAuth, useThreadInput, useModel, useChatSettings } from "@/stores";
 import { v4 as uuidv4 } from "uuid";
 
 interface Message {
@@ -40,6 +40,7 @@ const TempThread: FC = () => {
   const preview = getPreview("home");
   const file = getFile("home");
   const { model } = useModel();
+  const { smartSuggestions } = useChatSettings();
 
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
   const prevTranscriptRef = useRef("");
@@ -65,6 +66,26 @@ const TempThread: FC = () => {
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
+  };
+
+  const isQuestion = (text?: string | null) => {
+    if (!text) return false;
+    const trimmed = text.trim();
+    return (
+      trimmed.endsWith("?") ||
+      /^(who|what|where|when|why|how|do|does|did|is|are|can|should|would|could|will|shall|may)\b/i.test(trimmed)
+    );
+  };
+
+  const buildPrompt = (text: string | null) => {
+    if (!text) return "";
+    if (smartSuggestions && isQuestion(text)) {
+      return (
+        text +
+        "\n\nAfter answering, append a brief follow-up suggestion starting with phrases like \"Would you like\", \"You may want\", or \"If you want\" in the same response."
+      );
+    }
+    return text;
   };
 
   useEffect(() => {
@@ -146,7 +167,7 @@ const TempThread: FC = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: textToSend || null,
+          message: textToSend ? buildPrompt(textToSend) : null,
           image: imageBase64 || null,
           model,
         }),
@@ -223,7 +244,7 @@ const TempThread: FC = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: userMessage.text || null,
+          message: userMessage.text ? buildPrompt(userMessage.text) : null,
           image: base64Image,
           model,
         }),

@@ -12,6 +12,7 @@ import {
   useThreadInput,
   useThreadMessages,
   useModel,
+  useChatSettings,
 } from "@/stores";
 import { MessageInput } from "@/components";
 import type { MessageInputHandle } from "@/components/MessageInput";
@@ -40,6 +41,7 @@ const Home: FC = () => {
     useThreadMessages();
   const { model } = useModel();
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
+  const { smartSuggestions } = useChatSettings();
 
   const [threadId, setThreadId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -73,6 +75,26 @@ const Home: FC = () => {
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
+  };
+
+  const isQuestion = (text?: string | null) => {
+    if (!text) return false;
+    const trimmed = text.trim();
+    return (
+      trimmed.endsWith("?") ||
+      /^(who|what|where|when|why|how|do|does|did|is|are|can|should|would|could|will|shall|may)\b/i.test(trimmed)
+    );
+  };
+
+  const buildPrompt = (text: string | null) => {
+    if (!text) return "";
+    if (smartSuggestions && isQuestion(text)) {
+      return (
+        text +
+        "\n\nAfter answering, append a brief follow-up suggestion starting with phrases like \"Would you like\", \"You may want\", or \"If you want\" in the same response."
+      );
+    }
+    return text;
   };
 
   useEffect(() => {
@@ -123,7 +145,7 @@ const Home: FC = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: userMessage.text || null,
+          message: userMessage.text ? buildPrompt(userMessage.text) : null,
           image: imageBase64 || null,
           model,
         }),
@@ -249,7 +271,7 @@ const Home: FC = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: userMessage.text || null,
+          message: userMessage.text ? buildPrompt(userMessage.text) : null,
           image: base64Image,
           model,
         }),
