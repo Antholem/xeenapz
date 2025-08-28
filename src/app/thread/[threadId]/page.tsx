@@ -14,8 +14,10 @@ import {
   useThreadInput,
   useThreadMessages,
   useModel,
+  useChatSettings,
   type Message,
 } from "@/stores";
+import { generateSmartSuggestions } from "@/utils/smartSuggestions";
 
 const Thread: FC = () => {
   const { threadId } = useParams<{ threadId: string }>();
@@ -50,6 +52,7 @@ const Thread: FC = () => {
   const preview = getPreview(threadId || "home");
   const file = getFile(threadId || "home");
   const { model } = useModel();
+  const { smartSuggestions } = useChatSettings();
 
   const {
     messagesByThread,
@@ -219,10 +222,23 @@ const Thread: FC = () => {
       const data = await res.json();
       const botText =
         data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+
+      let finalText = botText;
+      if (smartSuggestions) {
+        const suggestions = await generateSmartSuggestions(
+          userMessage.text || null,
+          botText,
+          model
+        );
+        if (suggestions) {
+          finalText = `${botText}\n\n${suggestions}`;
+        }
+      }
+
       const botMessageId = uuidv4();
       const botMessage: Message = {
         id: botMessageId,
-        text: botText,
+        text: finalText,
         sender: "bot",
         timestamp: Date.now(),
         created_at: new Date().toISOString(),
@@ -314,9 +330,22 @@ const Thread: FC = () => {
       const data = await res.json();
       const botText =
         data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+
+      let finalText = botText;
+      if (smartSuggestions) {
+        const suggestions = await generateSmartSuggestions(
+          userMessage.text || null,
+          botText,
+          model
+        );
+        if (suggestions) {
+          finalText = `${botText}\n\n${suggestions}`;
+        }
+        }
+
       const updatedMessage: Message = {
         ...botMessage,
-        text: botText,
+        text: finalText,
         timestamp: Date.now(),
         created_at: new Date().toISOString(),
       };
