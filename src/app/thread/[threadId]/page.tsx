@@ -219,7 +219,6 @@ const Thread: FC = () => {
       const data = await res.json();
       const botText =
         data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
-
       const botMessageId = uuidv4();
       const botMessage: Message = {
         id: botMessageId,
@@ -315,7 +314,6 @@ const Thread: FC = () => {
       const data = await res.json();
       const botText =
         data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
-
       const updatedMessage: Message = {
         ...botMessage,
         text: botText,
@@ -344,11 +342,12 @@ const Thread: FC = () => {
     }
   };
 
-  const sendMessage = async () => {
+  const sendMessage = async (overrideText?: string) => {
     if (!user || !threadId) return;
 
     const base64Image = await getImageBase64();
-    if (!input.trim() && !base64Image) return;
+    const textToSend = (overrideText ?? input).trim();
+    if (!textToSend && !base64Image) return;
 
     const now = new Date().toISOString();
     const timestamp = Date.now();
@@ -389,7 +388,7 @@ const Thread: FC = () => {
 
     const userMessage: Message = {
       id: messageId,
-      text: input.trim() || null,
+      text: textToSend || null,
       sender: "user",
       timestamp,
       created_at: now,
@@ -429,7 +428,6 @@ const Thread: FC = () => {
       console.error("Error sending message:", error);
     }
   };
-
   if (loading) return null;
 
   return (

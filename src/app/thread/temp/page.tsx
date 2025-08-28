@@ -109,9 +109,10 @@ const TempThread: FC = () => {
     };
   }, []);
 
-  const sendMessage = async () => {
+  const sendMessage = async (overrideText?: string) => {
     const imageBase64 = await getImageBase64();
-    if (!input.trim() && !imageBase64) return;
+    const textToSend = (overrideText ?? input).trim();
+    if (!textToSend && !imageBase64) return;
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
@@ -127,7 +128,7 @@ const TempThread: FC = () => {
 
     const userMessage: Message = {
       id: uuidv4(),
-      text: input.trim() || null,
+      text: textToSend || null,
       sender: "user",
       timestamp,
       created_at: now,
@@ -145,7 +146,7 @@ const TempThread: FC = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: input.trim() || null,
+          message: textToSend || null,
           image: imageBase64 || null,
           model,
         }),
@@ -248,7 +249,6 @@ const TempThread: FC = () => {
       setIsFetchingResponse(false);
     }
   };
-
   const isBlocked = !user && !loading;
 
   return (

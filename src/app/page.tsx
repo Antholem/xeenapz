@@ -132,7 +132,6 @@ const Home: FC = () => {
       const data = await res.json();
       const botResponse =
         data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
-
       const botMessageId = uuidv4();
       const botMessage: Message = {
         id: botMessageId,
@@ -259,7 +258,6 @@ const Home: FC = () => {
       const data = await res.json();
       const botResponse =
         data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
-
       const updatedMessage: Message = {
         ...botMessage,
         text: botResponse,
@@ -293,9 +291,10 @@ const Home: FC = () => {
     }
   };
 
-  const sendMessage = async () => {
+  const sendMessage = async (overrideText?: string) => {
     const base64Image = await getImageBase64();
-    if (!input.trim() && !base64Image) return;
+    const textToSend = (overrideText ?? input).trim();
+    if (!textToSend && !base64Image) return;
 
     const now = new Date().toISOString();
     const timestamp = Date.now();
@@ -350,10 +349,9 @@ const Home: FC = () => {
       });
     }
 
-    const textToSend = input.trim() || null;
     const userMessage: Message = {
       id: messageId,
-      text: textToSend,
+      text: textToSend || null,
       sender: "user",
       timestamp,
       created_at: now,

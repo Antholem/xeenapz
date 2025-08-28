@@ -27,6 +27,7 @@ import { BiMessageDetail, BiSolidMessageDetail } from "react-icons/bi";
 import { TbArrowBigUpLines, TbArrowBigUpLinesFilled } from "react-icons/tb";
 import { HiLockClosed, HiOutlineLockClosed, HiOutlineUser } from "react-icons/hi";
 import Appearance from "./Appearance";
+import General from "./General";
 
 interface SettingsProps {
   isOpen: boolean;
@@ -189,7 +190,9 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
             />
 
             <TabPanels flex="1" minH={0} overflowY="auto">
-              <TabPanel>General settings go here.</TabPanel>
+              <TabPanel>
+                <General />
+              </TabPanel>
               <TabPanel>
                 <Appearance />
               </TabPanel>

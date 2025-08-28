@@ -297,7 +297,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
                     mt={isFirst && !authUser ? 3 : 0}
                     pt={isFirst ? 3 : 2}
                     pb={isLast ? 3 : 2}
-                  />
+                />
                 </Box>
               );
             }}
