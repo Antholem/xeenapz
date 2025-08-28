@@ -8,8 +8,12 @@ import { MessageInput } from "@/components";
 import type { MessageInputHandle } from "@/components/MessageInput";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
 import { speakText } from "@/lib";
-import { useAuth, useThreadInput, useModel } from "@/stores";
+import { useAuth, useThreadInput, useModel, useChatSettings } from "@/stores";
 import { v4 as uuidv4 } from "uuid";
+import {
+  shouldGenerateSuggestions,
+  fetchFollowUpSuggestions,
+} from "@/utils/smartSuggestions";
 
 interface Message {
   id: string;
@@ -22,6 +26,7 @@ interface Message {
     path: string;
     url: string;
   } | null;
+  suggestions?: string[];
 }
 
 const TempThread: FC = () => {
@@ -40,6 +45,7 @@ const TempThread: FC = () => {
   const preview = getPreview("home");
   const file = getFile("home");
   const { model } = useModel();
+  const { smartSuggestions } = useChatSettings();
 
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
   const prevTranscriptRef = useRef("");
@@ -109,9 +115,10 @@ const TempThread: FC = () => {
     };
   }, []);
 
-  const sendMessage = async () => {
+  const sendMessage = async (overrideText?: string) => {
     const imageBase64 = await getImageBase64();
-    if (!input.trim() && !imageBase64) return;
+    const textToSend = (overrideText ?? input).trim();
+    if (!textToSend && !imageBase64) return;
 
     const timestamp = Date.now();
     const now = new Date().toISOString();
@@ -127,7 +134,7 @@ const TempThread: FC = () => {
 
     const userMessage: Message = {
       id: uuidv4(),
-      text: input.trim() || null,
+      text: textToSend || null,
       sender: "user",
       timestamp,
       created_at: now,
@@ -145,7 +152,7 @@ const TempThread: FC = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: input.trim() || null,
+          message: textToSend || null,
           image: imageBase64 || null,
           model,
         }),
@@ -155,12 +162,18 @@ const TempThread: FC = () => {
       const botResponse =
         data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
 
+      let suggestions: string[] | undefined;
+      if (smartSuggestions && shouldGenerateSuggestions(botResponse)) {
+        suggestions = await fetchFollowUpSuggestions(botResponse, model);
+      }
+
       const botMessage: Message = {
         id: uuidv4(),
         text: botResponse,
         sender: "bot",
         timestamp: Date.now(),
         created_at: new Date().toISOString(),
+        suggestions,
       };
 
       setMessages((prev) => [...prev, botMessage]);
@@ -232,6 +245,11 @@ const TempThread: FC = () => {
       const botResponse =
         data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
 
+      let suggestions: string[] | undefined;
+      if (smartSuggestions && shouldGenerateSuggestions(botResponse)) {
+        suggestions = await fetchFollowUpSuggestions(botResponse, model);
+      }
+
       setMessages((prev) => {
         const newMsgs = [...prev];
         newMsgs[index] = {
@@ -239,6 +257,7 @@ const TempThread: FC = () => {
           text: botResponse,
           timestamp: Date.now(),
           created_at: new Date().toISOString(),
+          suggestions,
         };
         return newMsgs;
       });
@@ -247,6 +266,10 @@ const TempThread: FC = () => {
     } finally {
       setIsFetchingResponse(false);
     }
+  };
+
+  const handleSelectSuggestion = async (text: string) => {
+    await sendMessage(text);
   };
 
   const isBlocked = !user && !loading;
@@ -265,6 +288,7 @@ const TempThread: FC = () => {
         messagesEndRef={messagesEndRef}
         emptyStateText="Temporary Thread"
         onRetryMessage={isBlocked ? undefined : retryBotMessage}
+        onSelectSuggestion={handleSelectSuggestion}
       />
       <MessageInput
         ref={messageInputRef}

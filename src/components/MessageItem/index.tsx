@@ -18,6 +18,7 @@ import {
   BoxProps,
   useColorMode,
   useColorModeValue,
+  Button,
 } from "@chakra-ui/react";
 import { ImageModal } from "@themed-components";
 import { useAccentColor, useToastStore } from "@/stores";
@@ -32,6 +33,7 @@ interface Message {
     path: string;
     url: string;
   } | null;
+  suggestions?: string[];
 }
 
 interface MessageItemProps extends BoxProps {
@@ -47,6 +49,7 @@ interface MessageItemProps extends BoxProps {
   playingMessageId: string | null;
   onRetry?: () => void;
   isHighlighted?: boolean;
+  onSelectSuggestion?: (text: string) => void;
 }
 
 const MessageItem: FC<MessageItemProps> = ({
@@ -57,6 +60,7 @@ const MessageItem: FC<MessageItemProps> = ({
   setPlayingMessageId,
   onRetry,
   isHighlighted = false,
+  onSelectSuggestion,
   ...props
 }) => {
   const isUser = message.sender === "user";
@@ -180,6 +184,21 @@ const MessageItem: FC<MessageItemProps> = ({
               </ReactMarkdown>
             </Box>
           )}
+
+          {message.sender === "bot" && message.suggestions?.length ? (
+            <Flex mt={2} wrap="wrap" gap={2}>
+              {message.suggestions.map((sug) => (
+                <Button
+                  key={sug}
+                  size="xs"
+                  variant="outline"
+                  onClick={() => onSelectSuggestion?.(sug)}
+                >
+                  {sug}
+                </Button>
+              ))}
+            </Flex>
+          ) : null}
 
           <Flex align="center" justify="center" gap={1}>
             {user && (

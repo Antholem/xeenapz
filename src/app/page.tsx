@@ -12,7 +12,12 @@ import {
   useThreadInput,
   useThreadMessages,
   useModel,
+  useChatSettings,
 } from "@/stores";
+import {
+  shouldGenerateSuggestions,
+  fetchFollowUpSuggestions,
+} from "@/utils/smartSuggestions";
 import { MessageInput } from "@/components";
 import type { MessageInputHandle } from "@/components/MessageInput";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
@@ -28,6 +33,7 @@ interface Message {
     path: string;
     url: string;
   } | null;
+  suggestions?: string[];
 }
 
 const Home: FC = () => {
@@ -39,6 +45,7 @@ const Home: FC = () => {
   const { setMessages: setGlobalMessages, addMessageToBottom } =
     useThreadMessages();
   const { model } = useModel();
+  const { smartSuggestions } = useChatSettings();
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
 
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -132,6 +139,10 @@ const Home: FC = () => {
       const data = await res.json();
       const botResponse =
         data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+      let suggestions: string[] | undefined;
+      if (smartSuggestions && shouldGenerateSuggestions(botResponse)) {
+        suggestions = await fetchFollowUpSuggestions(botResponse, model);
+      }
 
       const botMessageId = uuidv4();
       const botMessage: Message = {
@@ -140,6 +151,7 @@ const Home: FC = () => {
         sender: "bot",
         timestamp: Date.now(),
         created_at: new Date().toISOString(),
+        suggestions,
       };
 
       setMessages((prev) => [...prev, botMessage]);
@@ -259,12 +271,17 @@ const Home: FC = () => {
       const data = await res.json();
       const botResponse =
         data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+      let suggestions: string[] | undefined;
+      if (smartSuggestions && shouldGenerateSuggestions(botResponse)) {
+        suggestions = await fetchFollowUpSuggestions(botResponse, model);
+      }
 
       const updatedMessage: Message = {
         ...botMessage,
         text: botResponse,
         timestamp: Date.now(),
         created_at: new Date().toISOString(),
+        suggestions,
       };
 
       setMessages((prev) => {
@@ -293,9 +310,10 @@ const Home: FC = () => {
     }
   };
 
-  const sendMessage = async () => {
+  const sendMessage = async (overrideText?: string) => {
     const base64Image = await getImageBase64();
-    if (!input.trim() && !base64Image) return;
+    const textToSend = (overrideText ?? input).trim();
+    if (!textToSend && !base64Image) return;
 
     const now = new Date().toISOString();
     const timestamp = Date.now();
@@ -350,10 +368,9 @@ const Home: FC = () => {
       });
     }
 
-    const textToSend = input.trim() || null;
     const userMessage: Message = {
       id: messageId,
-      text: textToSend,
+      text: textToSend || null,
       sender: "user",
       timestamp,
       created_at: now,
@@ -413,6 +430,10 @@ const Home: FC = () => {
     }
   };
 
+  const handleSelectSuggestion = async (text: string) => {
+    await sendMessage(text);
+  };
+
   return (
     <ThreadLayout
       onFileDrop={(file) => messageInputRef.current?.handleFile(file)}
@@ -426,6 +447,7 @@ const Home: FC = () => {
         setPlayingMessageId={setPlayingMessageId}
         messagesEndRef={messagesEndRef}
         onRetryMessage={retryBotMessage}
+        onSelectSuggestion={handleSelectSuggestion}
       />
       <MessageInput
         ref={messageInputRef}

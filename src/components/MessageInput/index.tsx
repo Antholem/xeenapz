@@ -40,7 +40,7 @@ interface MessageInputProps {
   resetTranscript: () => void;
   isFetchingResponse: boolean;
   isDisabled?: boolean;
-  sendMessage: () => void;
+  sendMessage: (text?: string) => Promise<void> | void;
   fileInputRef: RefObject<HTMLInputElement | null>;
   discardImage: () => void;
 }
