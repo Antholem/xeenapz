@@ -12,10 +12,12 @@ import {
   useThreadInput,
   useThreadMessages,
   useModel,
+  useChatSettings,
 } from "@/stores";
 import { MessageInput } from "@/components";
 import type { MessageInputHandle } from "@/components/MessageInput";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
+import { generateSmartSuggestions } from "@/utils/smartSuggestions";
 
 interface Message {
   id: string;
@@ -39,6 +41,7 @@ const Home: FC = () => {
   const { setMessages: setGlobalMessages, addMessageToBottom } =
     useThreadMessages();
   const { model } = useModel();
+  const { smartSuggestions } = useChatSettings();
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
 
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -132,10 +135,23 @@ const Home: FC = () => {
       const data = await res.json();
       const botResponse =
         data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+
+      let finalText = botResponse;
+      if (smartSuggestions) {
+        const suggestions = await generateSmartSuggestions(
+          userMessage.text || null,
+          botResponse,
+          model
+        );
+        if (suggestions) {
+          finalText = `${botResponse}\n\n${suggestions}`;
+        }
+      }
+
       const botMessageId = uuidv4();
       const botMessage: Message = {
         id: botMessageId,
-        text: botResponse,
+        text: finalText,
         sender: "bot",
         timestamp: Date.now(),
         created_at: new Date().toISOString(),
@@ -258,9 +274,22 @@ const Home: FC = () => {
       const data = await res.json();
       const botResponse =
         data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+
+      let finalText = botResponse;
+      if (smartSuggestions) {
+        const suggestions = await generateSmartSuggestions(
+          userMessage.text || null,
+          botResponse,
+          model
+        );
+        if (suggestions) {
+          finalText = `${botResponse}\n\n${suggestions}`;
+        }
+      }
+
       const updatedMessage: Message = {
         ...botMessage,
-        text: botResponse,
+        text: finalText,
         timestamp: Date.now(),
         created_at: new Date().toISOString(),
       };
