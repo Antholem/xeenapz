@@ -14,7 +14,6 @@ export interface Message {
     path: string;
     url: string;
   } | null;
-  suggestions?: string[];
 }
 
 interface ThreadMessageStore {

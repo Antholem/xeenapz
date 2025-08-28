@@ -9,7 +9,6 @@ export interface Message {
     path: string;
     url: string;
   } | null;
-  suggestions?: string[];
 }
 
 export interface Thread {

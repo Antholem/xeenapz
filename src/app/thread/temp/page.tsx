@@ -8,12 +8,8 @@ import { MessageInput } from "@/components";
 import type { MessageInputHandle } from "@/components/MessageInput";
 import { ThreadLayout, MessagesLayout } from "@/layouts";
 import { speakText } from "@/lib";
-import { useAuth, useThreadInput, useModel, useChatSettings } from "@/stores";
+import { useAuth, useThreadInput, useModel } from "@/stores";
 import { v4 as uuidv4 } from "uuid";
-import {
-  shouldGenerateSuggestions,
-  fetchFollowUpSuggestions,
-} from "@/utils/smartSuggestions";
 
 interface Message {
   id: string;
@@ -26,7 +22,6 @@ interface Message {
     path: string;
     url: string;
   } | null;
-  suggestions?: string[];
 }
 
 const TempThread: FC = () => {
@@ -45,7 +40,6 @@ const TempThread: FC = () => {
   const preview = getPreview("home");
   const file = getFile("home");
   const { model } = useModel();
-  const { smartSuggestions } = useChatSettings();
 
   const { transcript, listening, resetTranscript } = useSpeechRecognition();
   const prevTranscriptRef = useRef("");
@@ -162,18 +156,12 @@ const TempThread: FC = () => {
       const botResponse =
         data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
 
-      let suggestions: string[] | undefined;
-      if (smartSuggestions && shouldGenerateSuggestions(botResponse)) {
-        suggestions = await fetchFollowUpSuggestions(botResponse, model);
-      }
-
       const botMessage: Message = {
         id: uuidv4(),
         text: botResponse,
         sender: "bot",
         timestamp: Date.now(),
         created_at: new Date().toISOString(),
-        suggestions,
       };
 
       setMessages((prev) => [...prev, botMessage]);
@@ -245,11 +233,6 @@ const TempThread: FC = () => {
       const botResponse =
         data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
 
-      let suggestions: string[] | undefined;
-      if (smartSuggestions && shouldGenerateSuggestions(botResponse)) {
-        suggestions = await fetchFollowUpSuggestions(botResponse, model);
-      }
-
       setMessages((prev) => {
         const newMsgs = [...prev];
         newMsgs[index] = {
@@ -257,7 +240,6 @@ const TempThread: FC = () => {
           text: botResponse,
           timestamp: Date.now(),
           created_at: new Date().toISOString(),
-          suggestions,
         };
         return newMsgs;
       });
@@ -267,11 +249,6 @@ const TempThread: FC = () => {
       setIsFetchingResponse(false);
     }
   };
-
-  const handleSelectSuggestion = async (text: string) => {
-    await sendMessage(text);
-  };
-
   const isBlocked = !user && !loading;
 
   return (
@@ -288,7 +265,6 @@ const TempThread: FC = () => {
         messagesEndRef={messagesEndRef}
         emptyStateText="Temporary Thread"
         onRetryMessage={isBlocked ? undefined : retryBotMessage}
-        onSelectSuggestion={handleSelectSuggestion}
       />
       <MessageInput
         ref={messageInputRef}

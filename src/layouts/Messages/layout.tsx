@@ -38,7 +38,6 @@ interface Message {
     path: string;
     url: string;
   } | null;
-  suggestions?: string[];
 }
 
 interface MessagesLayoutProps {
@@ -60,7 +59,6 @@ interface MessagesLayoutProps {
   onRetryMessage?: (message: Message) => void;
   targetMessageId?: string | null;
   scrollKey?: string | null;
-  onSelectSuggestion?: (text: string) => void;
 }
 
 const MessagesLayout: FC<MessagesLayoutProps> = ({
@@ -77,7 +75,6 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
   onRetryMessage,
   targetMessageId,
   scrollKey,
-  onSelectSuggestion,
 }) => {
   const { user: authUser } = useAuth();
   const { accentColor } = useAccentColor();
@@ -300,8 +297,7 @@ const MessagesLayout: FC<MessagesLayoutProps> = ({
                     mt={isFirst && !authUser ? 3 : 0}
                     pt={isFirst ? 3 : 2}
                     pb={isLast ? 3 : 2}
-                    onSelectSuggestion={onSelectSuggestion}
-                  />
+                />
                 </Box>
               );
             }}
