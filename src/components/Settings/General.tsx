@@ -1,6 +1,6 @@
 "use client";
 
-import { FC } from "react";
+import { FC, useEffect } from "react";
 import {
   Box,
   Card,
@@ -10,10 +10,10 @@ import {
   Flex,
   Grid,
   Text,
-  useColorModeValue,
 } from "@chakra-ui/react";
 import { Switch } from "@themed-components";
-import { useChatSettings } from "@/stores";
+import { useChatSettings, useAuth } from "@/stores";
+import { supabase } from "@/lib";
 
 const SettingRow = ({
   label,
@@ -53,32 +53,76 @@ const SettingRow = ({
 };
 
 const General: FC = () => {
-  const { showFollowUpSuggestions, toggleFollowUpSuggestions } =
+  const { smartSuggestions, setSmartSuggestions, toggleSmartSuggestions } =
     useChatSettings();
+  const { user } = useAuth();
 
-  const cardBg = useColorModeValue("white", "whiteAlpha.50");
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data, error } = await supabase
+        .from("user_preferences")
+        .select("smart_suggestions")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Failed to load smart suggestions:", error);
+        return;
+      }
+
+      if (data?.smart_suggestions !== undefined && data.smart_suggestions !== null) {
+        setSmartSuggestions(data.smart_suggestions);
+      } else {
+        const { error: upsertError } = await supabase
+          .from("user_preferences")
+          .upsert(
+            { user_id: user.id, smart_suggestions: smartSuggestions },
+            { onConflict: "user_id" }
+          );
+        if (upsertError)
+          console.error("Failed to save smart suggestions:", upsertError);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  const handleToggle = async () => {
+    const newValue = !smartSuggestions;
+    toggleSmartSuggestions();
+    if (!user) return;
+    const { error } = await supabase
+      .from("user_preferences")
+      .upsert(
+        { user_id: user.id, smart_suggestions: newValue },
+        { onConflict: "user_id" }
+      );
+    if (error) console.error("Failed to save smart suggestions:", error);
+  };
 
   return (
     <Flex direction="column" gap={4}>
-      <Card bg={cardBg} borderWidth="1px" borderColor="border">
-        <CardHeader>
-          <Text fontWeight="semibold">Chat Preferences</Text>
+      <Card bg="transparent" variant="outline">
+        <CardHeader px={5} py={3}>
+          <Text fontWeight="semibold" fontSize="xl">
+            Chat Preferences
+          </Text>
         </CardHeader>
-
         <Divider />
-
-        <CardBody>
-          <SettingRow
-            label="Follow-up Suggestions"
-            description="Show smart suggestions after assistant responses."
-            control={
-              <Switch
-                id="follow-up-suggestions"
-                isChecked={showFollowUpSuggestions}
-                onChange={toggleFollowUpSuggestions}
-              />
-            }
-          />
+        <CardBody px={5} py={4}>
+          <Flex direction="column" gap={4}>
+            <SettingRow
+              label="Smart Suggestions"
+              description="Show follow-up suggestions after assistant responses."
+              control={
+                <Switch
+                  id="smart-suggestions"
+                  isChecked={smartSuggestions}
+                  onChange={handleToggle}
+                />
+              }
+            />
+          </Flex>
         </CardBody>
       </Card>
     </Flex>

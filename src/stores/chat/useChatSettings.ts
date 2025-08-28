@@ -3,16 +3,16 @@
 import { create } from "zustand";
 
 interface ChatSettingsState {
-  showFollowUpSuggestions: boolean;
-  toggleFollowUpSuggestions: () => void;
+  smartSuggestions: boolean;
+  setSmartSuggestions: (value: boolean) => void;
+  toggleSmartSuggestions: () => void;
 }
 
 const useChatSettings = create<ChatSettingsState>((set) => ({
-  showFollowUpSuggestions: true,
-  toggleFollowUpSuggestions: () =>
-    set((state) => ({
-      showFollowUpSuggestions: !state.showFollowUpSuggestions,
-    })),
+  smartSuggestions: true,
+  setSmartSuggestions: (value) => set({ smartSuggestions: value }),
+  toggleSmartSuggestions: () =>
+    set((state) => ({ smartSuggestions: !state.smartSuggestions })),
 }));
 
 export default useChatSettings;
