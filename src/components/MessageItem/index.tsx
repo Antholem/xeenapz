@@ -116,7 +116,6 @@ const MessageItem: FC<MessageItemProps> = ({
     <Flex
       direction="column"
       align={isUser ? "flex-end" : "flex-start"}
-      overflowX="hidden"
       py={1}
       {...props}
     >
@@ -163,7 +162,14 @@ const MessageItem: FC<MessageItemProps> = ({
               <ReactMarkdown
                 components={{
                   ul: ({ children }) => (
-                    <ul style={{ paddingLeft: "20px" }}>{children}</ul>
+                    <ul
+                      style={{
+                        paddingLeft: "20px",
+                        listStylePosition: "inside",
+                      }}
+                    >
+                      {children}
+                    </ul>
                   ),
                   a: ({ ...props }) => (
                     <a
