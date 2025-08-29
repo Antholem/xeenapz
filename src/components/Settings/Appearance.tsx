@@ -5,6 +5,9 @@ import {
   Box,
   Button,
   ButtonGroup,
+  Card,
+  CardBody,
+  CardHeader,
   Divider,
   Flex,
   Icon,
@@ -26,17 +29,6 @@ import {
   RiComputerFill,
 } from "react-icons/ri";
 import { FaSquare } from "react-icons/fa6";
-
-const SectionTitle = ({ title, desc }: { title: string; desc: string }) => (
-  <Flex direction="column" gap={1} mb={2}>
-    <Text fontWeight="semibold" fontSize="md">
-      {title}
-    </Text>
-    <Text fontSize="sm" color="secondaryText">
-      {desc}
-    </Text>
-  </Flex>
-);
 
 const ModeButton = ({
   label,
@@ -137,7 +129,7 @@ const AccentTile = ({
 const Appearance: FC = () => {
   const { setColorMode } = useColorMode();
   const { accentColor, setAccentColor } = useAccentColor();
-  const activeModeText = useColorModeValue( 
+  const activeModeText = useColorModeValue(
     `${accentColor}.600`,
     `${accentColor}.200`
   );
@@ -177,7 +169,10 @@ const Appearance: FC = () => {
       } else {
         await supabase
           .from("user_preferences")
-          .upsert({ user_id: user.id, color_mode: mode }, { onConflict: "user_id" });
+          .upsert(
+            { user_id: user.id, color_mode: mode },
+            { onConflict: "user_id" }
+          );
       }
 
       if (data?.accent_color) {
@@ -193,7 +188,10 @@ const Appearance: FC = () => {
     if (!user) return;
     const { error } = await supabase
       .from("user_preferences")
-      .upsert({ user_id: user.id, color_mode: value }, { onConflict: "user_id" });
+      .upsert(
+        { user_id: user.id, color_mode: value },
+        { onConflict: "user_id" }
+      );
     if (error) console.error("Failed to save color mode:", error);
   };
 
@@ -202,64 +200,92 @@ const Appearance: FC = () => {
     if (!user) return;
     const { error } = await supabase
       .from("user_preferences")
-      .upsert({ user_id: user.id, accent_color: value }, { onConflict: "user_id" });
+      .upsert(
+        { user_id: user.id, accent_color: value },
+        { onConflict: "user_id" }
+      );
     if (error) console.error("Failed to save accent color:", error);
   };
 
   return (
-    <Flex direction="column" gap={6}>
-      <Box>
-        <SectionTitle
-          title="Color Mode"
-          desc="Select a preferred color mode, or let the app follow your system’s appearance setting"
-        />
-        <ButtonGroup isAttached w="full" gap={2}>
-          <ModeButton
-            label="Light"
-            icon={RiSunLine}
-            selectedIcon={RiSunFill}
-            isActive={mode === "light"}
-            onClick={() => saveMode("light")}
-            activeColor={activeModeText}
-          />
-          <ModeButton
-            label="Dark"
-            icon={RiMoonLine}
-            selectedIcon={RiMoonFill}
-            isActive={mode === "dark"}
-            onClick={() => saveMode("dark")}
-            activeColor={activeModeText}
-          />
-          <ModeButton
-            label="System"
-            icon={RiComputerLine}
-            selectedIcon={RiComputerFill}
-            isActive={mode === "system"}
-            onClick={() => saveMode("system")}
-            activeColor={activeModeText}
-          />
-        </ButtonGroup>
-      </Box>
+    <Flex direction="column" gap={4}>
+      <Flex direction="column" gap={2}>
+        <Text fontWeight="semibold" fontSize="lg">
+          Color
+        </Text>
+        <Card bg="transparent" variant="outline">
+          <CardBody p={4}>
+            <Flex direction="column" gap={6}>
+              <Flex direction="column" gap={4}>
+                <Flex direction="column" gap={1}>
+                  <Text fontSize="md" fontWeight="bold">
+                    Mode
+                  </Text>
+                  <Text fontSize="xs" color="secondaryText">
+                    Select a preferred color mode, or let the app follow your
+                    system’s appearance setting.
+                  </Text>
+                </Flex>
 
-      <Divider />
+                <ButtonGroup isAttached w="full" gap={2}>
+                  <ModeButton
+                    label="Light"
+                    icon={RiSunLine}
+                    selectedIcon={RiSunFill}
+                    isActive={mode === "light"}
+                    onClick={() => saveMode("light")}
+                    activeColor={activeModeText}
+                  />
+                  <ModeButton
+                    label="Dark"
+                    icon={RiMoonLine}
+                    selectedIcon={RiMoonFill}
+                    isActive={mode === "dark"}
+                    onClick={() => saveMode("dark")}
+                    activeColor={activeModeText}
+                  />
+                  <ModeButton
+                    label="System"
+                    icon={RiComputerLine}
+                    selectedIcon={RiComputerFill}
+                    isActive={mode === "system"}
+                    onClick={() => saveMode("system")}
+                    activeColor={activeModeText}
+                  />
+                </ButtonGroup>
+              </Flex>
+              <Divider />
+              <Flex direction="column" gap={4}>
+                <Flex direction="column" gap={1}>
+                  <Text fontSize="md" fontWeight="bold">
+                    Accent
+                  </Text>
+                  <Text fontSize="xs" color="secondaryText">
+                    Choose a accent color for the interface.
+                  </Text>
+                </Flex>
 
-      <Box>
-        <SectionTitle
-          title="Accent Color"
-          desc="Choose a highlight color for the interface"
-        />
-        <SimpleGrid columns={{ base: 2, sm: 3, md: 4 }} gap={2.5} role="radiogroup" aria-label="Accent color">
-          {Object.entries(ACCENT_COLORS).map(([key, { name }]) => (
-            <AccentTile
-              key={key}
-              name={name}
-              colorKey={key as AccentColors}
-              isActive={accentColor === key}
-              onClick={() => saveAccent(key as AccentColors)}
-            />
-          ))}
-        </SimpleGrid>
-      </Box>
+                <SimpleGrid
+                  columns={{ base: 2, sm: 3, md: 4 }}
+                  gap={2}
+                  role="radiogroup"
+                  aria-label="Accent color"
+                >
+                  {Object.entries(ACCENT_COLORS).map(([key, { name }]) => (
+                    <AccentTile
+                      key={key}
+                      name={name}
+                      colorKey={key as AccentColors}
+                      isActive={accentColor === key}
+                      onClick={() => saveAccent(key as AccentColors)}
+                    />
+                  ))}
+                </SimpleGrid>
+              </Flex>
+            </Flex>
+          </CardBody>
+        </Card>
+      </Flex>
     </Flex>
   );
 };
