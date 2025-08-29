@@ -18,6 +18,9 @@ import {
   BoxProps,
   useColorMode,
   useColorModeValue,
+  List,
+  ListItem,
+  OrderedList,
 } from "@chakra-ui/react";
 import { ImageModal } from "@themed-components";
 import { useAccentColor, useToastStore } from "@/stores";
@@ -163,8 +166,28 @@ const MessageItem: FC<MessageItemProps> = ({
               <ReactMarkdown
                 components={{
                   ul: ({ children }) => (
-                    <ul style={{ paddingLeft: "20px" }}>{children}</ul>
+                    <List
+                      styleType="disc"
+                      stylePosition="outside"
+                      pl={4}
+                      m={0}
+                    >
+                      {children}
+                    </List>
                   ),
+                  ol: ({ children }) => (
+                    <OrderedList
+                      stylePosition="outside"
+                      pl={4}
+                      m={0}
+                    >
+                      {children}
+                    </OrderedList>
+                  ),
+                  li: ({ children }) => (
+                    <ListItem mb={1}>{children}</ListItem>
+                  ),
+                  p: ({ children }) => <Text m={0}>{children}</Text>,
                   a: ({ ...props }) => (
                     <a
                       {...props}
