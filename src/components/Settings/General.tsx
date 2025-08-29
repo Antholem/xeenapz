@@ -87,7 +87,6 @@ const General: FC = () => {
           console.error("Failed to save smart suggestions:", upsertError);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const handleToggle = async () => {
@@ -105,28 +104,29 @@ const General: FC = () => {
 
   return (
     <Flex direction="column" gap={4}>
-      <Flex direction="column" gap={2}>
-        <Text fontWeight="semibold" fontSize="lg">
-          Chat Preferences
-        </Text>
-        <Card bg="transparent" variant="outline">
-          <CardBody p={4}>
-            <Flex direction="column" gap={6}>
-              <SettingRow
-                label="Smart Suggestions"
-                description="Show follow-up suggestions after assistant responses."
-                control={
-                  <Switch
-                    id="smart-suggestions"
-                    isChecked={smartSuggestions}
-                    onChange={handleToggle}
-                  />
-                }
-              />
-            </Flex>
-          </CardBody>
-        </Card>
-      </Flex>
+      <Card bg="transparent" variant="outline">
+        <CardHeader px={4} py={3}>
+          <Text fontWeight="semibold" fontSize="lg">
+            Chat Preferences
+          </Text>
+        </CardHeader>
+        <Divider />
+        <CardBody p={4}>
+          <Flex direction="column" gap={6}>
+            <SettingRow
+              label="Smart Suggestions"
+              description="Show quick follow-up suggestions after assistant responses."
+              control={
+                <Switch
+                  id="smart-suggestions"
+                  isChecked={smartSuggestions}
+                  onChange={handleToggle}
+                />
+              }
+            />
+          </Flex>
+        </CardBody>
+      </Card>
     </Flex>
   );
 };

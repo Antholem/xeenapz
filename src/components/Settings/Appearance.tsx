@@ -3,16 +3,15 @@
 import { FC, useEffect, useState } from "react";
 import {
   Box,
-  Button,
-  ButtonGroup,
   Card,
-  CardBody,
   CardHeader,
+  CardBody,
   Divider,
   Flex,
   Icon,
   SimpleGrid,
   Text,
+  Button,
   useColorMode,
   useColorModeValue,
   useToken,
@@ -30,6 +29,17 @@ import {
 } from "react-icons/ri";
 import { FaSquare } from "react-icons/fa6";
 
+const SectionText = ({ title, desc }: { title: string; desc: string }) => (
+  <Box>
+    <Text fontSize="md" fontWeight="semibold">
+      {title}
+    </Text>
+    <Text mt={1} fontSize="xs" color="secondaryText">
+      {desc}
+    </Text>
+  </Box>
+);
+
 const ModeButton = ({
   label,
   icon,
@@ -45,7 +55,6 @@ const ModeButton = ({
   onClick: () => void;
   activeColor: string;
 }) => {
-  const border = useColorModeValue("gray.300", "gray.600");
   const activeBg = useColorModeValue("gray.100", "whiteAlpha.200");
   const hoverBg = useColorModeValue("gray.50", "whiteAlpha.100");
 
@@ -58,12 +67,12 @@ const ModeButton = ({
       isActive={isActive}
       aria-pressed={isActive}
       color={isActive ? activeColor : "inherit"}
-      borderColor={isActive ? activeColor : border}
+      borderColor={isActive ? activeColor : "gray"}
       bg={isActive ? activeBg : "transparent"}
       _hover={{ bg: isActive ? activeBg : hoverBg }}
       _active={{ bg: activeBg }}
       height="44px"
-      flex="1"
+      w="full"
     >
       {label}
     </Button>
@@ -81,7 +90,6 @@ const AccentTile = ({
   isActive: boolean;
   onClick: () => void;
 }) => {
-  const border = useColorModeValue("gray.300", "gray.600");
   const dotLight = `${colorKey}.600`;
   const dotDark = `${colorKey}.200`;
   const [swatchLight, swatchDark] = useToken("colors", [dotLight, dotDark]);
@@ -104,7 +112,7 @@ const AccentTile = ({
       justify="space-between"
       rounded="md"
       borderWidth="1px"
-      borderColor={isActive ? activeRing : border}
+      borderColor={isActive ? activeRing : "border"}
       bg={isActive ? activeBg : "transparent"}
       _hover={{ bg: hoveredBg }}
       _active={{ bg: activeBg }}
@@ -179,7 +187,6 @@ const Appearance: FC = () => {
         setAccentColor(data.accent_color as AccentColors);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const saveMode = async (value: "light" | "dark" | "system") => {
@@ -209,83 +216,75 @@ const Appearance: FC = () => {
 
   return (
     <Flex direction="column" gap={4}>
-      <Flex direction="column" gap={2}>
-        <Text fontWeight="semibold" fontSize="lg">
-          Color
-        </Text>
-        <Card bg="transparent" variant="outline">
-          <CardBody p={4}>
-            <Flex direction="column" gap={6}>
-              <Flex direction="column" gap={4}>
-                <Flex direction="column" gap={1}>
-                  <Text fontSize="md" fontWeight="bold">
-                    Mode
-                  </Text>
-                  <Text fontSize="xs" color="secondaryText">
-                    Select a preferred color mode, or let the app follow your
-                    system’s appearance setting.
-                  </Text>
-                </Flex>
-
-                <ButtonGroup isAttached w="full" gap={2}>
-                  <ModeButton
-                    label="Light"
-                    icon={RiSunLine}
-                    selectedIcon={RiSunFill}
-                    isActive={mode === "light"}
-                    onClick={() => saveMode("light")}
-                    activeColor={activeModeText}
-                  />
-                  <ModeButton
-                    label="Dark"
-                    icon={RiMoonLine}
-                    selectedIcon={RiMoonFill}
-                    isActive={mode === "dark"}
-                    onClick={() => saveMode("dark")}
-                    activeColor={activeModeText}
-                  />
-                  <ModeButton
-                    label="System"
-                    icon={RiComputerLine}
-                    selectedIcon={RiComputerFill}
-                    isActive={mode === "system"}
-                    onClick={() => saveMode("system")}
-                    activeColor={activeModeText}
-                  />
-                </ButtonGroup>
-              </Flex>
-              <Divider />
-              <Flex direction="column" gap={4}>
-                <Flex direction="column" gap={1}>
-                  <Text fontSize="md" fontWeight="bold">
-                    Accent
-                  </Text>
-                  <Text fontSize="xs" color="secondaryText">
-                    Choose a accent color for the interface.
-                  </Text>
-                </Flex>
-
-                <SimpleGrid
-                  columns={{ base: 2, sm: 3, md: 4 }}
-                  gap={2}
-                  role="radiogroup"
-                  aria-label="Accent color"
-                >
-                  {Object.entries(ACCENT_COLORS).map(([key, { name }]) => (
-                    <AccentTile
-                      key={key}
-                      name={name}
-                      colorKey={key as AccentColors}
-                      isActive={accentColor === key}
-                      onClick={() => saveAccent(key as AccentColors)}
-                    />
-                  ))}
-                </SimpleGrid>
-              </Flex>
+      <Card bg="transparent" variant="outline">
+        <CardHeader px={4} py={3}>
+          <Text fontWeight="semibold" fontSize="lg">
+            Theme & Colors
+          </Text>
+        </CardHeader>
+        <Divider />
+        <CardBody p={4}>
+          <Flex direction="column" gap={6}>
+            <Flex direction="column" gap={3}>
+              <SectionText
+                title="App Theme"
+                desc="Select Light, Dark, or follow your system preference."
+              />
+              <SimpleGrid columns={{ base: 1, sm: 3 }} gap={2}>
+                <ModeButton
+                  label="Light"
+                  icon={RiSunLine}
+                  selectedIcon={RiSunFill}
+                  isActive={mode === "light"}
+                  onClick={() => saveMode("light")}
+                  activeColor={activeModeText}
+                />
+                <ModeButton
+                  label="Dark"
+                  icon={RiMoonLine}
+                  selectedIcon={RiMoonFill}
+                  isActive={mode === "dark"}
+                  onClick={() => saveMode("dark")}
+                  activeColor={activeModeText}
+                />
+                <ModeButton
+                  label="System"
+                  icon={RiComputerLine}
+                  selectedIcon={RiComputerFill}
+                  isActive={mode === "system"}
+                  onClick={() => saveMode("system")}
+                  activeColor={activeModeText}
+                />
+              </SimpleGrid>
             </Flex>
-          </CardBody>
-        </Card>
-      </Flex>
+
+            <Divider />
+
+            <Flex direction="column" gap={3}>
+              <SectionText
+                title="Accent Color"
+                desc="Pick a highlight color for buttons, links, and emphasis."
+              />
+              <SimpleGrid
+                columns={{ base: 2, sm: 3, md: 4 }}
+                gap={2.5}
+                role="radiogroup"
+                aria-label="Accent color"
+              >
+                {Object.entries(ACCENT_COLORS).map(([key, { name }]) => (
+                  <AccentTile
+                    key={key}
+                    name={name}
+                    colorKey={key as AccentColors}
+                    isActive={accentColor === key}
+                    onClick={() => saveAccent(key as AccentColors)}
+                  />
+                ))}
+              </SimpleGrid>
+            </Flex>
+          </Flex>
+        </CardBody>
+      </Card>
     </Flex>
   );
 };
