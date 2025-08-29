@@ -14,6 +14,17 @@ import {
 } from "@chakra-ui/react";
 import { useTTSVoice } from "@/stores";
 
+const getVoiceLabel = (v: SpeechSynthesisVoice) => {
+  let label = v.name;
+
+  const dashIndex = label.indexOf(" - ");
+  if (dashIndex !== -1) label = label.slice(0, dashIndex);
+
+  label = label.replace(/^Microsoft\s+/i, "").replace(/^Google\s+/i, "");
+
+  return label.trim();
+};
+
 const SettingRow = ({
   label,
   description,
@@ -80,7 +91,7 @@ const VoiceAndAccessibility: FC = () => {
                   <option value="">Default</option>
                   {voices.map((v) => (
                     <option key={v.name} value={v.name}>
-                      {v.name} ({v.lang})
+                      {getVoiceLabel(v)}
                     </option>
                   ))}
                 </Select>
