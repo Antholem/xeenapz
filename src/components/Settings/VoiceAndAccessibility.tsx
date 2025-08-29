@@ -12,7 +12,8 @@ import {
   Text,
   Select,
 } from "@chakra-ui/react";
-import { useTTSVoice } from "@/stores";
+import { useTTSVoice, useAuth } from "@/stores";
+import { supabase } from "@/lib";
 
 const getVoiceLabel = (v: SpeechSynthesisVoice) => {
   let label = v.name;
@@ -59,6 +60,7 @@ const SettingRow = ({
 
 const VoiceAndAccessibility: FC = () => {
   const { voice, setVoice } = useTTSVoice();
+  const { user } = useAuth();
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
 
   useEffect(() => {
@@ -67,6 +69,36 @@ const VoiceAndAccessibility: FC = () => {
     loadVoices();
     window.speechSynthesis.onvoiceschanged = loadVoices;
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data, error } = await supabase
+        .from("user_preferences")
+        .select("tts_voice")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Failed to load tts voice:", error);
+        return;
+      }
+
+      if (data?.tts_voice !== undefined && data.tts_voice !== null) {
+        setVoice(data.tts_voice);
+      } else if (voice !== null) {
+        const { error: upsertError } = await supabase
+          .from("user_preferences")
+          .upsert(
+            { user_id: user.id, tts_voice: voice },
+            { onConflict: "user_id" }
+          );
+        if (upsertError)
+          console.error("Failed to save tts voice:", upsertError);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   return (
     <Flex direction="column" gap={4}>
@@ -85,7 +117,19 @@ const VoiceAndAccessibility: FC = () => {
               control={
                 <Select
                   value={voice ?? ""}
-                  onChange={(e) => setVoice(e.target.value || null)}
+                  onChange={async (e) => {
+                    const newVoice = e.target.value || null;
+                    setVoice(newVoice);
+                    if (!user) return;
+                    const { error } = await supabase
+                      .from("user_preferences")
+                      .upsert(
+                        { user_id: user.id, tts_voice: newVoice },
+                        { onConflict: "user_id" }
+                      );
+                    if (error)
+                      console.error("Failed to save tts voice:", error);
+                  }}
                   maxW="sm"
                 >
                   <option value="">Default</option>
