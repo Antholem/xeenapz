@@ -7,3 +7,4 @@ export { default as useToastStore } from "./components/useToastStore";
 export { default as useModel } from "./model/useModel";
 export { default as useChatSettings } from "./chat/useChatSettings";
 export type { Message } from "./thread/useThreadMessages";
+export { default as useTTSVoice } from "./speech/useTTSVoice";
