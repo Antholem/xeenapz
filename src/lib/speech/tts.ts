@@ -1,3 +1,5 @@
+import { useTTSVoice } from "@/stores";
+
 export const speakText = (
   text: string,
   id: string,
@@ -11,6 +13,12 @@ export const speakText = (
       setPlayingMessageId(null);
     } else {
       const utterance = new SpeechSynthesisUtterance(text);
+      const { voice } = useTTSVoice.getState();
+      if (voice) {
+        const voices = speechSynthesis.getVoices();
+        const selectedVoice = voices.find((v) => v.name === voice);
+        if (selectedVoice) utterance.voice = selectedVoice;
+      }
       utterance.onend = () => setPlayingMessageId(null);
       speechSynthesis.speak(utterance);
       setPlayingMessageId(id);

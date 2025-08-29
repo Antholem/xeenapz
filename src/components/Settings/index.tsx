@@ -28,6 +28,7 @@ import { TbArrowBigUpLines, TbArrowBigUpLinesFilled } from "react-icons/tb";
 import { HiLockClosed, HiOutlineLockClosed, HiOutlineUser } from "react-icons/hi";
 import Appearance from "./Appearance";
 import General from "./General";
+import VoiceAndAccessibility from "./VoiceAndAccessibility";
 
 interface SettingsProps {
   isOpen: boolean;
@@ -196,7 +197,9 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
               <TabPanel>
                 <Appearance />
               </TabPanel>
-              <TabPanel>Voice & Accessibility settings go here.</TabPanel>
+              <TabPanel>
+                <VoiceAndAccessibility />
+              </TabPanel>
               <TabPanel>Chat preferences go here.</TabPanel>
               <TabPanel>Data & Privacy settings go here.</TabPanel>
               <TabPanel>Account settings go here.</TabPanel>
