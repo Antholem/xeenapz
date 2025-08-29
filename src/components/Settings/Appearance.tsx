@@ -238,7 +238,7 @@ const Appearance: FC = () => {
           <Flex direction="column" gap={6}>
             <Flex direction="column" gap={3}>
               <SectionText
-                title="App Theme"
+                title="Color Mode"
                 desc="Select Light, Dark, or follow your system preference."
               />
               <SimpleGrid columns={{ base: 1, sm: 3 }} gap={2}>
