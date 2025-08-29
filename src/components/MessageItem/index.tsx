@@ -18,6 +18,7 @@ import {
   BoxProps,
   useColorMode,
   useColorModeValue,
+  chakra,
 } from "@chakra-ui/react";
 import { ImageModal } from "@themed-components";
 import { useAccentColor, useToastStore } from "@/stores";
@@ -163,7 +164,14 @@ const MessageItem: FC<MessageItemProps> = ({
               <ReactMarkdown
                 components={{
                   ul: ({ children }) => (
-                    <ul style={{ paddingLeft: "20px" }}>{children}</ul>
+                    <chakra.ul pl={4} m={0} listStylePosition="inside">
+                      {children}
+                    </chakra.ul>
+                  ),
+                  ol: ({ children }) => (
+                    <chakra.ol pl={4} m={0} listStylePosition="inside">
+                      {children}
+                    </chakra.ol>
                   ),
                   a: ({ ...props }) => (
                     <a
