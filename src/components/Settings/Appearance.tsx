@@ -3,13 +3,15 @@
 import { FC, useEffect, useState } from "react";
 import {
   Box,
-  Button,
-  ButtonGroup,
+  Card,
+  CardHeader,
+  CardBody,
   Divider,
   Flex,
   Icon,
   SimpleGrid,
   Text,
+  Button,
   useColorMode,
   useColorModeValue,
   useToken,
@@ -27,15 +29,15 @@ import {
 } from "react-icons/ri";
 import { FaSquare } from "react-icons/fa6";
 
-const SectionTitle = ({ title, desc }: { title: string; desc: string }) => (
-  <Flex direction="column" gap={1} mb={2}>
-    <Text fontWeight="semibold" fontSize="md">
+const SectionText = ({ title, desc }: { title: string; desc: string }) => (
+  <Box>
+    <Text fontSize="md" fontWeight="semibold">
       {title}
     </Text>
-    <Text fontSize="sm" color="secondaryText">
+    <Text mt={1} fontSize="xs" color="secondaryText">
       {desc}
     </Text>
-  </Flex>
+  </Box>
 );
 
 const ModeButton = ({
@@ -53,7 +55,6 @@ const ModeButton = ({
   onClick: () => void;
   activeColor: string;
 }) => {
-  const border = useColorModeValue("gray.300", "gray.600");
   const activeBg = useColorModeValue("gray.100", "whiteAlpha.200");
   const hoverBg = useColorModeValue("gray.50", "whiteAlpha.100");
 
@@ -66,12 +67,12 @@ const ModeButton = ({
       isActive={isActive}
       aria-pressed={isActive}
       color={isActive ? activeColor : "inherit"}
-      borderColor={isActive ? activeColor : border}
+      borderColor={isActive ? activeColor : "gray"}
       bg={isActive ? activeBg : "transparent"}
       _hover={{ bg: isActive ? activeBg : hoverBg }}
       _active={{ bg: activeBg }}
       height="44px"
-      flex="1"
+      w="full"
     >
       {label}
     </Button>
@@ -89,7 +90,6 @@ const AccentTile = ({
   isActive: boolean;
   onClick: () => void;
 }) => {
-  const border = useColorModeValue("gray.300", "gray.600");
   const dotLight = `${colorKey}.600`;
   const dotDark = `${colorKey}.200`;
   const [swatchLight, swatchDark] = useToken("colors", [dotLight, dotDark]);
@@ -112,7 +112,7 @@ const AccentTile = ({
       justify="space-between"
       rounded="md"
       borderWidth="1px"
-      borderColor={isActive ? activeRing : border}
+      borderColor={isActive ? activeRing : "border"}
       bg={isActive ? activeBg : "transparent"}
       _hover={{ bg: hoveredBg }}
       _active={{ bg: activeBg }}
@@ -137,7 +137,7 @@ const AccentTile = ({
 const Appearance: FC = () => {
   const { setColorMode } = useColorMode();
   const { accentColor, setAccentColor } = useAccentColor();
-  const activeModeText = useColorModeValue( 
+  const activeModeText = useColorModeValue(
     `${accentColor}.600`,
     `${accentColor}.200`
   );
@@ -177,14 +177,16 @@ const Appearance: FC = () => {
       } else {
         await supabase
           .from("user_preferences")
-          .upsert({ user_id: user.id, color_mode: mode }, { onConflict: "user_id" });
+          .upsert(
+            { user_id: user.id, color_mode: mode },
+            { onConflict: "user_id" }
+          );
       }
 
       if (data?.accent_color) {
         setAccentColor(data.accent_color as AccentColors);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const saveMode = async (value: "light" | "dark" | "system") => {
@@ -193,7 +195,10 @@ const Appearance: FC = () => {
     if (!user) return;
     const { error } = await supabase
       .from("user_preferences")
-      .upsert({ user_id: user.id, color_mode: value }, { onConflict: "user_id" });
+      .upsert(
+        { user_id: user.id, color_mode: value },
+        { onConflict: "user_id" }
+      );
     if (error) console.error("Failed to save color mode:", error);
   };
 
@@ -202,64 +207,84 @@ const Appearance: FC = () => {
     if (!user) return;
     const { error } = await supabase
       .from("user_preferences")
-      .upsert({ user_id: user.id, accent_color: value }, { onConflict: "user_id" });
+      .upsert(
+        { user_id: user.id, accent_color: value },
+        { onConflict: "user_id" }
+      );
     if (error) console.error("Failed to save accent color:", error);
   };
 
   return (
-    <Flex direction="column" gap={6}>
-      <Box>
-        <SectionTitle
-          title="Color Mode"
-          desc="Select a preferred color mode, or let the app follow your system’s appearance setting"
-        />
-        <ButtonGroup isAttached w="full" gap={2}>
-          <ModeButton
-            label="Light"
-            icon={RiSunLine}
-            selectedIcon={RiSunFill}
-            isActive={mode === "light"}
-            onClick={() => saveMode("light")}
-            activeColor={activeModeText}
-          />
-          <ModeButton
-            label="Dark"
-            icon={RiMoonLine}
-            selectedIcon={RiMoonFill}
-            isActive={mode === "dark"}
-            onClick={() => saveMode("dark")}
-            activeColor={activeModeText}
-          />
-          <ModeButton
-            label="System"
-            icon={RiComputerLine}
-            selectedIcon={RiComputerFill}
-            isActive={mode === "system"}
-            onClick={() => saveMode("system")}
-            activeColor={activeModeText}
-          />
-        </ButtonGroup>
-      </Box>
+    <Flex direction="column" gap={4}>
+      <Card bg="transparent" variant="outline">
+        <CardHeader px={4} py={3}>
+          <Text fontWeight="semibold" fontSize="lg">
+            Theme & Colors
+          </Text>
+        </CardHeader>
+        <Divider />
+        <CardBody p={4}>
+          <Flex direction="column" gap={6}>
+            <Flex direction="column" gap={3}>
+              <SectionText
+                title="App Theme"
+                desc="Select Light, Dark, or follow your system preference."
+              />
+              <SimpleGrid columns={{ base: 1, sm: 3 }} gap={2}>
+                <ModeButton
+                  label="Light"
+                  icon={RiSunLine}
+                  selectedIcon={RiSunFill}
+                  isActive={mode === "light"}
+                  onClick={() => saveMode("light")}
+                  activeColor={activeModeText}
+                />
+                <ModeButton
+                  label="Dark"
+                  icon={RiMoonLine}
+                  selectedIcon={RiMoonFill}
+                  isActive={mode === "dark"}
+                  onClick={() => saveMode("dark")}
+                  activeColor={activeModeText}
+                />
+                <ModeButton
+                  label="System"
+                  icon={RiComputerLine}
+                  selectedIcon={RiComputerFill}
+                  isActive={mode === "system"}
+                  onClick={() => saveMode("system")}
+                  activeColor={activeModeText}
+                />
+              </SimpleGrid>
+            </Flex>
 
-      <Divider />
+            <Divider />
 
-      <Box>
-        <SectionTitle
-          title="Accent Color"
-          desc="Choose a highlight color for the interface"
-        />
-        <SimpleGrid columns={{ base: 2, sm: 3, md: 4 }} gap={2.5} role="radiogroup" aria-label="Accent color">
-          {Object.entries(ACCENT_COLORS).map(([key, { name }]) => (
-            <AccentTile
-              key={key}
-              name={name}
-              colorKey={key as AccentColors}
-              isActive={accentColor === key}
-              onClick={() => saveAccent(key as AccentColors)}
-            />
-          ))}
-        </SimpleGrid>
-      </Box>
+            <Flex direction="column" gap={3}>
+              <SectionText
+                title="Accent Color"
+                desc="Pick a highlight color for buttons, links, and emphasis."
+              />
+              <SimpleGrid
+                columns={{ base: 2, sm: 3, md: 4 }}
+                gap={2.5}
+                role="radiogroup"
+                aria-label="Accent color"
+              >
+                {Object.entries(ACCENT_COLORS).map(([key, { name }]) => (
+                  <AccentTile
+                    key={key}
+                    name={name}
+                    colorKey={key as AccentColors}
+                    isActive={accentColor === key}
+                    onClick={() => saveAccent(key as AccentColors)}
+                  />
+                ))}
+              </SimpleGrid>
+            </Flex>
+          </Flex>
+        </CardBody>
+      </Card>
     </Flex>
   );
 };

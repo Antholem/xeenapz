@@ -71,7 +71,10 @@ const General: FC = () => {
         return;
       }
 
-      if (data?.smart_suggestions !== undefined && data.smart_suggestions !== null) {
+      if (
+        data?.smart_suggestions !== undefined &&
+        data.smart_suggestions !== null
+      ) {
         setSmartSuggestions(data.smart_suggestions);
       } else {
         const { error: upsertError } = await supabase
@@ -84,7 +87,6 @@ const General: FC = () => {
           console.error("Failed to save smart suggestions:", upsertError);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const handleToggle = async () => {
@@ -103,17 +105,17 @@ const General: FC = () => {
   return (
     <Flex direction="column" gap={4}>
       <Card bg="transparent" variant="outline">
-        <CardHeader px={5} py={3}>
-          <Text fontWeight="semibold" fontSize="xl">
+        <CardHeader px={4} py={3}>
+          <Text fontWeight="semibold" fontSize="lg">
             Chat Preferences
           </Text>
         </CardHeader>
         <Divider />
-        <CardBody px={5} py={4}>
-          <Flex direction="column" gap={4}>
+        <CardBody p={4}>
+          <Flex direction="column" gap={6}>
             <SettingRow
               label="Smart Suggestions"
-              description="Show follow-up suggestions after assistant responses."
+              description="Show quick follow-up suggestions after assistant responses."
               control={
                 <Switch
                   id="smart-suggestions"
