@@ -17,12 +17,9 @@ import { supabase } from "@/lib";
 
 const getVoiceLabel = (v: SpeechSynthesisVoice) => {
   let label = v.name;
-
   const dashIndex = label.indexOf(" - ");
   if (dashIndex !== -1) label = label.slice(0, dashIndex);
-
   label = label.replace(/^Microsoft\s+/i, "").replace(/^Google\s+/i, "");
-
   return label.trim();
 };
 
@@ -37,21 +34,30 @@ const SettingRow = ({
 }) => {
   return (
     <Grid
-      templateColumns="1fr auto"
+      templateColumns={{ base: "1fr", md: "1fr auto" }} // stack on mobile
       columnGap={4}
-      rowGap={1}
-      alignItems="center"
+      rowGap={{ base: 3, md: 1 }}
+      alignItems={{ base: "start", md: "center" }}
     >
       <Box minW={0}>
         <Text fontWeight="medium">{label}</Text>
         {description && (
-          <Text mt={1} fontSize="xs" color="secondaryText" wordBreak="break-word">
+          <Text
+            mt={1}
+            fontSize="xs"
+            color="secondaryText"
+            wordBreak="break-word"
+          >
             {description}
           </Text>
         )}
       </Box>
 
-      <Flex justify="flex-end" minW="fit-content">
+      <Flex
+        justify={{ base: "stretch", md: "flex-end" }}
+        minW={{ base: 0, md: "fit-content" }}
+        w={{ base: "full", md: "auto" }}
+      >
         {control}
       </Flex>
     </Grid>
@@ -97,7 +103,6 @@ const VoiceAndAccessibility: FC = () => {
           console.error("Failed to save tts voice:", upsertError);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   return (
@@ -105,14 +110,14 @@ const VoiceAndAccessibility: FC = () => {
       <Card bg="transparent" variant="outline">
         <CardHeader px={4} py={3}>
           <Text fontWeight="semibold" fontSize="lg">
-            Text-to-Speech
+            Voice
           </Text>
         </CardHeader>
         <Divider />
         <CardBody p={4}>
           <Flex direction="column" gap={6}>
             <SettingRow
-              label="Voice"
+              label="Text-to-Speech"
               description="Choose the voice for text-to-speech playback."
               control={
                 <Select
@@ -130,7 +135,8 @@ const VoiceAndAccessibility: FC = () => {
                     if (error)
                       console.error("Failed to save tts voice:", error);
                   }}
-                  maxW="sm"
+                  w="full"
+                  maxW={{ base: "100%", md: "sm" }}
                 >
                   <option value="">Default</option>
                   {voices.map((v) => (
