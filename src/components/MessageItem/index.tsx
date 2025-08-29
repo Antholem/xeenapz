@@ -163,7 +163,29 @@ const MessageItem: FC<MessageItemProps> = ({
               <ReactMarkdown
                 components={{
                   ul: ({ children }) => (
-                    <ul style={{ paddingLeft: "20px" }}>{children}</ul>
+                    <Box
+                      as="ul"
+                      pl={4}
+                      m={0}
+                      style={{ listStylePosition: "inside" }}
+                    >
+                      {children}
+                    </Box>
+                  ),
+                  ol: ({ children }) => (
+                    <Box
+                      as="ol"
+                      pl={4}
+                      m={0}
+                      style={{ listStylePosition: "inside" }}
+                    >
+                      {children}
+                    </Box>
+                  ),
+                  li: ({ children }) => (
+                    <Box as="li" mb={1}>
+                      {children}
+                    </Box>
                   ),
                   a: ({ ...props }) => (
                     <a
