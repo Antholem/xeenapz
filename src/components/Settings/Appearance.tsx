@@ -29,6 +29,8 @@ import {
 } from "react-icons/ri";
 import { FaSquare } from "react-icons/fa6";
 
+const MODE_STORAGE_KEY = "color-mode-preference";
+
 const SectionText = ({ title, desc }: { title: string; desc: string }) => (
   <Box>
     <Text fontSize="md" fontWeight="semibold">
@@ -147,13 +149,13 @@ const Appearance: FC = () => {
   const [mode, setMode] = useState<"light" | "dark" | "system">(() => {
     if (typeof window !== "undefined") {
       return (
-        (localStorage.getItem("chakra-ui-color-mode") as
+        (localStorage.getItem(MODE_STORAGE_KEY) as
           | "light"
           | "dark"
-          | "system") || "light"
+          | "system") || "system"
       );
     }
-    return "light";
+    return "system";
   });
 
   useEffect(() => {
@@ -174,6 +176,9 @@ const Appearance: FC = () => {
         const saved = data.color_mode as "light" | "dark" | "system";
         setMode(saved);
         setColorMode(saved);
+        if (typeof window !== "undefined") {
+          localStorage.setItem(MODE_STORAGE_KEY, saved);
+        }
       } else {
         await supabase
           .from("user_preferences")
@@ -181,6 +186,9 @@ const Appearance: FC = () => {
             { user_id: user.id, color_mode: mode },
             { onConflict: "user_id" }
           );
+        if (typeof window !== "undefined") {
+          localStorage.setItem(MODE_STORAGE_KEY, mode);
+        }
       }
 
       if (data?.accent_color) {
@@ -192,6 +200,9 @@ const Appearance: FC = () => {
   const saveMode = async (value: "light" | "dark" | "system") => {
     setMode(value);
     setColorMode(value);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(MODE_STORAGE_KEY, value);
+    }
     if (!user) return;
     const { error } = await supabase
       .from("user_preferences")
