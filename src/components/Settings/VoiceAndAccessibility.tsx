@@ -10,8 +10,8 @@ import {
   Flex,
   Grid,
   Text,
-  Select,
 } from "@chakra-ui/react";
+import { Select } from "@/components/ui";
 import { useTTSVoice, useAuth } from "@/stores";
 import { supabase } from "@/lib";
 

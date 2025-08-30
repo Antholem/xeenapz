@@ -10,6 +10,7 @@ import MenuItem from "./MenuItem";
 import MenuList from "./MenuList";
 import ImageModal from "./ImageModal";
 import Switch from "./Switch";
+import Select from "./Select";
 
 export {
   Button,
@@ -24,4 +25,5 @@ export {
   MenuList,
   ImageModal,
   Switch,
+  Select,
 };
