@@ -30,9 +30,9 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           option: {
             backgroundColor: optionBg,
           },
-          "option:checked, option:hover": {
-            backgroundColor: optionHighlightBg,
-            color: optionHighlightColor,
+          "option:checked, option:hover, option:focus, option:active": {
+            backgroundColor: `${optionHighlightBg} !important`,
+            color: `${optionHighlightColor} !important`,
           },
         }}
         {...props}
