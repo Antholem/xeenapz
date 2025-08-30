@@ -10,8 +10,10 @@ import {
   Flex,
   Grid,
   Text,
-  Select,
+  useColorMode,
 } from "@chakra-ui/react";
+import { ChevronDownIcon } from "@chakra-ui/icons";
+import { Menu, MenuButton, MenuItem, MenuList } from "@/components/ui";
 import { useTTSVoice, useAuth } from "@/stores";
 import { supabase } from "@/lib";
 
@@ -68,6 +70,7 @@ const VoiceAndAccessibility: FC = () => {
   const { voice, setVoice } = useTTSVoice();
   const { user } = useAuth();
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const { colorMode } = useColorMode();
 
   useEffect(() => {
     if (!("speechSynthesis" in window)) return;
@@ -120,31 +123,74 @@ const VoiceAndAccessibility: FC = () => {
               label="Text-to-Speech"
               description="Choose the voice for text-to-speech playback."
               control={
-                <Select
-                  value={voice ?? ""}
-                  onChange={async (e) => {
-                    const newVoice = e.target.value || null;
-                    setVoice(newVoice);
-                    if (!user) return;
-                    const { error } = await supabase
-                      .from("user_preferences")
-                      .upsert(
-                        { user_id: user.id, tts_voice: newVoice },
-                        { onConflict: "user_id" }
-                      );
-                    if (error)
-                      console.error("Failed to save tts voice:", error);
-                  }}
-                  w="full"
-                  maxW={{ base: "100%", md: "sm" }}
-                >
-                  <option value="">Default</option>
-                  {voices.map((v) => (
-                    <option key={v.name} value={v.name}>
-                      {getVoiceLabel(v)}
-                    </option>
-                  ))}
-                </Select>
+                <Menu>
+                  <MenuButton
+                    w="full"
+                    maxW={{ base: "100%", md: "sm" }}
+                    textAlign="left"
+                    rightIcon={<ChevronDownIcon />}
+                  >
+                    {voice === null
+                      ? "Default"
+                      : (() => {
+                          const selected = voices.find((v) => v.name === voice);
+                          return selected ? getVoiceLabel(selected) : voice;
+                        })()}
+                  </MenuButton>
+                  <MenuList maxH="300px" overflowY="auto">
+                    <MenuItem
+                      onClick={async () => {
+                        const newVoice = null;
+                        setVoice(newVoice);
+                        if (!user) return;
+                        const { error } = await supabase
+                          .from("user_preferences")
+                          .upsert(
+                            { user_id: user.id, tts_voice: newVoice },
+                            { onConflict: "user_id" }
+                          );
+                        if (error)
+                          console.error("Failed to save tts voice:", error);
+                      }}
+                      bgColor={
+                        voice === null
+                          ? colorMode === "dark"
+                            ? "gray.700"
+                            : "gray.100"
+                          : undefined
+                      }
+                    >
+                      Default
+                    </MenuItem>
+                    {voices.map((v) => (
+                      <MenuItem
+                        key={v.name}
+                        onClick={async () => {
+                          const newVoice = v.name;
+                          setVoice(newVoice);
+                          if (!user) return;
+                          const { error } = await supabase
+                            .from("user_preferences")
+                            .upsert(
+                              { user_id: user.id, tts_voice: newVoice },
+                              { onConflict: "user_id" }
+                            );
+                          if (error)
+                            console.error("Failed to save tts voice:", error);
+                        }}
+                        bgColor={
+                          voice === v.name
+                            ? colorMode === "dark"
+                              ? "gray.700"
+                              : "gray.100"
+                            : undefined
+                        }
+                      >
+                        {getVoiceLabel(v)}
+                      </MenuItem>
+                    ))}
+                  </MenuList>
+                </Menu>
               }
             />
           </Flex>
