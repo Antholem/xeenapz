@@ -7,6 +7,7 @@ import {
   type MenuProps as ChakraMenuProps,
 } from "@chakra-ui/react";
 import type { ButtonProps } from "@chakra-ui/react";
+import { HiOutlineChevronDown } from "react-icons/hi";
 import Button from "../Button";
 import MenuList from "../MenuList";
 import MenuItem from "../MenuItem";
@@ -38,13 +39,22 @@ const Menu = ({
 
   return (
     <ChakraMenu initialFocusRef={selectedRef} {...props}>
-      <ChakraMenuButton as={Button} w="full" textAlign="left" {...buttonProps}>
+      <ChakraMenuButton
+        as={Button}
+        colorScheme="gray"
+        w="full"
+        variant="solid"
+        textAlign="left"
+        rightIcon={<HiOutlineChevronDown />}
+        {...buttonProps}
+      >
         {selectedLabel}
       </ChakraMenuButton>
       <MenuList maxH="200px" overflowY="auto">
         <MenuItem
           ref={value === null ? selectedRef : undefined}
           onClick={() => onChange(null)}
+          color={value === null ? "red.500" : undefined}
         >
           {placeholder}
         </MenuItem>
@@ -53,6 +63,7 @@ const Menu = ({
             key={item.value}
             ref={item.value === value ? selectedRef : undefined}
             onClick={() => onChange(item.value)}
+            color={item.value === value ? "red.500" : undefined}
           >
             {item.label}
           </MenuItem>
