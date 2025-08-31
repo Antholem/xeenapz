@@ -49,7 +49,6 @@ const Menu = ({
         as={Button}
         colorScheme="gray"
         w="full"
-        variant="solid"
         textAlign="left"
         rightIcon={<HiOutlineChevronDown />}
         {...buttonProps}
