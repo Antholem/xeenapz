@@ -5,12 +5,14 @@ import {
   Menu as ChakraMenu,
   MenuButton as ChakraMenuButton,
   type MenuProps as ChakraMenuProps,
+  useColorMode,
 } from "@chakra-ui/react";
 import type { ButtonProps } from "@chakra-ui/react";
 import { HiOutlineChevronDown } from "react-icons/hi";
 import Button from "../Button";
 import MenuList from "../MenuList";
 import MenuItem from "../MenuItem";
+import { useAccentColor } from "@/stores";
 
 interface MenuItemData {
   label: string;
@@ -36,6 +38,10 @@ const Menu = ({
   const selectedRef = useRef<HTMLDivElement>(null);
   const selectedLabel =
     items.find((i) => i.value === value)?.label ?? placeholder;
+  const { colorMode } = useColorMode();
+  const { accentColor } = useAccentColor();
+  const selectedColor =
+    colorMode === "dark" ? `${accentColor}.300` : `${accentColor}.500`;
 
   return (
     <ChakraMenu initialFocusRef={selectedRef} {...props}>
@@ -54,7 +60,7 @@ const Menu = ({
         <MenuItem
           ref={value === null ? selectedRef : undefined}
           onClick={() => onChange(null)}
-          color={value === null ? "red.500" : undefined}
+          color={value === null ? selectedColor : undefined}
         >
           {placeholder}
         </MenuItem>
@@ -63,7 +69,7 @@ const Menu = ({
             key={item.value}
             ref={item.value === value ? selectedRef : undefined}
             onClick={() => onChange(item.value)}
-            color={item.value === value ? "red.500" : undefined}
+            color={item.value === value ? selectedColor : undefined}
           >
             {item.label}
           </MenuItem>
