@@ -8,6 +8,7 @@ import AlertDialogContent from "./AlertDialogContent";
 import ModalContent from "./ModalContent";
 import MenuItem from "./MenuItem";
 import MenuList from "./MenuList";
+import Menu from "./Menu";
 import ImageModal from "./ImageModal";
 import Switch from "./Switch";
 
@@ -22,6 +23,7 @@ export {
   ModalContent,
   MenuItem,
   MenuList,
+  Menu,
   ImageModal,
   Switch,
 };
