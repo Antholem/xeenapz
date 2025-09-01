@@ -157,6 +157,7 @@ const NavigationBar: FC = () => {
                       if (value) setModel(value);
                     }}
                     placeholder="Select Model"
+                    includeNullOption={false}
                     buttonProps={{
                       size: "xs",
                       variant: "ghost",
