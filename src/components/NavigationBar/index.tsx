@@ -3,7 +3,6 @@
 import { FC, Fragment, memo, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
-import { HiOutlineChevronDown } from "react-icons/hi";
 import { IoMdMenu } from "react-icons/io";
 import { RiChat3Line, RiChatHistoryFill } from "react-icons/ri";
 
@@ -12,15 +11,13 @@ import {
   Divider,
   Flex,
   IconButton,
-  Menu,
-  MenuButton,
   Text,
   useDisclosure,
 } from "@chakra-ui/react";
 
 import { supabase, GEMINI_MODELS } from "@/lib";
 import { useAuth, useModel, useToastStore } from "@/stores";
-import { Button, MenuItem, MenuList } from "@themed-components";
+import { Button, Menu } from "@/components/ui";
 import { SideBar } from "@/components";
 
 interface Thread {
@@ -44,8 +41,6 @@ const NavigationBar: FC = () => {
       .replace(/^gemini/i, "Gemini")
       .replace(/-/g, " ")
       .replace(/\b(\w)/g, (match) => match.toUpperCase());
-
-  const formattedModel = formatModel(model);
 
   useEffect(() => {
     if (!user) {
@@ -151,34 +146,34 @@ const NavigationBar: FC = () => {
               <Text fontSize="lg" fontWeight="bold" noOfLines={1} px={1}>
                 {pathname === "/" ? "Xeenapz" : pathname === "/thread/temp" ? "Temporary Chat" : currentThreadTitle || "Xeenapz"}
               </Text>
-              {user && (
-                <Menu>
-                  <MenuButton
-                    as={Button}
-                    size="xs"
-                    variant="ghost"
-                    color="secondaryText"
-                    colorScheme="gray"
-                    px={1}
-                    maxW="100%"
-                    overflow="hidden"
-                    textOverflow="ellipsis"
-                    whiteSpace="nowrap"
-                    rightIcon={<HiOutlineChevronDown />}
-                  >
-                    {formattedModel}
-                  </MenuButton>
-                  <MenuList>
-                    {GEMINI_MODELS.map((m) => (
-                      <MenuItem key={m} onClick={() => setModel(m)}>
-                        {formatModel(m)}
-                      </MenuItem>
-                    ))}
-                  </MenuList>
-                </Menu>
-              )}
+                {user && (
+                  <Menu
+                    items={GEMINI_MODELS.map((m) => ({
+                      value: m,
+                      label: formatModel(m),
+                    }))}
+                    value={model}
+                    onChange={(value) => {
+                      if (value) setModel(value);
+                    }}
+                    placeholder="Select Model"
+                    includeNullOption={false}
+                    buttonProps={{
+                      size: "xs",
+                      variant: "ghost",
+                      color: "secondaryText",
+                      colorScheme: "gray",
+                      px: 1,
+                      w: "auto",
+                      maxW: "100%",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  />
+                )}
+              </Flex>
             </Flex>
-          </Flex>
 
           <Flex align="center" gap={4} flexShrink={0}>
             {user && (pathname === "/" || pathname === "/thread/temp") && (

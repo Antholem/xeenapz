@@ -24,6 +24,7 @@ interface MenuProps extends Omit<ChakraMenuProps, "children"> {
   value: string | null;
   onChange: (value: string | null) => void | Promise<void>;
   placeholder?: string;
+  includeNullOption?: boolean;
   buttonProps?: ButtonProps;
 }
 
@@ -32,6 +33,7 @@ const Menu = ({
   value,
   onChange,
   placeholder = "Select...",
+  includeNullOption = true,
   buttonProps,
   ...props
 }: MenuProps) => {
@@ -57,13 +59,15 @@ const Menu = ({
         {selectedLabel}
       </ChakraMenuButton>
       <MenuList maxH="200px" overflowY="auto">
-        <MenuItem
-          ref={value === null ? selectedRef : undefined}
-          onClick={() => onChange(null)}
-          color={value === null ? selectedColor : undefined}
-        >
-          {placeholder}
-        </MenuItem>
+        {includeNullOption && (
+          <MenuItem
+            ref={value === null ? selectedRef : undefined}
+            onClick={() => onChange(null)}
+            color={value === null ? selectedColor : undefined}
+          >
+            {placeholder}
+          </MenuItem>
+        )}
         {items.map((item) => (
           <MenuItem
             key={item.value}
