@@ -34,10 +34,10 @@ const SettingRow = ({
 }) => {
   return (
     <Grid
-      templateColumns={{ base: "1fr", md: "1fr auto" }} // stack on mobile
+      templateColumns="1fr auto"
       columnGap={4}
-      rowGap={{ base: 3, md: 1 }}
-      alignItems={{ base: "start", md: "center" }}
+      rowGap={1}
+      alignItems="center"
     >
       <Box minW={0}>
         <Text fontWeight="medium">{label}</Text>
@@ -53,13 +53,7 @@ const SettingRow = ({
         )}
       </Box>
 
-      <Flex
-        justify={{ base: "stretch", md: "flex-end" }}
-        minW={{ base: 0, md: "fit-content" }}
-        w={{ base: "full", md: "auto" }}
-      >
-        {control}
-      </Flex>
+      <Flex justify="flex-end">{control}</Flex>
     </Grid>
   );
 };
