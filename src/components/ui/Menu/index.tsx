@@ -24,6 +24,7 @@ interface MenuProps extends Omit<ChakraMenuProps, "children"> {
   value: string | null;
   onChange: (value: string | null) => void | Promise<void>;
   placeholder?: string;
+  includeNullOption?: boolean;
   buttonProps?: ButtonProps;
 }
 
@@ -32,6 +33,7 @@ const Menu = ({
   value,
   onChange,
   placeholder = "Select...",
+  includeNullOption = true,
   buttonProps,
   ...props
 }: MenuProps) => {
@@ -44,7 +46,7 @@ const Menu = ({
     colorMode === "dark" ? `${accentColor}.300` : `${accentColor}.500`;
 
   return (
-    <ChakraMenu initialFocusRef={selectedRef} {...props}>
+    <ChakraMenu matchWidth initialFocusRef={selectedRef} {...props}>
       <ChakraMenuButton
         as={Button}
         colorScheme="gray"
@@ -57,20 +59,23 @@ const Menu = ({
         {selectedLabel}
       </ChakraMenuButton>
       <MenuList maxH="200px" overflowY="auto">
-        <MenuItem
-          ref={value === null ? selectedRef : undefined}
-          onClick={() => onChange(null)}
-          color={value === null ? selectedColor : undefined}
-        >
-          {placeholder}
-        </MenuItem>
+        {includeNullOption && (
+          <MenuItem
+            ref={value === null ? selectedRef : undefined}
+            onClick={() => onChange(null)}
+            color={value === null ? selectedColor : undefined}
+            w="full"
+          >
+            {placeholder}
+          </MenuItem>
+        )}
         {items.map((item) => (
           <MenuItem
             key={item.value}
             ref={item.value === value ? selectedRef : undefined}
             onClick={() => onChange(item.value)}
             color={item.value === value ? selectedColor : undefined}
-
+            w="full"
           >
             {item.label}
           </MenuItem>
