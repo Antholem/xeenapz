@@ -10,8 +10,10 @@ import {
   Flex,
   Grid,
   Text,
-  Select,
+  Menu,
+  MenuButton,
 } from "@chakra-ui/react";
+import { Button, MenuItem, MenuList } from "@themed-components";
 import { useTTSVoice, useAuth } from "@/stores";
 import { supabase } from "@/lib";
 
@@ -120,31 +122,63 @@ const VoiceAndAccessibility: FC = () => {
               label="Text-to-Speech"
               description="Choose the voice for text-to-speech playback."
               control={
-                <Select
-                  value={voice ?? ""}
-                  onChange={async (e) => {
-                    const newVoice = e.target.value || null;
-                    setVoice(newVoice);
-                    if (!user) return;
-                    const { error } = await supabase
-                      .from("user_preferences")
-                      .upsert(
-                        { user_id: user.id, tts_voice: newVoice },
-                        { onConflict: "user_id" }
-                      );
-                    if (error)
-                      console.error("Failed to save tts voice:", error);
-                  }}
-                  w="full"
-                  maxW={{ base: "100%", md: "sm" }}
-                >
-                  <option value="">Default</option>
-                  {voices.map((v) => (
-                    <option key={v.name} value={v.name}>
-                      {getVoiceLabel(v)}
-                    </option>
-                  ))}
-                </Select>
+                <Menu>
+                  <MenuButton
+                    as={Button}
+                    variant="outline"
+                    w="full"
+                    maxW={{ base: "100%", md: "sm" }}
+                  >
+                    {voice
+                      ? getVoiceLabel(
+                          (voices.find((v) => v.name === voice) ?? {
+                            name: voice,
+                          }) as SpeechSynthesisVoice
+                        )
+                      : "Default"}
+                  </MenuButton>
+                  <MenuList>
+                    <MenuItem
+                      onClick={async () => {
+                        setVoice(null);
+                        if (!user) return;
+                        const { error } = await supabase
+                          .from("user_preferences")
+                          .upsert(
+                            { user_id: user.id, tts_voice: null },
+                            { onConflict: "user_id" }
+                          );
+                        if (error)
+                          console.error("Failed to save tts voice:", error);
+                      }}
+                    >
+                      Default
+                    </MenuItem>
+                    {voices.map((v) => (
+                      <MenuItem
+                        key={v.name}
+                        onClick={async () => {
+                          const newVoice = v.name;
+                          setVoice(newVoice);
+                          if (!user) return;
+                          const { error } = await supabase
+                            .from("user_preferences")
+                            .upsert(
+                              { user_id: user.id, tts_voice: newVoice },
+                              { onConflict: "user_id" }
+                            );
+                          if (error)
+                            console.error(
+                              "Failed to save tts voice:",
+                              error
+                            );
+                        }}
+                      >
+                        {getVoiceLabel(v)}
+                      </MenuItem>
+                    ))}
+                  </MenuList>
+                </Menu>
               }
             />
           </Flex>
