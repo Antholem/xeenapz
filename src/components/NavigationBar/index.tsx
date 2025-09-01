@@ -144,36 +144,35 @@ const NavigationBar: FC = () => {
 
             <Flex align="start" direction="column" flex="1" minW={0}>
               <Text fontSize="lg" fontWeight="bold" noOfLines={1} px={1}>
-                {pathname === "/" ? "Xeenapz" : pathname === "/thread/temp" ? "Temporary Chat" : currentThreadTitle || "Xeenapz"}
+                {pathname === "/"
+                  ? "Xeenapz"
+                  : pathname === "/thread/temp"
+                  ? "Temporary Chat"
+                  : currentThreadTitle || "Xeenapz"}
               </Text>
-                {user && (
-                  <Menu
-                    items={GEMINI_MODELS.map((m) => ({
-                      value: m,
-                      label: formatModel(m),
-                    }))}
-                    value={model}
-                    onChange={(value) => {
-                      if (value) setModel(value);
-                    }}
-                    placeholder="Select Model"
-                    includeNullOption={false}
-                    buttonProps={{
-                      size: "xs",
-                      variant: "ghost",
-                      color: "secondaryText",
-                      colorScheme: "gray",
-                      px: 1,
-                      w: "auto",
-                      maxW: "100%",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  />
-                )}
-              </Flex>
+              {user && (
+                <Menu
+                  items={GEMINI_MODELS.map((m) => ({
+                    value: m,
+                    label: formatModel(m),
+                  }))}
+                  value={model}
+                  onChange={(value) => {
+                    if (value) setModel(value);
+                  }}
+                  placeholder="Select Model"
+                  includeNullOption={false}
+                  buttonProps={{
+                    size: "xs",
+                    variant: "ghost",
+                    color: "secondaryText",
+                    px: 1,
+                    w: "auto",
+                  }}
+                />
+              )}
             </Flex>
+          </Flex>
 
           <Flex align="center" gap={4} flexShrink={0}>
             {user && (pathname === "/" || pathname === "/thread/temp") && (

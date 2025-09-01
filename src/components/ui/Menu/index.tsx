@@ -74,7 +74,6 @@ const Menu = ({
             ref={item.value === value ? selectedRef : undefined}
             onClick={() => onChange(item.value)}
             color={item.value === value ? selectedColor : undefined}
-
           >
             {item.label}
           </MenuItem>
@@ -85,4 +84,3 @@ const Menu = ({
 };
 
 export default Menu;
-

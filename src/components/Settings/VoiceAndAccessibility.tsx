@@ -141,8 +141,6 @@ const VoiceAndAccessibility: FC = () => {
                   placeholder="Default"
                   buttonProps={{
                     variant: "outline",
-                    w: "full",
-                    maxW: { base: "100%", md: "sm" },
                   }}
                 />
               }
