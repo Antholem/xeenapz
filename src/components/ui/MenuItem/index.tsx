@@ -23,6 +23,7 @@ const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>((props, ref) => {
       _focus={{
         bgColor: colorMode === "dark" ? "gray.700" : "gray.100",
       }}
+      whiteSpace="nowrap"
       {...props}
     />
   );

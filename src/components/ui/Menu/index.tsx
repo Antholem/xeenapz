@@ -68,6 +68,9 @@ const Menu = ({
         textAlign="left"
         rightIcon={<HiOutlineChevronDown />}
         {...buttonProps}
+        size="md"
+        fontSize="md"
+        px={3}
         w="auto"
         position="absolute"
         visibility="hidden"
