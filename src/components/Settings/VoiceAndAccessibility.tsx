@@ -34,10 +34,10 @@ const SettingRow = ({
 }) => {
   return (
     <Grid
-      templateColumns="1fr auto"
+      templateColumns={{ base: "1fr", md: "1fr auto" }}
       columnGap={4}
       rowGap={1}
-      alignItems="center"
+      alignItems={{ md: "center" }}
     >
       <Box minW={0}>
         <Text fontWeight="medium">{label}</Text>
@@ -53,7 +53,12 @@ const SettingRow = ({
         )}
       </Box>
 
-      <Flex justify="flex-end">{control}</Flex>
+      <Flex
+        justify={{ base: "flex-start", md: "flex-end" }}
+        w={{ base: "full", md: "auto" }}
+      >
+        {control}
+      </Flex>
     </Grid>
   );
 };
@@ -135,6 +140,7 @@ const VoiceAndAccessibility: FC = () => {
                   placeholder="Default"
                   buttonProps={{
                     variant: "outline",
+                    w: { base: "full", md: "auto" },
                   }}
                 />
               }

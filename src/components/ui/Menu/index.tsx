@@ -87,11 +87,16 @@ const Menu = ({
           textAlign="left"
           rightIcon={<HiOutlineChevronDown />}
           {...buttonProps}
-          w={menuWidth}
+          w={{ base: "full", md: menuWidth }}
         >
           {selectedLabel}
         </ChakraMenuButton>
-        <MenuList maxH="200px" overflowY="auto" w={menuWidth} minW="0">
+        <MenuList
+          maxH="200px"
+          overflowY="auto"
+          w={{ base: "full", md: menuWidth }}
+          minW="0"
+        >
           {includeNullOption && (
             <MenuItem
               ref={value === null ? selectedRef : undefined}
