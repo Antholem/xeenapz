@@ -29,6 +29,7 @@ import { HiLockClosed, HiOutlineLockClosed, HiOutlineUser } from "react-icons/hi
 import Appearance from "./Appearance";
 import General from "./General";
 import VoiceAndAccessibility from "./VoiceAndAccessibility";
+import DataAndPrivacy from "./DataAndPrivacy";
 
 interface SettingsProps {
   isOpen: boolean;
@@ -201,7 +202,9 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
                 <VoiceAndAccessibility />
               </TabPanel>
               <TabPanel>Chat preferences go here.</TabPanel>
-              <TabPanel>Data & Privacy settings go here.</TabPanel>
+              <TabPanel>
+                <DataAndPrivacy />
+              </TabPanel>
               <TabPanel>Account settings go here.</TabPanel>
               <TabPanel>Advanced settings go here.</TabPanel>
               <TabPanel>About info goes here.</TabPanel>
