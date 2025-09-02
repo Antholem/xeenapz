@@ -65,9 +65,20 @@ const DataAndPrivacy: FC = () => {
   const { showToast } = useToastStore();
   const router = useRouter();
   const pathname = usePathname();
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const cancelRef = useRef<HTMLButtonElement>(null);
+  const {
+    isOpen: isDeleteOpen,
+    onOpen: onDeleteOpen,
+    onClose: onDeleteClose,
+  } = useDisclosure();
+  const {
+    isOpen: isArchiveOpen,
+    onOpen: onArchiveOpen,
+    onClose: onArchiveClose,
+  } = useDisclosure();
+  const deleteCancelRef = useRef<HTMLButtonElement>(null);
+  const archiveCancelRef = useRef<HTMLButtonElement>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
 
   const handleDeleteAll = async () => {
     if (!user) return;
@@ -113,7 +124,7 @@ const DataAndPrivacy: FC = () => {
 
       await supabase.from("threads").delete().eq("user_id", user.id);
 
-      onClose();
+      onDeleteClose();
       showToast({
         id: "delete-all-threads",
         title: "All threads deleted",
@@ -132,6 +143,41 @@ const DataAndPrivacy: FC = () => {
     }
   };
 
+  const handleArchiveAll = async () => {
+    if (!user) return;
+
+    try {
+      setIsArchiving(true);
+
+      if (pathname?.startsWith("/thread")) {
+        router.push("/");
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+
+      await supabase
+        .from("threads")
+        .update({ is_archived: true })
+        .eq("user_id", user.id);
+
+      onArchiveClose();
+      showToast({
+        id: "archive-all-threads",
+        title: "All threads archived",
+        status: "success",
+      });
+    } catch (err) {
+      console.error("Failed to archive threads:", err);
+      showToast({
+        id: "archive-all-threads-error",
+        title: "Failed to archive",
+        description: "An error occurred while archiving your threads.",
+        status: "error",
+      });
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
   return (
     <Flex direction="column" gap={4}>
       <Card bg="transparent" variant="outline">
@@ -144,14 +190,17 @@ const DataAndPrivacy: FC = () => {
         <CardBody p={4}>
           <Flex direction="column" gap={6}>
             <SettingRow
+              label="Archive All Threads"
+              description="Move all your threads to the archive."
+              control={
+                <Button onClick={onArchiveOpen}>Archive</Button>
+              }
+            />
+            <SettingRow
               label="Delete All Threads"
               description="Permanently remove all of your threads."
               control={
-                <Button
-                  variant="outline"
-                  colorScheme="red"
-                  onClick={onOpen}
-                >
+                <Button colorScheme="red" onClick={onDeleteOpen}>
                   Delete
                 </Button>
               }
@@ -161,9 +210,46 @@ const DataAndPrivacy: FC = () => {
       </Card>
 
       <AlertDialog
-        isOpen={isOpen}
-        leastDestructiveRef={cancelRef}
-        onClose={onClose}
+        isOpen={isArchiveOpen}
+        leastDestructiveRef={archiveCancelRef}
+        onClose={onArchiveClose}
+        isCentered
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Archive All Threads
+            </AlertDialogHeader>
+            <AlertDialogBody>
+              Are you sure you want to archive all your threads?
+            </AlertDialogBody>
+            <AlertDialogFooter>
+              <HStack gap={4}>
+                <Button
+                  variant="ghost"
+                  colorScheme="gray"
+                  onClick={onArchiveClose}
+                  ref={archiveCancelRef}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={handleArchiveAll}
+                  isLoading={isArchiving}
+                >
+                  Archive
+                </Button>
+              </HStack>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
+
+      <AlertDialog
+        isOpen={isDeleteOpen}
+        leastDestructiveRef={deleteCancelRef}
+        onClose={onDeleteClose}
         isCentered
       >
         <AlertDialogOverlay>
@@ -180,8 +266,8 @@ const DataAndPrivacy: FC = () => {
                 <Button
                   variant="ghost"
                   colorScheme="gray"
-                  onClick={onClose}
-                  ref={cancelRef}
+                  onClick={onDeleteClose}
+                  ref={deleteCancelRef}
                 >
                   Cancel
                 </Button>
