@@ -112,7 +112,7 @@ const General: FC = () => {
         </CardHeader>
         <Divider />
         <CardBody p={4}>
-          <Flex direction="column" gap={6}>
+          <Flex direction="column" gap={4}>
             <SettingRow
               label="Smart Suggestions"
               description="Show quick follow-up suggestions after assistant responses."
