@@ -192,10 +192,9 @@ const DataAndPrivacy: FC = () => {
             <SettingRow
               label="Archive All Threads"
               description="Move all your threads to the archive."
-              control={
-                <Button onClick={onArchiveOpen}>Archive</Button>
-              }
+              control={<Button onClick={onArchiveOpen}>Archive</Button>}
             />
+            <Divider />
             <SettingRow
               label="Delete All Threads"
               description="Permanently remove all of your threads."
@@ -289,4 +288,3 @@ const DataAndPrivacy: FC = () => {
 };
 
 export default DataAndPrivacy;
-
