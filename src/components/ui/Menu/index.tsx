@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import {
+  Box,
   Menu as ChakraMenu,
   MenuButton as ChakraMenuButton,
   type MenuProps as ChakraMenuProps,
@@ -52,11 +53,21 @@ const Menu = ({
         colorScheme="gray"
         w="full"
         variant="solid"
-        textAlign="left"
+        justifyContent="space-between"
+        overflow="hidden"
         rightIcon={<HiOutlineChevronDown />}
         {...buttonProps}
       >
-        {selectedLabel}
+        <Box
+          flex="1"
+          textAlign="left"
+          minW={0}
+          textOverflow="ellipsis"
+          overflow="hidden"
+          whiteSpace="nowrap"
+        >
+          {selectedLabel}
+        </Box>
       </ChakraMenuButton>
       <MenuList maxH="200px" overflowY="auto">
         {includeNullOption && (
