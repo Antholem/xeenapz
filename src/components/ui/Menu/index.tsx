@@ -58,7 +58,7 @@ const Menu = ({
       >
         {selectedLabel}
       </ChakraMenuButton>
-      <MenuList maxH="200px" overflowY="auto" w="full" minW="0">
+      <MenuList>
         {includeNullOption && (
           <MenuItem
             ref={value === null ? selectedRef : undefined}
