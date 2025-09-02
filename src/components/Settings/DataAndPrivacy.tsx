@@ -188,7 +188,7 @@ const DataAndPrivacy: FC = () => {
         </CardHeader>
         <Divider />
         <CardBody p={4}>
-          <Flex direction="column" gap={6}>
+          <Flex direction="column" gap={4}>
             <SettingRow
               label="Archive All Threads"
               description="Move all your threads to the archive."

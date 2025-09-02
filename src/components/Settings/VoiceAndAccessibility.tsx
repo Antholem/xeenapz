@@ -115,7 +115,7 @@ const VoiceAndAccessibility: FC = () => {
         </CardHeader>
         <Divider />
         <CardBody p={4}>
-          <Flex direction="column" gap={6}>
+          <Flex direction="column" gap={4}>
             <SettingRow
               label="Text-to-Speech"
               description="Choose the voice for text-to-speech playback."

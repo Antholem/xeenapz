@@ -235,7 +235,7 @@ const Appearance: FC = () => {
         </CardHeader>
         <Divider />
         <CardBody p={4}>
-          <Flex direction="column" gap={6}>
+          <Flex direction="column" gap={4}>
             <Flex direction="column" gap={3}>
               <SectionText
                 title="Color Mode"
