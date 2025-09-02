@@ -10,8 +10,8 @@ import {
   Flex,
   Grid,
   Text,
-  Select,
 } from "@chakra-ui/react";
+import { Menu } from "@/components/ui";
 import { useTTSVoice, useAuth } from "@/stores";
 import { supabase } from "@/lib";
 
@@ -120,10 +120,9 @@ const VoiceAndAccessibility: FC = () => {
               label="Text-to-Speech"
               description="Choose the voice for text-to-speech playback."
               control={
-                <Select
-                  value={voice ?? ""}
-                  onChange={async (e) => {
-                    const newVoice = e.target.value || null;
+                <Menu
+                  value={voice}
+                  onChange={async (newVoice) => {
                     setVoice(newVoice);
                     if (!user) return;
                     const { error } = await supabase
@@ -135,16 +134,15 @@ const VoiceAndAccessibility: FC = () => {
                     if (error)
                       console.error("Failed to save tts voice:", error);
                   }}
-                  w="full"
-                  maxW={{ base: "100%", md: "sm" }}
-                >
-                  <option value="">Default</option>
-                  {voices.map((v) => (
-                    <option key={v.name} value={v.name}>
-                      {getVoiceLabel(v)}
-                    </option>
-                  ))}
-                </Select>
+                  items={voices.map((v) => ({
+                    value: v.name,
+                    label: getVoiceLabel(v),
+                  }))}
+                  placeholder="Default"
+                  buttonProps={{
+                    variant: "outline",
+                  }}
+                />
               }
             />
           </Flex>
