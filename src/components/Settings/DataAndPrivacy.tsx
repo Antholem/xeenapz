@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useRef, useState } from "react";
+import { FC, useEffect, useRef, useState } from "react";
 import {
   Box,
   Card,
@@ -22,6 +22,7 @@ import { Button, AlertDialogContent } from "@themed-components";
 import { useAuth, useToastStore } from "@/stores";
 import { supabase } from "@/lib";
 import { useRouter, usePathname } from "next/navigation";
+import { formatBytes } from "@/utils/formatBytes";
 
 const SettingRow = ({
   label,
@@ -79,6 +80,51 @@ const DataAndPrivacy: FC = () => {
   const archiveCancelRef = useRef<HTMLButtonElement>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
+  const [supabaseUsage, setSupabaseUsage] = useState<number | null>(null);
+  const [localUsage, setLocalUsage] = useState<number | null>(null);
+
+  useEffect(() => {
+    let total = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+      total += new Blob([key]).size;
+      const value = localStorage.getItem(key);
+      if (value) total += new Blob([value]).size;
+    }
+    setLocalUsage(total);
+  }, []);
+
+  useEffect(() => {
+    const fetchUsage = async () => {
+      if (!user) {
+        setSupabaseUsage(0);
+        return;
+      }
+
+      let total = 0;
+      const { data: threads, error } = await supabase
+        .from("threads")
+        .select("id")
+        .eq("user_id", user.id);
+      if (!error && threads) {
+        for (const { id } of threads) {
+          const { data: files, error: listError } = await supabase.storage
+            .from("messages")
+            .list(`${user.id}/${id}`);
+          if (listError || !files) continue;
+          for (const file of files) {
+            const size = (file as any).metadata?.size ?? 0;
+            total += size;
+          }
+        }
+      }
+
+      setSupabaseUsage(total);
+    };
+
+    fetchUsage();
+  }, [user]);
 
   const handleDeleteAll = async () => {
     if (!user) return;
@@ -180,6 +226,40 @@ const DataAndPrivacy: FC = () => {
 
   return (
     <Flex direction="column" gap={4}>
+      <Card bg="transparent" variant="outline">
+        <CardHeader px={4} py={3}>
+          <Text fontWeight="semibold" fontSize="lg">
+            Storage Usage
+          </Text>
+        </CardHeader>
+        <Divider />
+        <CardBody p={4}>
+          <Flex direction="column" gap={4}>
+            <SettingRow
+              label="Supabase Storage"
+              description="Files stored in Supabase."
+              control={
+                <Text>
+                  {supabaseUsage !== null
+                    ? formatBytes(supabaseUsage)
+                    : "-"}
+                </Text>
+              }
+            />
+            <Divider />
+            <SettingRow
+              label="Local Storage"
+              description="Data stored in your browser."
+              control={
+                <Text>
+                  {localUsage !== null ? formatBytes(localUsage) : "-"}
+                </Text>
+              }
+            />
+          </Flex>
+        </CardBody>
+      </Card>
+
       <Card bg="transparent" variant="outline">
         <CardHeader px={4} py={3}>
           <Text fontWeight="semibold" fontSize="lg">
