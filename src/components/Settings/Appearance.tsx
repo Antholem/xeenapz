@@ -232,9 +232,10 @@ const Appearance: FC = () => {
               control={
                 <Menu
                   value={mode}
-                  onChange={(value) =>
-                    value && saveMode(value as "light" | "dark" | "system")
-                  }
+                  onChange={(value) => {
+                    if (!value) return;
+                    return saveMode(value as "light" | "dark" | "system");
+                  }}
                   items={[
                     {
                       value: "light",
