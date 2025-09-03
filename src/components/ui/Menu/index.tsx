@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, type ReactElement } from "react";
 import {
   Box,
   Menu as ChakraMenu,
@@ -18,6 +18,7 @@ import { useAccentColor } from "@/stores";
 interface MenuItemData {
   label: string;
   value: string;
+  icon?: ReactElement;
 }
 
 interface MenuProps extends Omit<ChakraMenuProps, "children"> {
@@ -39,8 +40,9 @@ const Menu = ({
   ...props
 }: MenuProps) => {
   const selectedRef = useRef<HTMLDivElement>(null);
-  const selectedLabel =
-    items.find((i) => i.value === value)?.label ?? placeholder;
+  const selectedItem = items.find((i) => i.value === value);
+  const selectedLabel = selectedItem?.label ?? placeholder;
+  const selectedIcon = selectedItem?.icon;
   const { colorMode } = useColorMode();
   const { accentColor } = useAccentColor();
   const selectedColor =
@@ -55,6 +57,7 @@ const Menu = ({
         variant="solid"
         justifyContent="space-between"
         overflow="hidden"
+        leftIcon={selectedIcon}
         rightIcon={<HiOutlineChevronDown />}
         {...buttonProps}
       >
@@ -85,6 +88,7 @@ const Menu = ({
             ref={item.value === value ? selectedRef : undefined}
             onClick={() => onChange(item.value)}
             color={item.value === value ? selectedColor : undefined}
+            icon={item.icon}
           >
             {item.label}
           </MenuItem>
