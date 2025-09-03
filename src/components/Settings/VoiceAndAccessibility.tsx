@@ -9,8 +9,11 @@ import {
   Divider,
   Flex,
   Grid,
+  IconButton,
   Text,
+  Tooltip,
 } from "@chakra-ui/react";
+import { HiSpeakerWave, HiStop } from "react-icons/hi2";
 import { Menu } from "@/components/ui";
 import { useTTSVoice, useAuth } from "@/stores";
 import { supabase } from "@/lib";
@@ -68,6 +71,7 @@ const VoiceAndAccessibility: FC = () => {
   const { voice, setVoice } = useTTSVoice();
   const { user } = useAuth();
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     if (!("speechSynthesis" in window)) return;
@@ -105,6 +109,24 @@ const VoiceAndAccessibility: FC = () => {
     })();
   }, [user]);
 
+  const handleTestVoice = () => {
+    if (!("speechSynthesis" in window)) return;
+    const utterance = new SpeechSynthesisUtterance(
+      "Hello! Nice to meet you. This is how I will sound."
+    );
+    if (voice) {
+      const selected = window.speechSynthesis
+        .getVoices()
+        .find((v) => v.name === voice);
+      if (selected) utterance.voice = selected;
+    }
+    utterance.onend = () => setIsPlaying(false);
+    utterance.onerror = () => setIsPlaying(false);
+    window.speechSynthesis.cancel();
+    setIsPlaying(true);
+    window.speechSynthesis.speak(utterance);
+  };
+
   return (
     <Flex direction="column" gap={4}>
       <Card bg="transparent" variant="outline">
@@ -120,29 +142,50 @@ const VoiceAndAccessibility: FC = () => {
               label="Text-to-Speech"
               description="Choose the voice for text-to-speech playback."
               control={
-                <Menu
-                  value={voice}
-                  onChange={async (newVoice) => {
-                    setVoice(newVoice);
-                    if (!user) return;
-                    const { error } = await supabase
-                      .from("user_preferences")
-                      .upsert(
-                        { user_id: user.id, tts_voice: newVoice },
-                        { onConflict: "user_id" }
-                      );
-                    if (error)
-                      console.error("Failed to save tts voice:", error);
-                  }}
-                  items={voices.map((v) => ({
-                    value: v.name,
-                    label: getVoiceLabel(v),
-                  }))}
-                  placeholder="Default"
-                  buttonProps={{
-                    variant: "outline",
-                  }}
-                />
+                <Flex w="full" gap={2}>
+                  <Tooltip label={isPlaying ? "Stop sample" : "Play sample"}>
+                    <IconButton
+                      aria-label={isPlaying ? "Stop sample" : "Play sample"}
+                      icon={isPlaying ? <HiStop /> : <HiSpeakerWave />}
+                      variant="ghost"
+                      colorScheme={isPlaying ? "red" : undefined}
+                      onClick={() => {
+                        if (isPlaying) {
+                          window.speechSynthesis.cancel();
+                          setIsPlaying(false);
+                        } else {
+                          handleTestVoice();
+                        }
+                      }}
+                    />
+                  </Tooltip>
+                  <Box flex={{ base: 1, md: 0 }} minW={0}>
+                    <Menu
+                      value={voice}
+                      onChange={async (newVoice) => {
+                        setVoice(newVoice);
+                        if (!user) return;
+                        const { error } = await supabase
+                          .from("user_preferences")
+                          .upsert(
+                            { user_id: user.id, tts_voice: newVoice },
+                            { onConflict: "user_id" }
+                          );
+                        if (error)
+                          console.error("Failed to save tts voice:", error);
+                      }}
+                      items={voices.map((v) => ({
+                        value: v.name,
+                        label: getVoiceLabel(v),
+                      }))}
+                      placeholder="Default"
+                      buttonProps={{
+                        variant: "outline",
+                        w: { base: "full", md: "auto" },
+                      }}
+                    />
+                  </Box>
+                </Flex>
               }
             />
           </Flex>
