@@ -17,12 +17,11 @@ import {
   AlertDialogBody,
   AlertDialogFooter,
   HStack,
-  Input,
 } from "@chakra-ui/react";
-import { Button, AlertDialogContent } from "@themed-components";
+import { Button, AlertDialogContent, Input } from "@themed-components";
 import { useAuth, useToastStore } from "@/stores";
 import { supabase } from "@/lib";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { HiOutlineTrash } from "react-icons/hi";
 
 const SettingRow = ({
@@ -66,7 +65,6 @@ const Account: FC = () => {
   const { user } = useAuth();
   const { showToast } = useToastStore();
   const router = useRouter();
-  const pathname = usePathname();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = useRef<HTMLButtonElement>(null);
   const [confirmValue, setConfirmValue] = useState("");
@@ -77,10 +75,8 @@ const Account: FC = () => {
     try {
       setIsDeleting(true);
 
-      if (pathname?.startsWith("/thread")) {
-        router.push("/");
-        await new Promise((resolve) => setTimeout(resolve, 500));
-      }
+      router.push("/");
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       await supabase.from("messages").delete().eq("user_id", user.id);
 
@@ -209,7 +205,6 @@ const Account: FC = () => {
                 <Button
                   variant="ghost"
                   colorScheme="red"
-                  leftIcon={<HiOutlineTrash />}
                   onClick={handleDeleteAccount}
                   isDisabled={confirmValue !== user?.email}
                   isLoading={isDeleting}
