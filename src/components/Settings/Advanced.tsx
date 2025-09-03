@@ -28,6 +28,7 @@ import {
   useTTSVoice,
 } from "@/stores";
 import { supabase } from "@/lib";
+import { HiOutlineRefresh } from "react-icons/hi";
 
 const SettingRow = ({
   label,
@@ -140,7 +141,11 @@ const Advanced: FC = () => {
               label="Reset Settings"
               description="Restore all preferences to their default values."
               control={
-                <Button colorScheme="red" onClick={onOpen}>
+                <Button
+                  colorScheme="red"
+                  leftIcon={<HiOutlineRefresh />}
+                  onClick={onOpen}
+                >
                   Reset
                 </Button>
               }
@@ -177,6 +182,7 @@ const Advanced: FC = () => {
                 <Button
                   variant="ghost"
                   colorScheme="red"
+                  leftIcon={<HiOutlineRefresh />}
                   onClick={handleReset}
                   isLoading={isResetting}
                 >
