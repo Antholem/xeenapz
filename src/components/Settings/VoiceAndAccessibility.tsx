@@ -9,8 +9,11 @@ import {
   Divider,
   Flex,
   Grid,
+  IconButton,
   Text,
+  Tooltip,
 } from "@chakra-ui/react";
+import { HiSpeakerWave } from "react-icons/hi2";
 import { Menu } from "@/components/ui";
 import { useTTSVoice, useAuth } from "@/stores";
 import { supabase } from "@/lib";
@@ -105,6 +108,21 @@ const VoiceAndAccessibility: FC = () => {
     })();
   }, [user]);
 
+  const handleTestVoice = () => {
+    if (!("speechSynthesis" in window)) return;
+    const utterance = new SpeechSynthesisUtterance(
+      "This is how I will sound."
+    );
+    if (voice) {
+      const selected = window.speechSynthesis
+        .getVoices()
+        .find((v) => v.name === voice);
+      if (selected) utterance.voice = selected;
+    }
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  };
+
   return (
     <Flex direction="column" gap={4}>
       <Card bg="transparent" variant="outline">
@@ -120,29 +138,39 @@ const VoiceAndAccessibility: FC = () => {
               label="Text-to-Speech"
               description="Choose the voice for text-to-speech playback."
               control={
-                <Menu
-                  value={voice}
-                  onChange={async (newVoice) => {
-                    setVoice(newVoice);
-                    if (!user) return;
-                    const { error } = await supabase
-                      .from("user_preferences")
-                      .upsert(
-                        { user_id: user.id, tts_voice: newVoice },
-                        { onConflict: "user_id" }
-                      );
-                    if (error)
-                      console.error("Failed to save tts voice:", error);
-                  }}
-                  items={voices.map((v) => ({
-                    value: v.name,
-                    label: getVoiceLabel(v),
-                  }))}
-                  placeholder="Default"
-                  buttonProps={{
-                    variant: "outline",
-                  }}
-                />
+                <Flex gap={2}>
+                  <Menu
+                    value={voice}
+                    onChange={async (newVoice) => {
+                      setVoice(newVoice);
+                      if (!user) return;
+                      const { error } = await supabase
+                        .from("user_preferences")
+                        .upsert(
+                          { user_id: user.id, tts_voice: newVoice },
+                          { onConflict: "user_id" }
+                        );
+                      if (error)
+                        console.error("Failed to save tts voice:", error);
+                    }}
+                    items={voices.map((v) => ({
+                      value: v.name,
+                      label: getVoiceLabel(v),
+                    }))}
+                    placeholder="Default"
+                    buttonProps={{
+                      variant: "outline",
+                    }}
+                  />
+                  <Tooltip label="Play sample">
+                    <IconButton
+                      aria-label="Play sample"
+                      icon={<HiSpeakerWave />}
+                      variant="outline"
+                      onClick={handleTestVoice}
+                    />
+                  </Tooltip>
+                </Flex>
               }
             />
           </Flex>
