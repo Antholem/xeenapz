@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect, useState, type ReactNode } from "react";
 import {
   Box,
   Card,
@@ -11,7 +11,7 @@ import {
   Icon,
   SimpleGrid,
   Text,
-  Button,
+  Grid,
   useColorMode,
   useColorModeValue,
   useToken,
@@ -19,14 +19,8 @@ import {
 import { useAccentColor, useAuth } from "@/stores";
 import { ACCENT_COLORS, AccentColors } from "@/theme/types";
 import { supabase } from "@/lib";
-import {
-  RiSunLine,
-  RiMoonLine,
-  RiComputerLine,
-  RiSunFill,
-  RiMoonFill,
-  RiComputerFill,
-} from "react-icons/ri";
+import { Menu } from "@/components/ui";
+import { RiSunLine, RiMoonLine, RiComputerLine } from "react-icons/ri";
 import { FaSquare } from "react-icons/fa6";
 
 const MODE_STORAGE_KEY = "color-mode-preference";
@@ -42,44 +36,44 @@ const SectionText = ({ title, desc }: { title: string; desc: string }) => (
   </Box>
 );
 
-const ModeButton = ({
+const SettingRow = ({
   label,
-  icon,
-  selectedIcon,
-  isActive,
-  onClick,
-  activeColor,
+  description,
+  control,
 }: {
   label: string;
-  icon: any;
-  selectedIcon: any;
-  isActive: boolean;
-  onClick: () => void;
-  activeColor: string;
-}) => {
-  const activeBg = useColorModeValue("gray.100", "whiteAlpha.200");
-  const hoverBg = useColorModeValue("gray.50", "whiteAlpha.100");
+  description?: string;
+  control: ReactNode;
+}) => (
+  <Grid
+    templateColumns={{ base: "1fr", md: "1fr auto" }}
+    columnGap={4}
+    rowGap={{ base: 3, md: 1 }}
+    alignItems={{ base: "start", md: "center" }}
+  >
+    <Box minW={0}>
+      <Text fontWeight="medium">{label}</Text>
+      {description && (
+        <Text
+          mt={1}
+          fontSize="xs"
+          color="secondaryText"
+          wordBreak="break-word"
+        >
+          {description}
+        </Text>
+      )}
+    </Box>
 
-  return (
-    <Button
-      onClick={onClick}
-      variant="outline"
-      justifyContent="flex-start"
-      leftIcon={<Icon as={isActive ? selectedIcon : icon} boxSize={4} />}
-      isActive={isActive}
-      aria-pressed={isActive}
-      color={isActive ? activeColor : "inherit"}
-      borderColor={isActive ? activeColor : "gray"}
-      bg={isActive ? activeBg : "transparent"}
-      _hover={{ bg: isActive ? activeBg : hoverBg }}
-      _active={{ bg: activeBg }}
-      height="44px"
-      w="full"
+    <Flex
+      justify={{ base: "stretch", md: "flex-end" }}
+      minW={{ base: 0, md: "fit-content" }}
+      w={{ base: "full", md: "auto" }}
     >
-      {label}
-    </Button>
-  );
-};
+      {control}
+    </Flex>
+  </Grid>
+);
 
 const AccentTile = ({
   name,
@@ -139,10 +133,6 @@ const AccentTile = ({
 const Appearance: FC = () => {
   const { setColorMode } = useColorMode();
   const { accentColor, setAccentColor } = useAccentColor();
-  const activeModeText = useColorModeValue(
-    `${accentColor}.600`,
-    `${accentColor}.200`
-  );
 
   const { user } = useAuth();
 
@@ -236,38 +226,37 @@ const Appearance: FC = () => {
         <Divider />
         <CardBody p={4}>
           <Flex direction="column" gap={4}>
-            <Flex direction="column" gap={3}>
-              <SectionText
-                title="Color Mode"
-                desc="Select Light, Dark, or follow your system preference."
-              />
-              <SimpleGrid columns={{ base: 1, sm: 3 }} gap={2}>
-                <ModeButton
-                  label="Light"
-                  icon={RiSunLine}
-                  selectedIcon={RiSunFill}
-                  isActive={mode === "light"}
-                  onClick={() => saveMode("light")}
-                  activeColor={activeModeText}
+            <SettingRow
+              label="Color Mode"
+              description="Select Light, Dark, or follow your system preference."
+              control={
+                <Menu
+                  value={mode}
+                  onChange={(value) =>
+                    value && saveMode(value as "light" | "dark" | "system")
+                  }
+                  items={[
+                    {
+                      value: "light",
+                      label: "Light",
+                      icon: <Icon as={RiSunLine} boxSize={4} />,
+                    },
+                    {
+                      value: "dark",
+                      label: "Dark",
+                      icon: <Icon as={RiMoonLine} boxSize={4} />,
+                    },
+                    {
+                      value: "system",
+                      label: "System",
+                      icon: <Icon as={RiComputerLine} boxSize={4} />,
+                    },
+                  ]}
+                  includeNullOption={false}
+                  buttonProps={{ variant: "outline" }}
                 />
-                <ModeButton
-                  label="Dark"
-                  icon={RiMoonLine}
-                  selectedIcon={RiMoonFill}
-                  isActive={mode === "dark"}
-                  onClick={() => saveMode("dark")}
-                  activeColor={activeModeText}
-                />
-                <ModeButton
-                  label="System"
-                  icon={RiComputerLine}
-                  selectedIcon={RiComputerFill}
-                  isActive={mode === "system"}
-                  onClick={() => saveMode("system")}
-                  activeColor={activeModeText}
-                />
-              </SimpleGrid>
-            </Flex>
+              }
+            />
 
             <Divider />
 
