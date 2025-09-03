@@ -13,7 +13,7 @@ import {
   Text,
   Tooltip,
 } from "@chakra-ui/react";
-import { HiSpeakerWave } from "react-icons/hi2";
+import { HiSpeakerWave, HiStop } from "react-icons/hi2";
 import { Menu } from "@/components/ui";
 import { useTTSVoice, useAuth } from "@/stores";
 import { supabase } from "@/lib";
@@ -71,6 +71,7 @@ const VoiceAndAccessibility: FC = () => {
   const { voice, setVoice } = useTTSVoice();
   const { user } = useAuth();
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     if (!("speechSynthesis" in window)) return;
@@ -111,7 +112,7 @@ const VoiceAndAccessibility: FC = () => {
   const handleTestVoice = () => {
     if (!("speechSynthesis" in window)) return;
     const utterance = new SpeechSynthesisUtterance(
-      "This is how I will sound."
+      "Hello! This is how I will sound. Nice to meet you."
     );
     if (voice) {
       const selected = window.speechSynthesis
@@ -119,7 +120,10 @@ const VoiceAndAccessibility: FC = () => {
         .find((v) => v.name === voice);
       if (selected) utterance.voice = selected;
     }
+    utterance.onend = () => setIsPlaying(false);
+    utterance.onerror = () => setIsPlaying(false);
     window.speechSynthesis.cancel();
+    setIsPlaying(true);
     window.speechSynthesis.speak(utterance);
   };
 
@@ -138,38 +142,49 @@ const VoiceAndAccessibility: FC = () => {
               label="Text-to-Speech"
               description="Choose the voice for text-to-speech playback."
               control={
-                <Flex gap={2}>
-                  <Menu
-                    value={voice}
-                    onChange={async (newVoice) => {
-                      setVoice(newVoice);
-                      if (!user) return;
-                      const { error } = await supabase
-                        .from("user_preferences")
-                        .upsert(
-                          { user_id: user.id, tts_voice: newVoice },
-                          { onConflict: "user_id" }
-                        );
-                      if (error)
-                        console.error("Failed to save tts voice:", error);
-                    }}
-                    items={voices.map((v) => ({
-                      value: v.name,
-                      label: getVoiceLabel(v),
-                    }))}
-                    placeholder="Default"
-                    buttonProps={{
-                      variant: "outline",
-                    }}
-                  />
-                  <Tooltip label="Play sample">
+                <Flex w="full" gap={2}>
+                  <Tooltip label={isPlaying ? "Stop sample" : "Play sample"}>
                     <IconButton
-                      aria-label="Play sample"
-                      icon={<HiSpeakerWave />}
-                      variant="outline"
-                      onClick={handleTestVoice}
+                      aria-label={isPlaying ? "Stop sample" : "Play sample"}
+                      icon={isPlaying ? <HiStop /> : <HiSpeakerWave />}
+                      variant={isPlaying ? "ghost" : "outline"}
+                      colorScheme={isPlaying ? "red" : undefined}
+                      onClick={() => {
+                        if (isPlaying) {
+                          window.speechSynthesis.cancel();
+                          setIsPlaying(false);
+                        } else {
+                          handleTestVoice();
+                        }
+                      }}
                     />
                   </Tooltip>
+                  <Box flex={{ base: 1, md: 0 }} minW={0}>
+                    <Menu
+                      value={voice}
+                      onChange={async (newVoice) => {
+                        setVoice(newVoice);
+                        if (!user) return;
+                        const { error } = await supabase
+                          .from("user_preferences")
+                          .upsert(
+                            { user_id: user.id, tts_voice: newVoice },
+                            { onConflict: "user_id" }
+                          );
+                        if (error)
+                          console.error("Failed to save tts voice:", error);
+                      }}
+                      items={voices.map((v) => ({
+                        value: v.name,
+                        label: getVoiceLabel(v),
+                      }))}
+                      placeholder="Default"
+                      buttonProps={{
+                        variant: "outline",
+                        w: { base: "full", md: "auto" },
+                      }}
+                    />
+                  </Box>
                 </Flex>
               }
             />
