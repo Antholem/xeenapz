@@ -112,7 +112,7 @@ const VoiceAndAccessibility: FC = () => {
   const handleTestVoice = () => {
     if (!("speechSynthesis" in window)) return;
     const utterance = new SpeechSynthesisUtterance(
-      "Hello! This is how I will sound. Nice to meet you."
+      "Hello! Nice to meet you. This is how I will sound."
     );
     if (voice) {
       const selected = window.speechSynthesis
@@ -147,7 +147,7 @@ const VoiceAndAccessibility: FC = () => {
                     <IconButton
                       aria-label={isPlaying ? "Stop sample" : "Play sample"}
                       icon={isPlaying ? <HiStop /> : <HiSpeakerWave />}
-                      variant={isPlaying ? "ghost" : "outline"}
+                      variant="ghost"
                       colorScheme={isPlaying ? "red" : undefined}
                       onClick={() => {
                         if (isPlaying) {
