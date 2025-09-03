@@ -17,9 +17,17 @@ import {
   AlertDialogBody,
   AlertDialogFooter,
   HStack,
+  useColorMode,
 } from "@chakra-ui/react";
 import { Button, AlertDialogContent } from "@themed-components";
-import { useAccentColor, useToastStore } from "@/stores";
+import {
+  useAccentColor,
+  useToastStore,
+  useAuth,
+  useChatSettings,
+  useTTSVoice,
+} from "@/stores";
+import { supabase } from "@/lib";
 
 const SettingRow = ({
   label,
@@ -61,6 +69,10 @@ const SettingRow = ({
 const Advanced: FC = () => {
   const { setAccentColor } = useAccentColor();
   const { showToast } = useToastStore();
+  const { user } = useAuth();
+  const { setSmartSuggestions } = useChatSettings();
+  const { setVoice } = useTTSVoice();
+  const { setColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = useRef<HTMLButtonElement>(null);
   const [isResetting, setIsResetting] = useState(false);
@@ -68,9 +80,32 @@ const Advanced: FC = () => {
   const handleReset = async () => {
     setIsResetting(true);
     try {
-      localStorage.removeItem("accent-color");
-      localStorage.removeItem("color-mode-preference");
-      setAccentColor("blue");
+      setColorMode("system");
+      localStorage.setItem("color-mode-preference", "system");
+
+      setAccentColor("cyan");
+
+      setSmartSuggestions(true);
+
+      setVoice(null);
+      localStorage.removeItem("tts-voice");
+
+      if (user) {
+        const { error } = await supabase
+          .from("user_preferences")
+          .upsert(
+            {
+              user_id: user.id,
+              color_mode: "system",
+              accent_color: "cyan",
+              smart_suggestions: true,
+              tts_voice: null,
+            },
+            { onConflict: "user_id" }
+          );
+        if (error) throw error;
+      }
+
       showToast({
         id: "reset-settings",
         title: "Settings reset",
