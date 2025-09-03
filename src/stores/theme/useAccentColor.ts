@@ -12,7 +12,7 @@ interface AccentColorState {
 const useAccentColor = create<AccentColorState>()(
   persist(
     (set) => ({
-      accentColor: "blue",
+      accentColor: "cyan",
       setAccentColor: (scheme) => set({ accentColor: scheme }),
     }),
     {
