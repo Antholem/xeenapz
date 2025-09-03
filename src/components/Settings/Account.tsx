@@ -72,12 +72,12 @@ const Account: FC = () => {
 
   const handleDeleteAccount = async () => {
     if (!user) return;
+
+    setIsDeleting(true);
+    router.push("/");
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
     try {
-      setIsDeleting(true);
-
-      router.push("/");
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
       await supabase.from("messages").delete().eq("user_id", user.id);
 
       const { data: threads, error: threadsError } = await supabase
@@ -110,15 +110,18 @@ const Account: FC = () => {
       }
 
       await supabase.from("threads").delete().eq("user_id", user.id);
-      await supabase.from("user_preferences").delete().eq("user_id", user.id);
+      await supabase
+        .from("user_preferences")
+        .delete()
+        .eq("user_id", user.id);
       await supabase.from("users").delete().eq("id", user.id);
-      const { error: deleteError } = await supabase.auth.admin.deleteUser(
-        user.id
-      );
-      if (deleteError) throw deleteError;
 
-      await supabase.auth.signOut();
-      localStorage.clear();
+      const { error: deleteError } = await supabase.auth.admin.deleteUser(
+        user.id,
+      );
+      if (deleteError) {
+        console.error("Failed to delete auth user:", deleteError);
+      }
 
       onClose();
       showToast({
@@ -135,6 +138,11 @@ const Account: FC = () => {
         status: "error",
       });
     } finally {
+      const { error: signOutError } = await supabase.auth.signOut();
+      if (signOutError) {
+        console.error("Failed to sign out:", signOutError);
+      }
+      localStorage.clear();
       setIsDeleting(false);
     }
   };
