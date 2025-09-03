@@ -18,12 +18,17 @@ import {
   Menu,
   MenuButton,
   Icon,
+  Spinner,
 } from "@chakra-ui/react";
 import { IoStop, IoAddCircleSharp } from "react-icons/io5";
 import { IoIosMic, IoMdSend, IoMdClose, IoMdImage } from "react-icons/io";
 import { SpeechRecognize } from "@/lib";
 import { Input, ImageModal, MenuList, MenuItem, InputGroup } from "@themed-components";
-import { useAccentColor } from "@/stores";
+import { useAccentColor, useToastStore } from "@/stores";
+
+const MAX_IMAGE_SIZE_MB =
+  Number(process.env.NEXT_PUBLIC_MAX_IMAGE_SIZE_MB) || 1;
+const MAX_IMAGE_SIZE = MAX_IMAGE_SIZE_MB * 1024 * 1024; // bytes
 
 export interface MessageInputHandle {
   handleFile: (file: File) => void;
@@ -69,10 +74,26 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
     };
 
     const { accentColor } = useAccentColor();
+    const { showToast } = useToastStore();
 
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+    const [isImageLoading, setIsImageLoading] = useState(false);
 
     const handleFile = (file: File) => {
+      if (file.size > MAX_IMAGE_SIZE) {
+        showToast({
+          id: `image-size-${Date.now()}`,
+          title: "Image too large",
+          description: `Maximum size is ${MAX_IMAGE_SIZE_MB}MB`,
+          status: "error",
+        });
+        if (preview) URL.revokeObjectURL(preview);
+        setPreview(null);
+        setFile(null);
+        discardImage();
+        setIsPreviewOpen(false);
+        return;
+      }
       if (preview) {
         URL.revokeObjectURL(preview);
       }
@@ -82,6 +103,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
         fileInputRef.current.files = dt.files;
       }
       const url = URL.createObjectURL(file);
+      setIsImageLoading(true);
       setPreview(url);
       setFile(file);
     };
@@ -98,6 +120,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
       setFile(null);
       discardImage();
       setIsPreviewOpen(false);
+      setIsImageLoading(false);
     };
 
     useEffect(() => {
@@ -119,6 +142,7 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
         setPreview(null);
         setFile(null);
         setIsPreviewOpen(false);
+        setIsImageLoading(false);
       }
       await sendPromise;
     };
@@ -138,7 +162,22 @@ const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(
                   boxSize="100px"
                   objectFit="cover"
                   onClick={() => setIsPreviewOpen(true)}
+                  onLoad={() => setIsImageLoading(false)}
+                  filter={isImageLoading ? "blur(8px)" : "none"}
                 />
+                {isImageLoading && (
+                  <Flex
+                    position="absolute"
+                    top={0}
+                    left={0}
+                    w="100%"
+                    h="100%"
+                    align="center"
+                    justify="center"
+                  >
+                    <Spinner />
+                  </Flex>
+                )}
                 <IconButton
                   aria-label="Discard image"
                   size="xs"
