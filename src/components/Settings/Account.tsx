@@ -62,7 +62,7 @@ const SettingRow = ({
 };
 
 const Account: FC = () => {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const { showToast } = useToastStore();
   const router = useRouter();
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -143,6 +143,7 @@ const Account: FC = () => {
         console.error("Failed to sign out:", signOutError);
       }
       localStorage.clear();
+      setUser(null);
       setIsDeleting(false);
     }
   };
