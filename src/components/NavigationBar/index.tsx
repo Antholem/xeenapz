@@ -43,9 +43,32 @@ const NavigationBar: FC = () => {
       .replace(/\b(\w)/g, (match) => match.toUpperCase());
 
   useEffect(() => {
-    if (!user) {
-      setModel(GEMINI_MODEL);
-    }
+    (async () => {
+      if (user) {
+        const { data, error } = await supabase
+          .from("user_preferences")
+          .select("model")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Failed to load model:", error);
+          setModel(GEMINI_MODEL);
+        } else if (data?.model) {
+          setModel(data.model);
+        } else {
+          await supabase
+            .from("user_preferences")
+            .upsert(
+              { user_id: user.id, model: GEMINI_MODEL },
+              { onConflict: "user_id" }
+            );
+          setModel(GEMINI_MODEL);
+        }
+      } else {
+        setModel(GEMINI_MODEL);
+      }
+    })();
   }, [user, setModel]);
 
   useEffect(() => {
@@ -157,8 +180,21 @@ const NavigationBar: FC = () => {
                     label: formatModel(m),
                   }))}
                   value={model}
-                  onChange={(value) => {
-                    if (value) setModel(value);
+                  onChange={async (value) => {
+                    if (value) {
+                      setModel(value);
+                      if (user) {
+                        const { error } = await supabase
+                          .from("user_preferences")
+                          .upsert(
+                            { user_id: user.id, model: value },
+                            { onConflict: "user_id" }
+                          );
+                        if (error) {
+                          console.error("Failed to save model:", error);
+                        }
+                      }
+                    }
                   }}
                   placeholder="Select Model"
                   includeNullOption={false}
