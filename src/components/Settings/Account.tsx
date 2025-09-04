@@ -19,7 +19,14 @@ import {
   HStack,
 } from "@chakra-ui/react";
 import { Button, AlertDialogContent, Input } from "@themed-components";
-import { useAuth, useToastStore } from "@/stores";
+import {
+  useAccentColor,
+  useAuth,
+  useToastStore,
+  useTempThread,
+  useThreadInput,
+  useThreadMessages,
+} from "@/stores";
 import { supabase } from "@/lib";
 import { useRouter } from "next/navigation";
 import { HiOutlineTrash } from "react-icons/hi";
@@ -64,6 +71,10 @@ const SettingRow = ({
 const Account: FC = () => {
   const { user, setUser } = useAuth();
   const { showToast } = useToastStore();
+  const { setAccentColor } = useAccentColor();
+  const { setIsMessageTemporary } = useTempThread();
+  const { clearInputs } = useThreadInput();
+  const { clearMessages } = useThreadMessages();
   const router = useRouter();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = useRef<HTMLButtonElement>(null);
@@ -116,13 +127,6 @@ const Account: FC = () => {
         .eq("user_id", user.id);
       await supabase.from("users").delete().eq("id", user.id);
 
-      const { error: deleteError } = await supabase.auth.admin.deleteUser(
-        user.id,
-      );
-      if (deleteError) {
-        console.error("Failed to delete auth user:", deleteError);
-      }
-
       onClose();
       showToast({
         id: "delete-account",
@@ -142,7 +146,11 @@ const Account: FC = () => {
       if (signOutError) {
         console.error("Failed to sign out:", signOutError);
       }
+      setIsMessageTemporary(false);
+      clearInputs();
+      clearMessages();
       localStorage.clear();
+      setAccentColor("cyan");
       setUser(null);
       setIsDeleting(false);
     }
