@@ -34,6 +34,7 @@ import {
   Tooltip,
   useBreakpointValue,
   useDisclosure,
+  useColorMode,
 } from "@chakra-ui/react";
 import { FiLogOut, FiUserCheck } from "react-icons/fi";
 import { IoAdd, IoSearch, IoSettingsSharp } from "react-icons/io5";
@@ -154,6 +155,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
 
   const { showToast } = useToastStore();
   const { accentColor, reset: resetAccentColor } = useAccentColor();
+  const { setColorMode } = useColorMode();
   const { reset: resetTempThread } = useTempThread();
   const { clearInputs } = useThreadInput();
   const { clearMessages } = useThreadMessages();
@@ -345,6 +347,9 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
 
       localStorage.clear();
       sessionStorage.clear();
+
+      setColorMode("system");
+      localStorage.setItem("color-mode-preference", "system");
 
       resetAccentColor();
       resetChatSettings();
