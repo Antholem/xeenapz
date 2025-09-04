@@ -47,6 +47,9 @@ import {
   useTempThread,
   useThreadInput,
   useThreadMessages,
+  useChatSettings,
+  useModel,
+  useTTSVoice,
 } from "@/stores";
 import { ThreadList, Settings } from "@/components";
 
@@ -150,10 +153,13 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
   const [isResizing, setIsResizing] = useState(false);
 
   const { showToast } = useToastStore();
-  const { accentColor } = useAccentColor();
-  const { setIsMessageTemporary } = useTempThread();
+  const { accentColor, reset: resetAccentColor } = useAccentColor();
+  const { reset: resetTempThread } = useTempThread();
   const { clearInputs } = useThreadInput();
   const { clearMessages } = useThreadMessages();
+  const { reset: resetChatSettings } = useChatSettings();
+  const { reset: resetModel } = useModel();
+  const { reset: resetTTSVoice } = useTTSVoice();
 
   const {
     isOpen: isSettingsOpen,
@@ -336,9 +342,18 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      setIsMessageTemporary(false);
+
+      localStorage.clear();
+      sessionStorage.clear();
+
+      resetAccentColor();
+      resetChatSettings();
+      resetModel();
+      resetTTSVoice();
+      resetTempThread();
       clearInputs();
       clearMessages();
+
       router.push("/");
       setAuthLoading(true);
       showToast({
