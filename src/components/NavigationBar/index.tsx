@@ -13,16 +13,20 @@ import {
   IconButton,
   Text,
   useDisclosure,
+  useColorMode,
 } from "@chakra-ui/react";
 
 import { supabase, GEMINI_MODELS, GEMINI_MODEL } from "@/lib";
-import { useAuth, useModel, useToastStore } from "@/stores";
+import { useAuth, useModel, useToastStore, useAccentColor } from "@/stores";
+import type { AccentColors } from "@/theme/types";
 import { Button, Menu } from "@/components/ui";
 import { SideBar } from "@/components";
 
 interface Thread {
   title?: string;
 }
+
+const MODE_STORAGE_KEY = "color-mode-preference";
 
 const NavigationBar: FC = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -31,6 +35,8 @@ const NavigationBar: FC = () => {
   const router = useRouter();
   const { showToast } = useToastStore();
   const { model, setModel } = useModel();
+  const { setColorMode } = useColorMode();
+  const { setAccentColor } = useAccentColor();
 
   const [currentThreadTitle, setCurrentThreadTitle] = useState<string | null>(
     null
@@ -47,29 +53,72 @@ const NavigationBar: FC = () => {
       if (user) {
         const { data, error } = await supabase
           .from("user_preferences")
-          .select("model")
+          .select("model, color_mode, accent_color")
           .eq("user_id", user.id)
           .maybeSingle();
 
         if (error) {
-          console.error("Failed to load model:", error);
+          console.error("Failed to load preferences:", error);
           setModel(GEMINI_MODEL);
-        } else if (data?.model) {
+          setColorMode("system");
+          setAccentColor("cyan" as AccentColors);
+          if (typeof window !== "undefined") {
+            localStorage.setItem(MODE_STORAGE_KEY, "system");
+          }
+          return;
+        }
+
+        const defaults: { user_id: string; model?: string; color_mode?: string; accent_color?: AccentColors } = {
+          user_id: user.id,
+        };
+        let needsUpsert = false;
+
+        if (data?.model) {
           setModel(data.model);
         } else {
+          setModel(GEMINI_MODEL);
+          defaults.model = GEMINI_MODEL;
+          needsUpsert = true;
+        }
+
+        if (data?.color_mode) {
+          const saved = data.color_mode as "light" | "dark" | "system";
+          setColorMode(saved);
+          if (typeof window !== "undefined") {
+            localStorage.setItem(MODE_STORAGE_KEY, saved);
+          }
+        } else {
+          setColorMode("system");
+          if (typeof window !== "undefined") {
+            localStorage.setItem(MODE_STORAGE_KEY, "system");
+          }
+          defaults.color_mode = "system";
+          needsUpsert = true;
+        }
+
+        if (data?.accent_color) {
+          setAccentColor(data.accent_color as AccentColors);
+        } else {
+          setAccentColor("cyan" as AccentColors);
+          defaults.accent_color = "cyan" as AccentColors;
+          needsUpsert = true;
+        }
+
+        if (needsUpsert) {
           await supabase
             .from("user_preferences")
-            .upsert(
-              { user_id: user.id, model: GEMINI_MODEL },
-              { onConflict: "user_id" }
-            );
-          setModel(GEMINI_MODEL);
+            .upsert(defaults, { onConflict: "user_id" });
         }
       } else {
         setModel(GEMINI_MODEL);
+        setColorMode("system");
+        setAccentColor("cyan" as AccentColors);
+        if (typeof window !== "undefined") {
+          localStorage.setItem(MODE_STORAGE_KEY, "system");
+        }
       }
     })();
-  }, [user, setModel]);
+  }, [user, setModel, setColorMode, setAccentColor]);
 
   useEffect(() => {
     const fetchThreadTitle = async () => {
