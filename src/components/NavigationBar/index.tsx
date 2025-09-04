@@ -15,7 +15,7 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 
-import { supabase, GEMINI_MODELS } from "@/lib";
+import { supabase, GEMINI_MODELS, GEMINI_MODEL } from "@/lib";
 import { useAuth, useModel, useToastStore } from "@/stores";
 import { Button, Menu } from "@/components/ui";
 import { SideBar } from "@/components";
@@ -44,7 +44,7 @@ const NavigationBar: FC = () => {
 
   useEffect(() => {
     if (!user) {
-      setModel("gemini-1.5-flash");
+      setModel(GEMINI_MODEL);
     }
   }, [user, setModel]);
 
@@ -150,7 +150,7 @@ const NavigationBar: FC = () => {
                   ? "Temporary Chat"
                   : currentThreadTitle || "Xeenapz"}
               </Text>
-              {user && (
+              {user ? (
                 <Menu
                   items={GEMINI_MODELS.map((m) => ({
                     value: m,
@@ -170,6 +170,15 @@ const NavigationBar: FC = () => {
                     w: "auto",
                   }}
                 />
+              ) : (
+                <Text
+                  color="secondaryText"
+                  fontSize="xs"
+                  pl={1}
+                  fontWeight="semibold"
+                >
+                  {formatModel(GEMINI_MODEL)}
+                </Text>
               )}
             </Flex>
           </Flex>
