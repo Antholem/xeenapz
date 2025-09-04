@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useEffect } from "react";
+import { FC } from "react";
 import {
   Box,
   Card,
@@ -53,41 +53,8 @@ const SettingRow = ({
 };
 
 const General: FC = () => {
-  const { smartSuggestions, setSmartSuggestions, toggleSmartSuggestions } =
-    useChatSettings();
+  const { smartSuggestions, toggleSmartSuggestions } = useChatSettings();
   const { user } = useAuth();
-
-  useEffect(() => {
-    if (!user) return;
-    (async () => {
-      const { data, error } = await supabase
-        .from("user_preferences")
-        .select("smart_suggestions")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Failed to load smart suggestions:", error);
-        return;
-      }
-
-      if (
-        data?.smart_suggestions !== undefined &&
-        data.smart_suggestions !== null
-      ) {
-        setSmartSuggestions(data.smart_suggestions);
-      } else {
-        const { error: upsertError } = await supabase
-          .from("user_preferences")
-          .upsert(
-            { user_id: user.id, smart_suggestions: smartSuggestions },
-            { onConflict: "user_id" }
-          );
-        if (upsertError)
-          console.error("Failed to save smart suggestions:", upsertError);
-      }
-    })();
-  }, [user]);
 
   const handleToggle = async () => {
     const newValue = !smartSuggestions;

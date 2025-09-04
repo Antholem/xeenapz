@@ -17,7 +17,13 @@ import {
 } from "@chakra-ui/react";
 
 import { supabase, GEMINI_MODELS, GEMINI_MODEL } from "@/lib";
-import { useAuth, useModel, useToastStore, useAccentColor } from "@/stores";
+import {
+  useAuth,
+  useModel,
+  useToastStore,
+  useAccentColor,
+  useChatSettings,
+} from "@/stores";
 import type { AccentColors } from "@/theme/types";
 import { Button, Menu } from "@/components/ui";
 import { SideBar } from "@/components";
@@ -37,6 +43,7 @@ const NavigationBar: FC = () => {
   const { model, setModel } = useModel();
   const { setColorMode } = useColorMode();
   const { setAccentColor } = useAccentColor();
+  const { setSmartSuggestions } = useChatSettings();
 
   const [currentThreadTitle, setCurrentThreadTitle] = useState<string | null>(
     null
@@ -53,7 +60,7 @@ const NavigationBar: FC = () => {
       if (user) {
         const { data, error } = await supabase
           .from("user_preferences")
-          .select("model, color_mode, accent_color")
+          .select("model, color_mode, accent_color, smart_suggestions")
           .eq("user_id", user.id)
           .maybeSingle();
 
@@ -68,7 +75,13 @@ const NavigationBar: FC = () => {
           return;
         }
 
-        const defaults: { user_id: string; model?: string; color_mode?: string; accent_color?: AccentColors } = {
+        const defaults: {
+          user_id: string;
+          model?: string;
+          color_mode?: string;
+          accent_color?: AccentColors;
+          smart_suggestions?: boolean;
+        } = {
           user_id: user.id,
         };
         let needsUpsert = false;
@@ -104,6 +117,17 @@ const NavigationBar: FC = () => {
           needsUpsert = true;
         }
 
+        if (
+          data?.smart_suggestions !== undefined &&
+          data.smart_suggestions !== null
+        ) {
+          setSmartSuggestions(data.smart_suggestions);
+        } else {
+          setSmartSuggestions(true);
+          defaults.smart_suggestions = true;
+          needsUpsert = true;
+        }
+
         if (needsUpsert) {
           await supabase
             .from("user_preferences")
@@ -113,12 +137,13 @@ const NavigationBar: FC = () => {
         setModel(GEMINI_MODEL);
         setColorMode("system");
         setAccentColor("cyan" as AccentColors);
+        setSmartSuggestions(true);
         if (typeof window !== "undefined") {
           localStorage.setItem(MODE_STORAGE_KEY, "system");
         }
       }
     })();
-  }, [user, setModel, setColorMode, setAccentColor]);
+  }, [user, setModel, setColorMode, setAccentColor, setSmartSuggestions]);
 
   useEffect(() => {
     const fetchThreadTitle = async () => {
