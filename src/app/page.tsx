@@ -365,7 +365,6 @@ const Home: FC = () => {
 
     if (user && isNewThread && id) {
       setThreadId(id);
-      await supabase.from("users").upsert({ id: user.id, user_id: user.id });
       await supabase.from("threads").insert({
         id,
         user_id: user.id,

@@ -11,6 +11,19 @@ interface AuthState {
   initializeAuth: () => () => void;
 }
 
+const ensureUserRecords = async (userId: string) => {
+  const { error: userError } = await supabase
+    .from("users")
+    .upsert({ id: userId, user_id: userId }, { onConflict: "id" });
+  if (userError) console.error("Error ensuring user record:", userError);
+
+  const { error: prefError } = await supabase
+    .from("user_preferences")
+    .upsert({ user_id: userId }, { onConflict: "user_id" });
+  if (prefError)
+    console.error("Error ensuring user preferences record:", prefError);
+};
+
 const useAuth = create<AuthState>((set) => ({
   user: null,
   loading: true,
@@ -18,26 +31,46 @@ const useAuth = create<AuthState>((set) => ({
   setLoading: (loading) => set({ loading }),
   initializeAuth: () => {
     const fetchUser = async () => {
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.getSession();
+      try {
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
 
-      if (error) {
-        console.error("Error getting session:", error);
-        set({ user: null, loading: false });
-        return;
+        if (error) throw error;
+
+        if (session?.user) {
+          await ensureUserRecords(session.user.id);
+          set({ user: session.user });
+        } else {
+          set({ user: null });
+        }
+      } catch (err) {
+        console.error("Error getting session:", err);
+        set({ user: null });
+      } finally {
+        set({ loading: false });
       }
-
-      set({ user: session?.user ?? null, loading: false });
     };
 
     fetchUser();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      set({ user: session?.user ?? null, loading: false });
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      try {
+        if (session?.user) {
+          await ensureUserRecords(session.user.id);
+          set({ user: session.user });
+        } else {
+          set({ user: null });
+        }
+      } catch (err) {
+        console.error("Error handling auth state change:", err);
+        set({ user: null });
+      } finally {
+        set({ loading: false });
+      }
     });
 
     return () => subscription.unsubscribe();

@@ -138,7 +138,8 @@ const MenuItems: FC<MenuItemsProps> = ({ user, switchAccount, signOut }) => (
 );
 
 const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
-  const { user, setLoading: setAuthLoading, loading: authLoading } = useAuth();
+  const { user, setLoading: setAuthLoading, loading: authLoading, setUser } =
+    useAuth();
   const router = useRouter();
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
 
@@ -150,7 +151,7 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
   const [isResizing, setIsResizing] = useState(false);
 
   const { showToast } = useToastStore();
-  const { accentColor } = useAccentColor();
+  const { accentColor, setAccentColor } = useAccentColor();
   const { setIsMessageTemporary } = useTempThread();
   const { clearInputs } = useThreadInput();
   const { clearMessages } = useThreadMessages();
@@ -333,20 +334,15 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
   };
 
   const handleSignOut = async () => {
+    setAuthLoading(true);
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      setIsMessageTemporary(false);
-      clearInputs();
-      clearMessages();
-      router.push("/");
-      setAuthLoading(true);
       showToast({
         id: `logout-${Date.now()}`,
         title: "Signed out successfully",
         status: "info",
       });
-      if (onClose) onClose();
     } catch (error) {
       showToast({
         id: `logout-error-${Date.now()}`,
@@ -358,9 +354,25 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
         status: "error",
       });
     } finally {
+      setIsMessageTemporary(false);
+      clearInputs();
+      clearMessages();
+      localStorage.clear();
+      setAccentColor("cyan");
+      setUser(null);
+      router.push("/");
+      if (onClose) onClose();
       setTimeout(() => setAuthLoading(false), 2000);
     }
   };
+
+  useEffect(() => {
+    if (!user) {
+      setThreads([]);
+      setLoading(true);
+      hasFetchedRef.current = false;
+    }
+  }, [user]);
 
   const content = (
     <Box display={!isLargeScreen ? "none" : "flex"} height="100dvh">
