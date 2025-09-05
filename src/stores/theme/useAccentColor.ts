@@ -7,6 +7,7 @@ import { AccentColors } from "@/theme/types";
 interface AccentColorState {
   accentColor: AccentColors;
   setAccentColor: (scheme: AccentColors) => void;
+  reset: () => void;
 }
 
 const useAccentColor = create<AccentColorState>()(
@@ -14,6 +15,7 @@ const useAccentColor = create<AccentColorState>()(
     (set) => ({
       accentColor: "cyan",
       setAccentColor: (scheme) => set({ accentColor: scheme }),
+      reset: () => set({ accentColor: "cyan" }),
     }),
     {
       name: "accent-color",

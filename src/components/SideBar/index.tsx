@@ -34,6 +34,7 @@ import {
   Tooltip,
   useBreakpointValue,
   useDisclosure,
+  useColorMode,
 } from "@chakra-ui/react";
 import { FiLogOut, FiUserCheck } from "react-icons/fi";
 import { IoAdd, IoSearch, IoSettingsSharp } from "react-icons/io5";
@@ -47,6 +48,9 @@ import {
   useTempThread,
   useThreadInput,
   useThreadMessages,
+  useChatSettings,
+  useModel,
+  useTTSVoice,
 } from "@/stores";
 import { ThreadList, Settings } from "@/components";
 
@@ -150,10 +154,14 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
   const [isResizing, setIsResizing] = useState(false);
 
   const { showToast } = useToastStore();
-  const { accentColor } = useAccentColor();
-  const { setIsMessageTemporary } = useTempThread();
+  const { accentColor, reset: resetAccentColor } = useAccentColor();
+  const { setColorMode } = useColorMode();
+  const { reset: resetTempThread } = useTempThread();
   const { clearInputs } = useThreadInput();
   const { clearMessages } = useThreadMessages();
+  const { reset: resetChatSettings } = useChatSettings();
+  const { reset: resetModel } = useModel();
+  const { reset: resetTTSVoice } = useTTSVoice();
 
   const {
     isOpen: isSettingsOpen,
@@ -336,9 +344,21 @@ const SideBar: FC<SideBarProps> = ({ type, isOpen, placement, onClose }) => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      setIsMessageTemporary(false);
+
+      localStorage.clear();
+      sessionStorage.clear();
+
+      setColorMode("system");
+      localStorage.setItem("color-mode-preference", "system");
+
+      resetAccentColor();
+      resetChatSettings();
+      resetModel();
+      resetTTSVoice();
+      resetTempThread();
       clearInputs();
       clearMessages();
+
       router.push("/");
       setAuthLoading(true);
       showToast({

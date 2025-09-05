@@ -6,6 +6,7 @@ interface ChatSettingsState {
   smartSuggestions: boolean;
   setSmartSuggestions: (value: boolean) => void;
   toggleSmartSuggestions: () => void;
+  reset: () => void;
 }
 
 const useChatSettings = create<ChatSettingsState>((set) => ({
@@ -13,6 +14,7 @@ const useChatSettings = create<ChatSettingsState>((set) => ({
   setSmartSuggestions: (value) => set({ smartSuggestions: value }),
   toggleSmartSuggestions: () =>
     set((state) => ({ smartSuggestions: !state.smartSuggestions })),
+  reset: () => set({ smartSuggestions: true }),
 }));
 
 export default useChatSettings;
