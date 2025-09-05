@@ -30,11 +30,11 @@ const useAuth = create<AuthState>((set) => ({
         }
 
         if (!userRow) {
-          const { error: insertUserError } = await supabase
+          const { error: upsertUserError } = await supabase
             .from("users")
-            .insert({ id: user.id, user_id: user.id });
-          if (insertUserError)
-            console.error("Error creating user record:", insertUserError);
+            .upsert({ id: user.id, user_id: user.id }, { onConflict: "id" });
+          if (upsertUserError)
+            console.error("Error creating user record:", upsertUserError);
         }
 
         const { data: prefRow, error: prefError } = await supabase
@@ -48,11 +48,11 @@ const useAuth = create<AuthState>((set) => ({
         }
 
         if (!prefRow) {
-          const { error: insertPrefError } = await supabase
+          const { error: upsertPrefError } = await supabase
             .from("user_preferences")
-            .insert({ user_id: user.id });
-          if (insertPrefError)
-            console.error("Error creating user preferences:", insertPrefError);
+            .upsert({ user_id: user.id }, { onConflict: "user_id" });
+          if (upsertPrefError)
+            console.error("Error creating user preferences:", upsertPrefError);
         }
       } catch (err) {
         console.error("Failed to ensure user records:", err);
