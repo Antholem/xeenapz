@@ -222,7 +222,9 @@ const Home: FC = () => {
   };
 
   const retryBotMessage = async (botMessage: Message) => {
-    const index = messages.findIndex((m) => m.timestamp === botMessage.timestamp);
+    const index = messages.findIndex(
+      (m) => m.timestamp === botMessage.timestamp
+    );
     if (index === -1) return;
 
     const userMessage = (() => {
@@ -365,7 +367,6 @@ const Home: FC = () => {
 
     if (user && isNewThread && id) {
       setThreadId(id);
-      await supabase.from("users").upsert({ id: user.id, user_id: user.id });
       await supabase.from("threads").insert({
         id,
         user_id: user.id,
