@@ -17,6 +17,48 @@ const useAuth = create<AuthState>((set) => ({
   setUser: (user) => set({ user }),
   setLoading: (loading) => set({ loading }),
   initializeAuth: () => {
+    const ensureUserRecords = async (user: User) => {
+      try {
+        const { data: userRow, error: userError } = await supabase
+          .from("users")
+          .select("id")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (userError) {
+          console.error("Error checking user record:", userError);
+        }
+
+        if (!userRow) {
+          const { error: upsertUserError } = await supabase
+            .from("users")
+            .upsert({ id: user.id, user_id: user.id }, { onConflict: "id" });
+          if (upsertUserError)
+            console.error("Error creating user record:", upsertUserError);
+        }
+
+        const { data: prefRow, error: prefError } = await supabase
+          .from("user_preferences")
+          .select("user_id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (prefError) {
+          console.error("Error checking user preferences:", prefError);
+        }
+
+        if (!prefRow) {
+          const { error: upsertPrefError } = await supabase
+            .from("user_preferences")
+            .upsert({ user_id: user.id }, { onConflict: "user_id" });
+          if (upsertPrefError)
+            console.error("Error creating user preferences:", upsertPrefError);
+        }
+      } catch (err) {
+        console.error("Failed to ensure user records:", err);
+      }
+    };
+
     const fetchUser = async () => {
       const {
         data: { session },
@@ -29,7 +71,9 @@ const useAuth = create<AuthState>((set) => ({
         return;
       }
 
-      set({ user: session?.user ?? null, loading: false });
+      const loggedInUser = session?.user ?? null;
+      set({ user: loggedInUser, loading: false });
+      if (loggedInUser) await ensureUserRecords(loggedInUser);
     };
 
     fetchUser();
@@ -37,7 +81,9 @@ const useAuth = create<AuthState>((set) => ({
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      set({ user: session?.user ?? null, loading: false });
+      const authUser = session?.user ?? null;
+      set({ user: authUser, loading: false });
+      if (authUser) ensureUserRecords(authUser);
     });
 
     return () => subscription.unsubscribe();
