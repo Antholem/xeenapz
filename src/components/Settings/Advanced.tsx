@@ -81,7 +81,10 @@ const Advanced: FC = () => {
   const handleReset = async () => {
     setIsResetting(true);
     try {
-      setColorMode("system");
+      const prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches;
+      setColorMode(prefersDark ? "dark" : "light");
       localStorage.setItem("color-mode-preference", "system");
 
       setAccentColor("cyan");
@@ -180,9 +183,7 @@ const Advanced: FC = () => {
                   Cancel
                 </Button>
                 <Button
-                  variant="ghost"
                   colorScheme="red"
-                  leftIcon={<HiOutlineRefresh />}
                   onClick={handleReset}
                   isLoading={isResetting}
                 >
