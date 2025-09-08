@@ -203,7 +203,7 @@ const Appearance: FC = () => {
     if (error) console.error("Failed to save color mode:", error);
   };
 
-  const saveAccent = async (value: AccentColors) => {
+const saveAccent = async (value: AccentColors) => {
     setAccentColor(value);
     if (!user) return;
     const { error } = await supabase
@@ -214,6 +214,16 @@ const Appearance: FC = () => {
       );
     if (error) console.error("Failed to save accent color:", error);
   };
+
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === MODE_STORAGE_KEY && e.newValue) {
+        setMode(e.newValue as "light" | "dark" | "system");
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
 
   return (
     <Flex direction="column" gap={4}>

@@ -85,6 +85,12 @@ const Advanced: FC = () => {
       setColorMode(systemPrefersDark ? "dark" : "light");
       localStorage.removeItem("chakra-ui-color-mode");
       localStorage.setItem("color-mode-preference", "system");
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "color-mode-preference",
+          newValue: "system",
+        })
+      );
 
       setAccentColor("cyan");
 
