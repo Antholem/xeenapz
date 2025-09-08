@@ -213,12 +213,12 @@ const Account: FC = () => {
             <AlertDialogBody>
               <Flex direction="column" gap={4}>
                 <Text>
-                  Please enter your email to confirm account deletion. This action
-                  cannot be undone.
+                  This action cannot be undone. Please type your email ({user?.email})
+                  to confirm.
                 </Text>
                 <Input
                   type="email"
-                  placeholder="Email"
+                  placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -237,7 +237,6 @@ const Account: FC = () => {
                 <Button
                   variant="ghost"
                   colorScheme="red"
-                  leftIcon={<HiOutlineTrash />}
                   onClick={handleDeleteAccount}
                   isLoading={isDeleting}
                   isDisabled={email !== user?.email}
