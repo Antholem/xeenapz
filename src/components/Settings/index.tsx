@@ -30,6 +30,7 @@ import Appearance from "./Appearance";
 import General from "./General";
 import VoiceAndAccessibility from "./VoiceAndAccessibility";
 import DataAndPrivacy from "./DataAndPrivacy";
+import Account from "./Account";
 import Advanced from "./Advanced";
 
 interface SettingsProps {
@@ -206,7 +207,9 @@ const Settings: FC<SettingsProps> = ({ isOpen, onClose }) => {
               <TabPanel>
                 <DataAndPrivacy />
               </TabPanel>
-              <TabPanel>Account settings go here.</TabPanel>
+              <TabPanel>
+                <Account />
+              </TabPanel>
               <TabPanel>
                 <Advanced />
               </TabPanel>
