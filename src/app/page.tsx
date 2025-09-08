@@ -93,6 +93,13 @@ const Home: FC = () => {
   }, [pathname, user, isMessageTemporary]);
 
   useEffect(() => {
+    if (!user) {
+      setMessages([]);
+      setThreadId(null);
+    }
+  }, [user]);
+
+  useEffect(() => {
     if (transcript && transcript !== prevTranscriptRef.current) {
       const newText = transcript.replace(prevTranscriptRef.current, "").trim();
       setInput("home", (prev) =>
