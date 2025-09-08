@@ -149,7 +149,8 @@ const Account: FC = () => {
       clearMessages();
 
       router.push("/");
-      setAuthLoading(true);
+      // Ensure auth store reflects signed-out state to avoid persistent loading UI
+      setAuthLoading(false);
 
       showToast({
         id: "delete-account-success",
