@@ -28,7 +28,6 @@ import {
   useTTSVoice,
 } from "@/stores";
 import { supabase } from "@/lib";
-import { HiOutlineRefresh } from "react-icons/hi";
 
 const SettingRow = ({
   label,
@@ -81,8 +80,9 @@ const Advanced: FC = () => {
   const handleReset = async () => {
     setIsResetting(true);
     try {
-      const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      setColorMode(systemPrefersDark ? "dark" : "light");
+      // reset color mode to system preference
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      setColorMode(prefersDark ? "dark" : "light");
       localStorage.removeItem("chakra-ui-color-mode");
       localStorage.setItem("color-mode-preference", "system");
       window.dispatchEvent(
@@ -92,13 +92,13 @@ const Advanced: FC = () => {
         })
       );
 
+      // reset other local preferences
       setAccentColor("cyan");
-
       setSmartSuggestions(true);
-
       setVoice(null);
       localStorage.removeItem("tts-voice");
 
+      // persist defaults to database
       if (user) {
         const { error } = await supabase
           .from("user_preferences")
@@ -149,11 +149,7 @@ const Advanced: FC = () => {
               label="Reset Settings"
               description="Restore all preferences to their default values."
               control={
-                <Button
-                  colorScheme="red"
-                  leftIcon={<HiOutlineRefresh />}
-                  onClick={onOpen}
-                >
+                <Button colorScheme="red" onClick={onOpen}>
                   Reset
                 </Button>
               }
