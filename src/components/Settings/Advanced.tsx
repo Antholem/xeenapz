@@ -81,7 +81,9 @@ const Advanced: FC = () => {
   const handleReset = async () => {
     setIsResetting(true);
     try {
-      setColorMode("system");
+      const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      setColorMode(systemPrefersDark ? "dark" : "light");
+      localStorage.removeItem("chakra-ui-color-mode");
       localStorage.setItem("color-mode-preference", "system");
 
       setAccentColor("cyan");
@@ -180,9 +182,7 @@ const Advanced: FC = () => {
                   Cancel
                 </Button>
                 <Button
-                  variant="ghost"
                   colorScheme="red"
-                  leftIcon={<HiOutlineRefresh />}
                   onClick={handleReset}
                   isLoading={isResetting}
                 >
