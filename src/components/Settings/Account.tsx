@@ -33,7 +33,6 @@ import {
 } from "@/stores";
 import { supabase } from "@/lib";
 import { useRouter } from "next/navigation";
-import { HiOutlineTrash } from "react-icons/hi";
 
 const SettingRow = ({
   label,
@@ -186,11 +185,7 @@ const Account: FC = () => {
               label="Delete Account"
               description="Permanently delete your account and all data."
               control={
-                <Button
-                  colorScheme="red"
-                  leftIcon={<HiOutlineTrash />}
-                  onClick={onOpen}
-                >
+                <Button colorScheme="red" variant="outline" onClick={onOpen}>
                   Delete
                 </Button>
               }
@@ -213,8 +208,8 @@ const Account: FC = () => {
             <AlertDialogBody>
               <Flex direction="column" gap={4}>
                 <Text>
-                  This action cannot be undone. Please type your email ({user?.email})
-                  to confirm.
+                  This action cannot be undone. Please type your email (
+                  {user?.email}) to confirm.
                 </Text>
                 <Input
                   type="email"
@@ -235,7 +230,7 @@ const Account: FC = () => {
                   Cancel
                 </Button>
                 <Button
-                  variant="ghost"
+                  // variant="outline"
                   colorScheme="red"
                   onClick={handleDeleteAccount}
                   isLoading={isDeleting}
@@ -253,4 +248,3 @@ const Account: FC = () => {
 };
 
 export default Account;
-

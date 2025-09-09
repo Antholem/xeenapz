@@ -22,7 +22,6 @@ import { Button, AlertDialogContent } from "@themed-components";
 import { useAuth, useToastStore } from "@/stores";
 import { supabase } from "@/lib";
 import { useRouter, usePathname } from "next/navigation";
-import { HiOutlineArchive, HiOutlineTrash } from "react-icons/hi";
 
 const SettingRow = ({
   label,
@@ -194,7 +193,7 @@ const DataAndPrivacy: FC = () => {
               label="Archive All Threads"
               description="Move all your threads to the archive."
               control={
-                <Button leftIcon={<HiOutlineArchive />} onClick={onArchiveOpen}>
+                <Button variant="outline" onClick={onArchiveOpen}>
                   Archive
                 </Button>
               }
@@ -206,7 +205,7 @@ const DataAndPrivacy: FC = () => {
               control={
                 <Button
                   colorScheme="red"
-                  leftIcon={<HiOutlineTrash />}
+                  variant="outline"
                   onClick={onDeleteOpen}
                 >
                   Delete
@@ -241,12 +240,7 @@ const DataAndPrivacy: FC = () => {
                 >
                   Cancel
                 </Button>
-                <Button
-                  variant="ghost"
-                  leftIcon={<HiOutlineArchive />}
-                  onClick={handleArchiveAll}
-                  isLoading={isArchiving}
-                >
+                <Button onClick={handleArchiveAll} isLoading={isArchiving}>
                   Archive
                 </Button>
               </HStack>
@@ -281,9 +275,7 @@ const DataAndPrivacy: FC = () => {
                   Cancel
                 </Button>
                 <Button
-                  variant="ghost"
                   colorScheme="red"
-                  leftIcon={<HiOutlineTrash />}
                   onClick={handleDeleteAll}
                   isLoading={isDeleting}
                 >
