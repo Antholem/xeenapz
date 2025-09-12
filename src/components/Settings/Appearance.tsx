@@ -9,32 +9,18 @@ import {
   Divider,
   Flex,
   Icon,
-  SimpleGrid,
   Text,
   Grid,
   useColorMode,
-  useColorModeValue,
-  useToken,
 } from "@chakra-ui/react";
 import { useAccentColor, useAuth } from "@/stores";
 import { ACCENT_COLORS, AccentColors } from "@/theme/types";
 import { supabase } from "@/lib";
 import { Menu } from "@/components/ui";
 import { RiSunLine, RiMoonLine, RiComputerLine } from "react-icons/ri";
-import { FaSquare } from "react-icons/fa6";
+import { FaSquare, FaCheckSquare } from "react-icons/fa";
 
 const MODE_STORAGE_KEY = "color-mode-preference";
-
-const SectionText = ({ title, desc }: { title: string; desc: string }) => (
-  <Box>
-    <Text fontSize="md" fontWeight="semibold">
-      {title}
-    </Text>
-    <Text mt={1} fontSize="xs" color="secondaryText">
-      {desc}
-    </Text>
-  </Box>
-);
 
 const SettingRow = ({
   label,
@@ -74,61 +60,6 @@ const SettingRow = ({
     </Flex>
   </Grid>
 );
-
-const AccentTile = ({
-  name,
-  colorKey,
-  isActive,
-  onClick,
-}: {
-  name: string;
-  colorKey: AccentColors | string;
-  isActive: boolean;
-  onClick: () => void;
-}) => {
-  const dotLight = `${colorKey}.600`;
-  const dotDark = `${colorKey}.200`;
-  const [swatchLight, swatchDark] = useToken("colors", [dotLight, dotDark]);
-  const activeRing = useColorModeValue(`${colorKey}.400`, `${colorKey}.300`);
-  const activeText = useColorModeValue(`${colorKey}.700`, `${colorKey}.200`);
-  const hoveredBg = useColorModeValue("gray.50", "whiteAlpha.100");
-  const activeBg = useColorModeValue("gray.100", "whiteAlpha.200");
-
-  return (
-    <Flex
-      as="button"
-      type="button"
-      role="radio"
-      aria-checked={isActive}
-      onClick={onClick}
-      px={3}
-      py={2.5}
-      gap={3}
-      align="center"
-      justify="space-between"
-      rounded="md"
-      borderWidth="1px"
-      borderColor={isActive ? activeRing : "border"}
-      bg={isActive ? activeBg : "transparent"}
-      _hover={{ bg: hoveredBg }}
-      _active={{ bg: activeBg }}
-      outline="0"
-      transition="all .15s ease"
-    >
-      <Flex align="center" gap={3} minW={0}>
-        <Icon
-          as={FaSquare}
-          boxSize={5}
-          color={useColorModeValue(swatchLight, swatchDark)}
-          flexShrink={0}
-        />
-        <Text noOfLines={1} color={isActive ? activeText : "inherit"}>
-          {name}
-        </Text>
-      </Flex>
-    </Flex>
-  );
-};
 
 const Appearance: FC = () => {
   const { setColorMode } = useColorMode();
@@ -203,7 +134,7 @@ const Appearance: FC = () => {
     if (error) console.error("Failed to save color mode:", error);
   };
 
-const saveAccent = async (value: AccentColors) => {
+  const saveAccent = async (value: AccentColors) => {
     setAccentColor(value);
     if (!user) return;
     const { error } = await supabase
@@ -270,29 +201,33 @@ const saveAccent = async (value: AccentColors) => {
             />
 
             <Divider />
-
-            <Flex direction="column" gap={3}>
-              <SectionText
-                title="Accent Color"
-                desc="Pick a highlight color for buttons, links, and emphasis."
-              />
-              <SimpleGrid
-                columns={{ base: 2, sm: 3, md: 4 }}
-                gap={2.5}
-                role="radiogroup"
-                aria-label="Accent color"
-              >
-                {Object.entries(ACCENT_COLORS).map(([key, { name }]) => (
-                  <AccentTile
-                    key={key}
-                    name={name}
-                    colorKey={key as AccentColors}
-                    isActive={accentColor === key}
-                    onClick={() => saveAccent(key as AccentColors)}
-                  />
-                ))}
-              </SimpleGrid>
-            </Flex>
+            <SettingRow
+              label="Accent Color"
+              description="Pick a highlight color for buttons, links, and emphasis."
+              control={
+                <Menu
+                  value={accentColor}
+                  onChange={(value) => {
+                    if (!value) return;
+                    saveAccent(value as AccentColors);
+                  }}
+                  items={Object.entries(ACCENT_COLORS).map(([key, { name }]) => ({
+                    value: key,
+                    label: name,
+                    icon: (
+                      <Icon
+                        as={accentColor === key ? FaCheckSquare : FaSquare}
+                        boxSize={4}
+                        color={`${key}.600`}
+                        _dark={{ color: `${key}.200` }}
+                      />
+                    ),
+                  }))}
+                  includeNullOption={false}
+                  buttonProps={{ variant: "outline" }}
+                />
+              }
+            />
           </Flex>
         </CardBody>
       </Card>
