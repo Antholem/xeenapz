@@ -1,8 +1,10 @@
 "use client";
 
-import { useRef, type ReactElement } from "react";
+import { useRef, type ReactElement, type ReactNode } from "react";
 import {
   Box,
+  Flex,
+  Icon,
   Menu as ChakraMenu,
   MenuButton as ChakraMenuButton,
   type MenuProps as ChakraMenuProps,
@@ -10,13 +12,14 @@ import {
 } from "@chakra-ui/react";
 import type { ButtonProps } from "@chakra-ui/react";
 import { HiOutlineChevronDown } from "react-icons/hi";
+import { IoIosCheckmark } from "react-icons/io";
 import Button from "../Button";
 import MenuList from "../MenuList";
 import MenuItem from "../MenuItem";
 import { useAccentColor } from "@/stores";
 
 interface MenuItemData {
-  label: string;
+  label: ReactNode;
   value: string;
   icon?: ReactElement;
 }
@@ -79,7 +82,10 @@ const Menu = ({
             onClick={() => onChange(null)}
             color={value === null ? selectedColor : undefined}
           >
-            {placeholder}
+            <Flex align="center" justify="space-between" w="full">
+              {placeholder}
+              {value === null && <Icon as={IoIosCheckmark} boxSize={6} />}
+            </Flex>
           </MenuItem>
         )}
         {items.map((item) => (
@@ -90,7 +96,10 @@ const Menu = ({
             color={item.value === value ? selectedColor : undefined}
             icon={item.icon}
           >
-            {item.label}
+            <Flex align="center" justify="space-between" w="full">
+              {item.label}
+              {item.value === value && <Icon as={IoIosCheckmark} boxSize={6} />}
+            </Flex>
           </MenuItem>
         ))}
       </MenuList>
