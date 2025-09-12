@@ -193,7 +193,11 @@ const DataAndPrivacy: FC = () => {
               label="Archive All Threads"
               description="Move all your threads to the archive."
               control={
-                <Button variant="outline" onClick={onArchiveOpen}>
+                <Button
+                  colorScheme="gray"
+                  variant="outline"
+                  onClick={onArchiveOpen}
+                >
                   Archive
                 </Button>
               }
