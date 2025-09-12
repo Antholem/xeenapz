@@ -18,7 +18,7 @@ import { ACCENT_COLORS, AccentColors } from "@/theme/types";
 import { supabase } from "@/lib";
 import { Menu } from "@/components/ui";
 import { RiSunLine, RiMoonLine, RiComputerLine } from "react-icons/ri";
-import { FaSquare, FaCheckSquare } from "react-icons/fa";
+import { FaSquare } from "react-icons/fa";
 
 const MODE_STORAGE_KEY = "color-mode-preference";
 
@@ -216,7 +216,7 @@ const Appearance: FC = () => {
                     label: name,
                     icon: (
                       <Icon
-                        as={accentColor === key ? FaCheckSquare : FaSquare}
+                        as={FaSquare}
                         boxSize={4}
                         color={`${key}.600`}
                         _dark={{ color: `${key}.200` }}
