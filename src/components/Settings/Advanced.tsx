@@ -81,7 +81,9 @@ const Advanced: FC = () => {
     setIsResetting(true);
     try {
       // reset color mode to system preference
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches;
       setColorMode(prefersDark ? "dark" : "light");
       localStorage.removeItem("chakra-ui-color-mode");
       localStorage.setItem("color-mode-preference", "system");
@@ -100,18 +102,16 @@ const Advanced: FC = () => {
 
       // persist defaults to database
       if (user) {
-        const { error } = await supabase
-          .from("user_preferences")
-          .upsert(
-            {
-              user_id: user.id,
-              color_mode: "system",
-              accent_color: "cyan",
-              smart_suggestions: true,
-              tts_voice: null,
-            },
-            { onConflict: "user_id" }
-          );
+        const { error } = await supabase.from("user_preferences").upsert(
+          {
+            user_id: user.id,
+            color_mode: "system",
+            accent_color: "cyan",
+            smart_suggestions: true,
+            tts_voice: null,
+          },
+          { onConflict: "user_id" }
+        );
         if (error) throw error;
       }
 
@@ -149,7 +149,7 @@ const Advanced: FC = () => {
               label="Reset Settings"
               description="Restore all preferences to their default values."
               control={
-                <Button colorScheme="red" onClick={onOpen}>
+                <Button colorScheme="red" variant="outline" onClick={onOpen}>
                   Reset
                 </Button>
               }
@@ -200,4 +200,3 @@ const Advanced: FC = () => {
 };
 
 export default Advanced;
-

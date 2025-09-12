@@ -425,7 +425,6 @@ const ThreadItem: FC<ThreadItemProps> = ({
                   Cancel
                 </Button>
                 <Button
-                  variant="ghost"
                   colorScheme="red"
                   onClick={handleDelete}
                   isLoading={isDeleting}
@@ -469,7 +468,6 @@ const ThreadItem: FC<ThreadItemProps> = ({
                   Cancel
                 </Button>
                 <Button
-                  variant="ghost"
                   onClick={handleRename}
                   isLoading={isRenaming}
                   isDisabled={
