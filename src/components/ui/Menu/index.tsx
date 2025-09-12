@@ -12,7 +12,7 @@ import {
 } from "@chakra-ui/react";
 import type { ButtonProps } from "@chakra-ui/react";
 import { HiOutlineChevronDown } from "react-icons/hi";
-import { FaCheck } from "react-icons/fa";
+import { IoIosCheckmark } from "react-icons/io";
 import Button from "../Button";
 import MenuList from "../MenuList";
 import MenuItem from "../MenuItem";
@@ -84,7 +84,7 @@ const Menu = ({
           >
             <Flex align="center" justify="space-between" w="full">
               {placeholder}
-              {value === null && <Icon as={FaCheck} boxSize={4} />}
+              {value === null && <Icon as={IoIosCheckmark} boxSize={6} />}
             </Flex>
           </MenuItem>
         )}
@@ -98,7 +98,7 @@ const Menu = ({
           >
             <Flex align="center" justify="space-between" w="full">
               {item.label}
-              {item.value === value && <Icon as={FaCheck} boxSize={4} />}
+              {item.value === value && <Icon as={IoIosCheckmark} boxSize={6} />}
             </Flex>
           </MenuItem>
         ))}

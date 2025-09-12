@@ -40,12 +40,7 @@ const SettingRow = ({
     <Box minW={0}>
       <Text fontWeight="medium">{label}</Text>
       {description && (
-        <Text
-          mt={1}
-          fontSize="xs"
-          color="secondaryText"
-          wordBreak="break-word"
-        >
+        <Text mt={1} fontSize="xs" color="secondaryText" wordBreak="break-word">
           {description}
         </Text>
       )}
@@ -211,18 +206,20 @@ const Appearance: FC = () => {
                     if (!value) return;
                     saveAccent(value as AccentColors);
                   }}
-                  items={Object.entries(ACCENT_COLORS).map(([key, { name }]) => ({
-                    value: key,
-                    label: name,
-                    icon: (
-                      <Icon
-                        as={FaSquare}
-                        boxSize={4}
-                        color={`${key}.600`}
-                        _dark={{ color: `${key}.200` }}
-                      />
-                    ),
-                  }))}
+                  items={Object.entries(ACCENT_COLORS).map(
+                    ([key, { name }]) => ({
+                      value: key,
+                      label: name,
+                      icon: (
+                        <Icon
+                          as={FaSquare}
+                          boxSize={4}
+                          color={`${key}.600`}
+                          _dark={{ color: `${key}.200` }}
+                        />
+                      ),
+                    })
+                  )}
                   includeNullOption={false}
                   buttonProps={{ variant: "outline" }}
                 />
