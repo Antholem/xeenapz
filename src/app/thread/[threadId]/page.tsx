@@ -202,19 +202,24 @@ const Thread: FC = () => {
 
   const fetchBotResponse = async (
     userMessage: Message,
-    imageBase64?: string | null
+    imageBase64?: string | null,
+    prevMessages: Message[] = []
   ) => {
     if (!user || !threadId) return;
 
     setIsFetchingResponse(true);
 
     try {
+      const history = [
+        ...prevMessages.map((m) => ({ sender: m.sender, text: m.text })),
+        { sender: "user", text: userMessage.text, image: imageBase64 },
+      ];
+
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: userMessage.text || null,
-          image: imageBase64 || null,
+          history,
           model,
         }),
       });
@@ -317,12 +322,18 @@ const Thread: FC = () => {
 
     setIsFetchingResponse(true);
     try {
+      const history = messages
+        .slice(0, index)
+        .map((m) => ({ sender: m.sender, text: m.text }));
+      if (history.length > 0) {
+        history[history.length - 1].image = base64Image;
+      }
+
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: userMessage.text || null,
-          image: base64Image,
+          history,
           model,
         }),
       });
@@ -452,7 +463,7 @@ const Thread: FC = () => {
         })
         .eq("id", threadId);
 
-      await fetchBotResponse(userMessage, base64Image);
+      await fetchBotResponse(userMessage, base64Image, messages);
     } catch (error) {
       console.error("Error sending message:", error);
     }

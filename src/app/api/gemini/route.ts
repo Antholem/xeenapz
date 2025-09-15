@@ -12,28 +12,50 @@ export async function OPTIONS() {
 
 export async function POST(req: Request) {
   try {
-    const { message, image, model } = await req.json();
-    if (!message && !image)
-      return NextResponse.json(
-        { error: "Message or image is required" },
-        { status: 400 }
-      );
+    const { message, image, model, history } = await req.json();
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey)
       return NextResponse.json({ error: "API key not found" }, { status: 500 });
 
-    const parts: any[] = [];
+    let contents: any[] = [];
 
-    if (message) parts.push({ text: message });
-
-    if (image) {
-      parts.push({
-        inlineData: {
-          mimeType: "image/jpeg",
-          data: image, // base64 string, no data:image/... prefix
-        },
+    if (Array.isArray(history) && history.length > 0) {
+      contents = history.map((msg: any) => {
+        const parts: any[] = [];
+        if (msg.text) parts.push({ text: msg.text });
+        if (msg.image) {
+          parts.push({
+            inlineData: {
+              mimeType: "image/jpeg",
+              data: msg.image,
+            },
+          });
+        }
+        return {
+          role: msg.sender === "user" ? "user" : "model",
+          parts,
+        };
       });
+    } else {
+      if (!message && !image)
+        return NextResponse.json(
+          { error: "Message or image is required" },
+          { status: 400 }
+        );
+
+      const parts: any[] = [];
+      if (message) parts.push({ text: message });
+      if (image) {
+        parts.push({
+          inlineData: {
+            mimeType: "image/jpeg",
+            data: image, // base64 string, no data:image/... prefix
+          },
+        });
+      }
+
+      contents = [{ role: "user", parts }];
     }
 
     const response = await fetch(
@@ -42,7 +64,7 @@ export async function POST(req: Request) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [{ parts }],
+          contents,
         }),
       }
     );

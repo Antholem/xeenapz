@@ -135,6 +135,11 @@ const TempThread: FC = () => {
       image: imageData,
     };
 
+    const history = [
+      ...messages.map((m) => ({ sender: m.sender, text: m.text })),
+      { sender: "user", text: textToSend || null, image: imageBase64 },
+    ];
+
     setMessages((prev) => [...prev, userMessage]);
 
     setInput("home", "");
@@ -146,8 +151,7 @@ const TempThread: FC = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: textToSend || null,
-          image: imageBase64 || null,
+          history,
           model,
         }),
       });
@@ -219,12 +223,18 @@ const TempThread: FC = () => {
 
     setIsFetchingResponse(true);
     try {
+      const history = messages
+        .slice(0, index)
+        .map((m) => ({ sender: m.sender, text: m.text }));
+      if (history.length > 0) {
+        history[history.length - 1].image = base64Image;
+      }
+
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: userMessage.text || null,
-          image: base64Image,
+          history,
           model,
         }),
       });

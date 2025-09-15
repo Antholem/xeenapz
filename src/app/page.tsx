@@ -125,16 +125,21 @@ const Home: FC = () => {
   const fetchBotResponse = async (
     userMessage: Message,
     threadId?: string | null,
-    imageBase64?: string | null
+    imageBase64?: string | null,
+    prevMessages: Message[] = []
   ) => {
     setIsFetchingResponse(true);
     try {
+      const history = [
+        ...prevMessages.map((m) => ({ sender: m.sender, text: m.text })),
+        { sender: "user", text: userMessage.text, image: imageBase64 },
+      ];
+
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: userMessage.text || null,
-          image: imageBase64 || null,
+          history,
           model,
         }),
       });
@@ -270,12 +275,18 @@ const Home: FC = () => {
 
     setIsFetchingResponse(true);
     try {
+      const history = messages
+        .slice(0, index)
+        .map((m) => ({ sender: m.sender, text: m.text }));
+      if (history.length > 0) {
+        history[history.length - 1].image = base64Image;
+      }
+
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: userMessage.text || null,
-          image: base64Image,
+          history,
           model,
         }),
       });
@@ -430,7 +441,7 @@ const Home: FC = () => {
           })
           .eq("id", id);
 
-        await fetchBotResponse(userMessage, id, base64Image);
+        await fetchBotResponse(userMessage, id, base64Image, messages);
 
         if (isNewThread && pathname === "/") {
           await fetchBotSetTitle(userMessage.text ?? "", base64Image, id);
@@ -439,7 +450,7 @@ const Home: FC = () => {
         console.error("Error sending message:", error);
       }
     } else {
-      await fetchBotResponse(userMessage, null, base64Image);
+      await fetchBotResponse(userMessage, null, base64Image, messages);
     }
 
     if (isNewThread && id) {
