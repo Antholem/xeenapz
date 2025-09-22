@@ -1,0 +1,41 @@
+name: Keep Supabase Awake
+
+on:
+  schedule:
+    - cron: "0 0 * * 0,3" # Midnight UTC on Sundays and Wednesdays
+  workflow_dispatch:
+
+jobs:
+  ping:
+    name: Ping Supabase REST
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Hit lightweight threads query with retries
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          set -euo pipefail
+
+          max_attempts=4
+          sleep_between=45
+
+          for attempt in $(seq 1 "$max_attempts"); do
+            if curl --fail --show-error --silent --location \
+              "$SUPABASE_URL/rest/v1/threads?select=id&limit=1" \
+              -H "apikey: $SUPABASE_ANON_KEY" \
+              -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+              -o /dev/null; then
+              echo "Supabase ping succeeded on attempt $attempt."
+              exit 0
+            fi
+
+            if [ "$attempt" -lt "$max_attempts" ]; then
+              echo "Attempt $attempt failed; retrying in ${sleep_between}s..." >&2
+              sleep "$sleep_between"
+            fi
+          done
+
+          echo "All $max_attempts attempts to ping Supabase failed." >&2
+          exit 1
