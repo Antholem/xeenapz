@@ -2,34 +2,84 @@ name: Keep Supabase Awake
 
 on:
   schedule:
-    - cron: "0 0 * * 0,3" # Midnight UTC on Sundays and Wednesdays
+    - cron: "0 0 */2 * *" # Midnight UTC every 2 days
   workflow_dispatch:
 
 jobs:
   ping:
-    name: Ping Supabase REST
+    name: Keep Supabase active
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Hit lightweight threads query with retries
+      - name: Touch keepalive row with retries
         env:
           SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           set -euo pipefail
 
           max_attempts=4
           sleep_between=45
+          keepalive_user_id="00000000-0000-0000-0000-000000000000"
 
           for attempt in $(seq 1 "$max_attempts"); do
-            if curl --fail --show-error --silent --location \
-              "$SUPABASE_URL/rest/v1/threads?select=id&limit=1" \
-              -H "apikey: $SUPABASE_ANON_KEY" \
-              -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
-              -o /dev/null; then
-              echo "Supabase ping succeeded on attempt $attempt."
-              exit 0
+            timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+            patch_payload=$(printf '{"created_at":"%s"}' "$timestamp")
+            response_file=$(mktemp)
+            trap 'rm -f "$response_file"' EXIT
+
+            patch_status=$(curl \
+              --show-error --silent --location \
+              "$SUPABASE_URL/rest/v1/users?id=eq.$keepalive_user_id" \
+              -X PATCH \
+              -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+              -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+              -H "Content-Type: application/json" \
+              -H "Prefer: return=representation" \
+              -d "$patch_payload" \
+              -o "$response_file" \
+              -w "%{http_code}" || printf '000')
+
+            if [ "${patch_status:-0}" -ge 200 ] && [ "$patch_status" -lt 300 ]; then
+              if [ "$patch_status" -eq 204 ]; then
+                echo "Updated keepalive row at $timestamp."
+                exit 0
+              fi
+
+              patch_body=$(cat "$response_file")
+              if [ "$patch_body" != "[]" ] && [ -n "$patch_body" ]; then
+                echo "Updated keepalive row at $timestamp."
+                exit 0
+              fi
+
+              echo "Keepalive row missing, attempting upsert..."
+              post_payload=$(printf '{"id":"%s","user_id":"%s","created_at":"%s"}' \
+                "$keepalive_user_id" "$keepalive_user_id" "$timestamp")
+
+              post_status=$(curl \
+                --show-error --silent --location \
+                "$SUPABASE_URL/rest/v1/users" \
+                -X POST \
+                -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+                -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+                -H "Content-Type: application/json" \
+                -H "Prefer: resolution=merge-duplicates,return=representation" \
+                -d "$post_payload" \
+                -o "$response_file" \
+                -w "%{http_code}" || printf '000')
+
+              if [ "${post_status:-0}" -ge 200 ] && [ "$post_status" -lt 300 ]; then
+                echo "Upserted keepalive row at $timestamp."
+                exit 0
+              fi
+
+              echo "Upsert failed with status $post_status: $(cat "$response_file")" >&2
+            else
+              echo "Patch failed with status $patch_status: $(cat "$response_file")" >&2
             fi
+
+            rm -f "$response_file"
+            trap - EXIT
 
             if [ "$attempt" -lt "$max_attempts" ]; then
               echo "Attempt $attempt failed; retrying in ${sleep_between}s..." >&2
@@ -37,5 +87,5 @@ jobs:
             fi
           done
 
-          echo "All $max_attempts attempts to ping Supabase failed." >&2
+          echo "All $max_attempts attempts to refresh Supabase activity failed." >&2
           exit 1
